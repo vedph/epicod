@@ -2,11 +2,23 @@
 
 This is work in progress. The solution currently contains some internal-use tools for a VeDPH research project. The scrapers found here are intended for personal research only. Please see the copyright notices of the respective owners.
 
+## Prerequisites
+
+A PostgreSQL service. You can use a Dockerized service like (this sample refers to a Windows machine):
+
+```ps1
+docker run --volume postgresData://c/data/pgsql -p 5432:5432 --name postgres -e POSTGRES_PASSWORD=postgres -d postgres
+```
+
+(or use an image like `postgis/postgis` if you need GIS functionality).
+
 ## Packard Humanities Greek Inscriptions
+
+Plain Unicode text with Leiden conventions and minimalist metadata.
 
 ### Scraper
 
-Root entry: <https://inscriptions.packhum.org/allregions>
+Root entry: <https://inscriptions.packhum.org/allregions>.
 
 1. level 1 (regions, static): list of regions with their target: `//table/tbody/tr/td/a`. Each target points to a relative URI `/regions/ID` where ID is a number, e.g.:
 
