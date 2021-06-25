@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "epicod": {
+      "commandName": "Project",
+      "commandLineArgs": "scrape-packhum"
+    }
+  }
+}
