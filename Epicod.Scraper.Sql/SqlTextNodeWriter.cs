@@ -54,6 +54,7 @@ namespace Epicod.Scraper.Sql
             {
                 id = node.Id,
                 parentid = node.ParentId,
+                corpus = node.Corpus,
                 y = node.Y,
                 x = node.X,
                 name = node.Name,

@@ -16,6 +16,11 @@
         public int ParentId { get; set; }
 
         /// <summary>
+        /// Gets or sets the corpus this node comes from.
+        /// </summary>
+        public string Corpus { get; set; }
+
+        /// <summary>
         /// Gets or sets the "Y", i.e. the node depth level (1-N).
         /// </summary>
         public int Y { get; set; }
@@ -43,7 +48,7 @@
         /// </returns>
         public override string ToString()
         {
-            return $"#{Id} @{Y}.{X} {Name}";
+            return $"[{Corpus}#{Id}] @{Y}.{X} {Name}";
         }
     }
 }

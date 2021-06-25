@@ -24,6 +24,8 @@ namespace Epicod.Scraper.Packhum
     /// </summary>
     public sealed class PackhumScraper
     {
+        public const string CORPUS = "packhum";
+
         private readonly ITextNodeWriter _writer;
         private readonly PackhumNoteParser _parser;
         private string _rootUri;
@@ -131,6 +133,7 @@ namespace Epicod.Scraper.Packhum
         private void WriteNode(TextNode node,
             IList<TextNodeProperty> properties = null)
         {
+            node.Corpus = CORPUS;
             Logger?.LogInformation(node.ToString());
             if (!IsDry) _writer.Write(node, properties);
         }
@@ -201,7 +204,17 @@ namespace Epicod.Scraper.Packhum
 
                 props.Add(new TextNodeProperty(node.Id, "note", note));
                 if (IsNoteParsingEnabled)
-                    props.AddRange(_parser.Parse(note, node.Id));
+                {
+                    try
+                    {
+                        var noteProps = _parser.Parse(note, node.Id);
+                        props.AddRange(noteProps);
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger?.LogError(ex.ToString());
+                    }
+                }
             }
             if (!string.IsNullOrEmpty(phi))
                 props.Add(new TextNodeProperty(node.Id, "phi", phi));

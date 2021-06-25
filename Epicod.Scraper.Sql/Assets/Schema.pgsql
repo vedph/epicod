@@ -1,6 +1,7 @@
 ﻿CREATE TABLE public.textnode (
 	id int NOT NULL,
 	parentid int NULL,
+	corpus varchar(50) NOT NULL,
 	y int NOT NULL,
 	x int NOT NULL,
 	name varchar(100) NOT NULL,

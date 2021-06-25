@@ -95,7 +95,7 @@ namespace Epicod.Cli.Commands
                 $"Preflight: {_preflight}\n" +
                 $"Delay: {_delay}\n" +
                 $"Timeout: {_timeout}\n" +
-                $"Note parsing: {(_noteParsing? "yes":"no")}");
+                $"Note parsing: {(_noteParsing? "yes":"no")}\n");
 
             // check that Selenium driver for Chrome is present
             string path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
@@ -140,7 +140,8 @@ namespace Epicod.Cli.Commands
                 Logger = _logger,
                 Delay = _delay,
                 Timeout = _timeout,
-                IsDry = _preflight
+                IsDry = _preflight,
+                IsNoteParsingEnabled = _noteParsing
             };
             try
             {

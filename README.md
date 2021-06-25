@@ -106,4 +106,4 @@ For Packhum I currently define these metadata:
 - `date-nan`: a non-numeric date, which cannot be expressed in the conventional normal form.
 - `reference`
 
-All these metadata occur at most once per node, except for `ref`.
+All these metadata occur at most once per node, except for `reference`.
