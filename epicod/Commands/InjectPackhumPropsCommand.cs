@@ -1,21 +1,24 @@
-﻿using Microsoft.Extensions.CommandLineUtils;
+﻿using Epicod.Scraper.Packhum;
+using Fusi.Tools;
+using Microsoft.Extensions.CommandLineUtils;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using ShellProgressBar;
 using System;
 using System.Globalization;
-using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Epicod.Cli.Commands
 {
-    public sealed class ParsePackhumNoteCommand : ICommand
+    public sealed class InjectPackhumPropsCommand : ICommand
     {
         private readonly IConfiguration _config;
         private readonly string _dbName;
         private readonly bool _preflight;
         private readonly ILogger _logger;
 
-        public ParsePackhumNoteCommand(AppOptions options, string dbName,
+        public InjectPackhumPropsCommand(AppOptions options, string dbName,
             bool preflight)
         {
             _config = options.Configuration;
@@ -43,7 +46,7 @@ namespace Epicod.Cli.Commands
 
             command.OnExecute(() =>
             {
-                options.Command = new ParsePackhumNoteCommand(
+                options.Command = new InjectPackhumPropsCommand(
                     options,
                     dbNameOption.Value(),
                     preflightOption.HasValue());
@@ -54,7 +57,7 @@ namespace Epicod.Cli.Commands
         public Task Run()
         {
             Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine("\nPARSE PACKHUM NOTES\n");
+            Console.WriteLine("\nINJECT PACKHUM PROPERTIES\n");
             Console.ResetColor();
             Console.WriteLine(
                 $"Database name: {_dbName}\n" +
@@ -64,7 +67,19 @@ namespace Epicod.Cli.Commands
                 _config.GetConnectionString("Default"),
                 _dbName);
 
-            // TODO
+            ProgressBar bar = new ProgressBar(100, null, new ProgressBarOptions
+            {
+                // DisplayTimeInRealTime = false,
+                EnableTaskBarProgress = true,
+                CollapseWhenFinished = true
+            });
+
+            PackhumPropInjector injector = new PackhumPropInjector(connection);
+            injector.Inject(CancellationToken.None,
+                new Progress<ProgressReport>(report =>
+                {
+                    bar.Tick(report.Percent);
+                }));
 
             return Task.CompletedTask;
         }

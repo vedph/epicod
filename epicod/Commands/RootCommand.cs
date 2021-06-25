@@ -18,6 +18,7 @@ namespace Epicod.Cli.Commands
             // configure all the app commands here
             app.Command("create-db", c => CreateDbCommand.Configure(c, options));
             app.Command("scrape-packhum", c => ScrapePackhumCommand.Configure(c, options));
+            app.Command("inject-packhum", c => InjectPackhumPropsCommand.Configure(c, options));
 
             app.OnExecute(() =>
             {

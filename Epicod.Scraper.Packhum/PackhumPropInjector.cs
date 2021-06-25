@@ -1,14 +1,11 @@
 ﻿using Fusi.Tools;
 using Npgsql;
-using SqlKata;
 using SqlKata.Compilers;
 using SqlKata.Execution;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace Epicod.Scraper.Packhum
 {
@@ -17,51 +14,92 @@ namespace Epicod.Scraper.Packhum
     /// </summary>
     public sealed class PackhumPropInjector
     {
+        private const string NODE_TABLE = "textnode";
+        private const string PROP_TABLE = "textnodeproperty";
+
         private readonly string _connString;
-        private readonly string[] _names;
 
         public PackhumPropInjector(string connString)
         {
             _connString = connString ??
                 throw new ArgumentNullException(nameof(connString));
-            _names = new[]
+        }
+
+        private static void Clear(QueryFactory queryFactory)
+        {
+            queryFactory.Query(PROP_TABLE)
+                .Join("textnode", $"{NODE_TABLE}.id", $"{PROP_TABLE}.nodeid")
+                .Where("corpus", PackhumScraper.CORPUS).AsDelete();
+        }
+
+        /// <summary>
+        /// Injects properties by parsing the node property of each packhum
+        /// node.
+        /// </summary>
+        /// <param name="cancel">The cancellation token.</param>
+        /// <param name="progress">The optional progress reporter.</param>
+        /// <returns>Count of injected properties.</returns>
+        public int Inject(CancellationToken cancel,
+            IProgress<ProgressReport> progress = null)
+        {
+            QueryFactory qf = new QueryFactory(
+                new NpgsqlConnection(_connString),
+                new PostgresCompiler());
+
+            // clear
+            Clear(qf);
+
+            PackhumNoteParser parser = new PackhumNoteParser();
+            string[] names = new[]
             {
                 "region", "location", "type", "layout",
                 "date-phi", "date-txt", "date-val", "date-nan",
                 "reference"
             };
-        }
+            string[] cols = new[] { "nodeid", "name", "value" };
 
-        private void Clear(QueryFactory queryFactory)
-        {
-            queryFactory.Query("textnodeproperty")
-                .Join("textnode", "textnode.id", "textnodeproperty.nodeid")
-                .Where("corpus", PackhumScraper.CORPUS).AsDelete();
-        }
+            // get total
+            dynamic row = qf.Query(PROP_TABLE)
+                .Select($"{NODE_TABLE}.id as NodeId", $"{PROP_TABLE}.Note")
+                .Join(NODE_TABLE, $"{NODE_TABLE}.id", $"{PROP_TABLE}.nodeid")
+                .Where("corpus", PackhumScraper.CORPUS).AsCount().First();
+            int total = (int)row.count;
+            int count = 0, injected = 0;
+            ProgressReport report = progress != null ? new ProgressReport() : null;
 
-        public int Inject(CancellationToken cancel,
-            IProgress<ProgressReport> progress = null)
-        {
-            QueryFactory queryFactory = new QueryFactory(
-                new NpgsqlConnection(_connString),
-                new PostgresCompiler());
-
-            Clear(queryFactory);
-
-            PackhumNoteParser parser = new PackhumNoteParser();
-
-            foreach (var item in queryFactory.Query("textnodeproperty")
-                .Select("textnode.id as NodeId", "textnodeproperty.Note")
-                .Join("textnode", "textnode.id", "textnodeproperty.nodeid")
+            // process each note
+            foreach (var item in qf.Query(PROP_TABLE)
+                .Select($"{NODE_TABLE}.id as NodeId", $"{PROP_TABLE}.Note")
+                .Join(NODE_TABLE, $"{NODE_TABLE}.id", $"{PROP_TABLE}.nodeid")
                 .Where("corpus", PackhumScraper.CORPUS)
-                .OrderBy("textnode.id").Get())
+                .OrderBy($"{NODE_TABLE}.id").Get())
             {
                 IList<TextNodeProperty> props = parser.Parse
                     (item.Note, item.NodeId);
-                // TODO
+                if (props.Count == 0) continue;
+
+                injected += props.Count;
+                var data = props.Select(
+                    p => new object[] { item.NodeId, p.Name, p.Value })
+                    .ToArray();
+                qf.Query(PROP_TABLE).Insert(cols, data);
+
+                if (progress != null && ++count % 10 == 0)
+                {
+                    report.Count = count;
+                    report.Percent = count * 100 / total;
+                    progress.Report(report);
+                }
+                if (cancel.IsCancellationRequested) break;
             }
 
-            throw new NotImplementedException();
+            if (progress != null)
+            {
+                report.Percent = 100;
+                progress.Report(report);
+            }
+
+            return injected;
         }
     }
 }
