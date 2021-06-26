@@ -37,9 +37,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Epicod.Core\Epicod.Core.csproj" />
     <ProjectReference Include="..\Epicod.Scraper.Packhum\Epicod.Scraper.Packhum.csproj" />
     <ProjectReference Include="..\Epicod.Scraper.Sql\Epicod.Scraper.Sql.csproj" />
     <ProjectReference Include="..\Epicod.Scraper\Epicod.Scraper.csproj" />
+    <ProjectReference Include="..\Epicod.Sql\Epicod.Sql.csproj" />
   </ItemGroup>
 
 </Project>

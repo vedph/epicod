@@ -4,6 +4,7 @@ using System;
 using System.Linq;
 using System.Collections.Generic;
 using Npgsql;
+using Epicod.Core;
 
 namespace Epicod.Scraper.Sql
 {

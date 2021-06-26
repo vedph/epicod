@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using Epicod.Core;
+using System.Collections.Generic;
 
 namespace Epicod.Scraper
 {

@@ -1,4 +1,6 @@
-﻿using Fusi.Tools;
+﻿using Epicod.Core;
+using Epicod.Scraper.Sql;
+using Fusi.Tools;
 using Npgsql;
 using SqlKata.Compilers;
 using SqlKata.Execution;
@@ -14,9 +16,6 @@ namespace Epicod.Scraper.Packhum
     /// </summary>
     public sealed class PackhumPropInjector
     {
-        private const string NODE_TABLE = "textnode";
-        private const string PROP_TABLE = "textnodeproperty";
-
         private readonly string _connString;
 
         public PackhumPropInjector(string connString)
@@ -27,8 +26,9 @@ namespace Epicod.Scraper.Packhum
 
         private static void Clear(QueryFactory queryFactory)
         {
-            queryFactory.Query(PROP_TABLE)
-                .Join("textnode", $"{NODE_TABLE}.id", $"{PROP_TABLE}.nodeid")
+            queryFactory.Query(EpicodSchema.T_PROP)
+                .Join("textnode", $"{EpicodSchema.T_NODE}.id",
+                    $"{EpicodSchema.T_PROP}.nodeid")
                 .Where("corpus", PackhumScraper.CORPUS).AsDelete();
         }
 
@@ -59,20 +59,24 @@ namespace Epicod.Scraper.Packhum
             string[] cols = new[] { "nodeid", "name", "value" };
 
             // get total
-            dynamic row = qf.Query(PROP_TABLE)
-                .Select($"{NODE_TABLE}.id as NodeId", $"{PROP_TABLE}.Note")
-                .Join(NODE_TABLE, $"{NODE_TABLE}.id", $"{PROP_TABLE}.nodeid")
+            dynamic row = qf.Query(EpicodSchema.T_PROP)
+                .Select($"{EpicodSchema.T_NODE}.id as NodeId",
+                    $"{EpicodSchema.T_PROP}.Note")
+                .Join(EpicodSchema.T_NODE, $"{EpicodSchema.T_NODE}.id",
+                    $"{EpicodSchema.T_PROP}.nodeid")
                 .Where("corpus", PackhumScraper.CORPUS).AsCount().First();
             int total = (int)row.count;
             int count = 0, injected = 0;
             ProgressReport report = progress != null ? new ProgressReport() : null;
 
             // process each note
-            foreach (var item in qf.Query(PROP_TABLE)
-                .Select($"{NODE_TABLE}.id as NodeId", $"{PROP_TABLE}.Note")
-                .Join(NODE_TABLE, $"{NODE_TABLE}.id", $"{PROP_TABLE}.nodeid")
+            foreach (var item in qf.Query(EpicodSchema.T_PROP)
+                .Select($"{EpicodSchema.T_NODE}.id as NodeId",
+                    $"{EpicodSchema.T_PROP}.Note")
+                .Join(EpicodSchema.T_NODE,
+                    $"{EpicodSchema.T_NODE}.id", $"{EpicodSchema.T_PROP}.nodeid")
                 .Where("corpus", PackhumScraper.CORPUS)
-                .OrderBy($"{NODE_TABLE}.id").Get())
+                .OrderBy($"{EpicodSchema.T_NODE}.id").Get())
             {
                 IList<TextNodeProperty> props = parser.Parse
                     (item.Note, item.NodeId);
@@ -82,7 +86,7 @@ namespace Epicod.Scraper.Packhum
                 var data = props.Select(
                     p => new object[] { item.NodeId, p.Name, p.Value })
                     .ToArray();
-                qf.Query(PROP_TABLE).Insert(cols, data);
+                qf.Query(EpicodSchema.T_PROP).Insert(cols, data);
 
                 if (progress != null && ++count % 10 == 0)
                 {

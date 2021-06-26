@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using OpenQA.Selenium.Support.UI;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Remote;
+using Epicod.Core;
 
 // note: for Selenium you need the chrome driver from https://chromedriver.chromium.org/downloads
 // here it was downloaded for version 91 and stored within the CLI project

@@ -5,8 +5,21 @@ using System.Text;
 
 namespace Epicod.Scraper.Sql
 {
-    public static class ScraperDbSchema
+    /// <summary>
+    /// Epicod SQL schema.
+    /// </summary>
+    public static class EpicodSchema
     {
+        /// <summary>
+        /// The name of the text nodes table.
+        /// </summary>
+        public const string T_NODE = "textnode";
+
+        /// <summary>
+        /// The name of the text nodes properties table.
+        /// </summary>
+        public const string T_PROP = "textnodeproperty";
+
         /// <summary>
         /// Gets the DDL SQL representing the schema.
         /// </summary>
@@ -17,7 +30,7 @@ namespace Epicod.Scraper.Sql
         {
             using (StreamReader reader = new StreamReader(
                 Assembly.GetExecutingAssembly().GetManifestResourceStream(
-                    "Epicod.Scraper.Sql.Assets.Schema.pgsql"), Encoding.UTF8))
+                    "Epicod.Sql.Assets.Schema.pgsql"), Encoding.UTF8))
             {
                 return reader.ReadToEnd();
             }

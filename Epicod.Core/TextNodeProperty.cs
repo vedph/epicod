@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Epicod.Scraper
+namespace Epicod.Core
 {
     /// <summary>
     /// A property belonging to a <see cref="TextNode"/>. This is any value

@@ -1,4 +1,4 @@
-﻿namespace Epicod.Scraper
+﻿namespace Epicod.Core
 {
     /// <summary>
     /// A node for epigraphic texts scraped from a web resource.

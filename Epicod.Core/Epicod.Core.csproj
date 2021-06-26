@@ -7,15 +7,15 @@
     <Authors>Daniele Fusi</Authors>
     <Company>Fusi</Company>
     <Product>Epicod</Product>
-    <Description>Epicod shared library for scrapers</Description>
+    <Description>Epicod core components</Description>
     <NeutralLanguage>en-US</NeutralLanguage>
     <PackageLicenseExpression>GPL-3.0-or-later</PackageLicenseExpression>
     <Copyright>by Daniele Fusi</Copyright>
-    <PackageTags>epicod;epigraphy;scraper</PackageTags>
+    <PackageTags>epicod;epigraphy</PackageTags>
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Epicod.Core\Epicod.Core.csproj" />
+    <PackageReference Include="Fusi.Tools" Version="1.1.16" />
   </ItemGroup>
 
 </Project>

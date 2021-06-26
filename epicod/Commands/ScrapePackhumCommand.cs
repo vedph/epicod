@@ -128,7 +128,7 @@ namespace Epicod.Cli.Commands
                 {
                     Console.Write($"Creating {_dbName}...");
                     manager.CreateDatabase(_dbName,
-                        ScraperDbSchema.Get(), null);
+                        EpicodSchema.Get(), null);
                     Console.WriteLine(" done");
                 }
             }

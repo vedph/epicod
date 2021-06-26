@@ -28,6 +28,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Epicod.Scraper\Epicod.Scraper.csproj" />
+    <ProjectReference Include="..\Epicod.Sql\Epicod.Sql.csproj" />
   </ItemGroup>
 
 </Project>
