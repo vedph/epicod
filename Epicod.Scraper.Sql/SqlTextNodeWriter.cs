@@ -33,6 +33,12 @@ namespace Epicod.Scraper.Sql
             };
         }
 
+        private static string ConstrainLength(string text, int max)
+        {
+            if (string.IsNullOrEmpty(text)) return text;
+            return text.Length > max ? text.Substring(0, max) : text;
+        }
+
         /// <summary>
         /// Writes the specified node.
         /// </summary>
@@ -57,8 +63,8 @@ namespace Epicod.Scraper.Sql
                 corpus = node.Corpus,
                 y = node.Y,
                 x = node.X,
-                name = node.Name,
-                uri = node.Uri
+                name = ConstrainLength(node.Name, 200),
+                uri = ConstrainLength(node.Uri, 300)
             });
             if (properties?.Count > 0)
             {

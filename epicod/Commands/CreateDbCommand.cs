@@ -21,7 +21,7 @@ namespace Epicod.Cli.Commands
         {
             Logger = options.Logger;
             _config = options.Configuration;
-            _dbName = dbName ?? "packhum";
+            _dbName = dbName ?? "epicod";
         }
 
         public static void Configure(CommandLineApplication command,

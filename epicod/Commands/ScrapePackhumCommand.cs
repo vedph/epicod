@@ -28,7 +28,7 @@ namespace Epicod.Cli.Commands
             bool preflight, int delay, int timeout, bool noteParsing)
         {
             _config = options.Configuration;
-            _dbName = dbName ?? "packhum";
+            _dbName = dbName ?? "epicod";
             _preflight = preflight;
             _delay = delay;
             _timeout = timeout;
@@ -72,7 +72,7 @@ namespace Epicod.Cli.Commands
                     ? d : 500;
                 int timeout = (timeoutOption.HasValue()
                     && int.TryParse(timeoutOption.Value(), out int t))
-                    ? t : 3 * 60;
+                    ? t : 2 * 60;
 
                 options.Command = new ScrapePackhumCommand(
                     options,

@@ -22,7 +22,7 @@ namespace Epicod.Cli.Commands
             bool preflight)
         {
             _config = options.Configuration;
-            _dbName = dbName ?? "packhum";
+            _dbName = dbName ?? "epicod";
             _preflight = preflight;
             _logger = options.Logger;
         }
