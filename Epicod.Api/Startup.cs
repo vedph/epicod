@@ -1,3 +1,5 @@
+using Epicod.Core;
+using Epicod.Sql;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpOverrides;
@@ -149,6 +151,10 @@ namespace Epicod.Api
             //services.AddTransient<IMailerService, DotNetMailerService>();
             //services.AddTransient<IMessageBuilderService,
             //    FileMessageBuilderService>();
+
+            // corpus browser
+            services.AddTransient<ICorpusBrowser>((_) =>
+                new SqlCorpusBrowser(Configuration.GetConnectionString("Default")));
 
             // configuration
             services.AddSingleton(_ => Configuration);
