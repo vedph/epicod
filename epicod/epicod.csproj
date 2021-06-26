@@ -4,6 +4,13 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>net5.0</TargetFramework>
     <RootNamespace>Epicod.Cli</RootNamespace>
+    <Authors>Daniele Fusi</Authors>
+    <Company>Fusi</Company>
+    <Description>Epigraphic codices CLI tool</Description>
+    <NeutralLanguage>en-US</NeutralLanguage>
+    <PackageLicenseExpression>GPL-3.0-or-later</PackageLicenseExpression>
+    <Copyright>by Daniele Fusi</Copyright>
+    <PackageTags>epicod;epigraphy</PackageTags>
   </PropertyGroup>
 
   <ItemGroup>
