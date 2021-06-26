@@ -80,6 +80,13 @@ namespace Epicod.Sql
                     .Get<string>().ToList();
         }
 
+        private static void ApplyFilter(TextNodeFilter filter, Query query)
+        {
+            query.Where("parentid", filter.ParentId);
+            if (!string.IsNullOrEmpty(filter.CorpusId))
+                query.Where("corpus", filter.CorpusId);
+        }
+
         /// <summary>
         /// Gets the specified page of nodes.
         /// </summary>
@@ -93,17 +100,16 @@ namespace Epicod.Sql
             if (filter == null) throw new ArgumentNullException(nameof(filter));
 
             EnsureQueryFactory();
-            Query query = _qf.Query(EpicodSchema.T_NODE)
-                .Select("id", "parentid", "corpus", "y", "x", "name", "uri")
-                .Where("parentId", filter.ParentId);
-
-            if (!string.IsNullOrEmpty(filter.CorpusId))
-                query.Where("corpus", filter.CorpusId);
 
             // get total
-            int total = (int)query.AsCount().First().count;
+            Query totQuery = _qf.Query(EpicodSchema.T_NODE);
+            ApplyFilter(filter, totQuery);
+            int total = (int)totQuery.AsCount().First().count;
 
             // get page
+            Query query = _qf.Query(EpicodSchema.T_NODE)
+                .Select("id", "parentid", "corpus", "y", "x", "name", "uri");
+            ApplyFilter(filter, query);
             query.OrderBy("x");
             query.Skip(filter.GetSkipCount()).Limit(filter.PageSize);
 

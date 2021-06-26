@@ -37,4 +37,4 @@ packages/
 !Lib/**/*.dll
 *.scgdat
 PythiaApi/wwwroot/plugins/*.dll
-cadmus-log*.txt
+*-log*.txt
