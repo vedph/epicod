@@ -99,7 +99,7 @@ namespace Epicod.Cli.Commands
 
             // check that Selenium driver for Chrome is present
             string path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
-                "chromedriver.exe");
+                OsHelper.IsWindows()? "chromedriver.exe" : "chromedriver");
             if (!File.Exists(path))
             {
                 Console.ForegroundColor = ConsoleColor.Red;
@@ -136,7 +136,8 @@ namespace Epicod.Cli.Commands
             PackhumScraper scraper = new PackhumScraper(
                 new SqlTextNodeWriter(connection))
             {
-                ChromePath = _config.GetSection("Selenium").GetSection("ChromePath").Value,
+                ChromePath = _config.GetSection("Selenium")
+                    .GetSection("ChromePath-" + OsHelper.GetCode()).Value,
                 Logger = _logger,
                 Delay = _delay,
                 Timeout = _timeout,
