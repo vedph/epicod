@@ -26,7 +26,7 @@ namespace Epicod.Api.Controllers
 
         [HttpGet("api/nodes")]
         [ProducesResponseType(200)]
-        public DataPage<TextNode> GetNodes(
+        public DataPage<TextNodeResult> GetNodes(
             [FromQuery] TextNodeFilterBindingModel model)
         {
             TextNodeFilter filter = new TextNodeFilter
@@ -42,31 +42,15 @@ namespace Epicod.Api.Controllers
         [HttpGet("api/nodes/{id}")]
         [ProducesResponseType(200)]
         [ProducesResponseType(404)]
-        public ActionResult<TextNodeModel> GetNode(
+        public ActionResult<TextNodeResult> GetNode(
             [FromRoute] int id,
             [FromQuery] string propFilters)
         {
-            var t = _browser.GetNode(id,
+            TextNodeResult node = _browser.GetNode(id,
                 propFilters.Split(new[] { ',' },
                     StringSplitOptions.RemoveEmptyEntries));
-            if (t == null) return NotFound();
-
-            TextNodeModel model = new TextNodeModel
-            {
-                Id = t.Item1.Id,
-                ParentId = t.Item1.ParentId,
-                Corpus = t.Item1.Corpus,
-                Y = t.Item1.Y,
-                X = t.Item1.X,
-                Name = t.Item1.Name,
-                Uri = t.Item1.Uri,
-                Properties = t.Item2.Select(p => new TextNodePropertyModel
-                {
-                    Name = p.Name,
-                    Value = p.Value
-                }).ToArray()
-            };
-            return Ok(model);
+            if (node == null) return NotFound();
+            return Ok(node);
         }
     }
 }

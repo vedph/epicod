@@ -42,9 +42,9 @@ namespace Epicod.Sql
             }
         }
 
-        private static TextNode DynamicToTextNode(dynamic d)
+        private static TextNodeResult DynamicToTextNode(dynamic d)
         {
-            return d != null? new TextNode
+            return d != null? new TextNodeResult
             {
                 Id = d.id,
                 ParentId = d.parentid,
@@ -52,15 +52,15 @@ namespace Epicod.Sql
                 Y = d.y,
                 X = d.x,
                 Name = d.name,
-                Uri = d.uri
+                Uri = d.uri,
+                IsExpandable = d.expandable ?? false
             } : null;
         }
 
-        private static TextNodeProperty DynamicToTextNodeProperty(dynamic d)
+        private static TextNodeResultProperty DynamicToTextNodeProperty(dynamic d)
         {
-            return d != null ? new TextNodeProperty
+            return d != null ? new TextNodeResultProperty
             {
-                NodeId = d.nodeid,
                 Name = d.name,
                 Value = d.value
             } : null;
@@ -95,7 +95,7 @@ namespace Epicod.Sql
         /// The resulting page.
         /// </returns>
         /// <exception cref="ArgumentNullException">filter</exception>
-        public DataPage<TextNode> GetNodes(TextNodeFilter filter)
+        public DataPage<TextNodeResult> GetNodes(TextNodeFilter filter)
         {
             if (filter == null) throw new ArgumentNullException(nameof(filter));
 
@@ -108,16 +108,19 @@ namespace Epicod.Sql
 
             // get page
             Query query = _qf.Query(EpicodSchema.T_NODE)
-                .Select("id", "parentid", "corpus", "y", "x", "name", "uri");
+                .Select("id", "parentid", "corpus", "y", "x", "name", "uri")
+                .SelectRaw("EXISTS(SELECT(id) " +
+                    $"FROM {EpicodSchema.T_NODE} n " +
+                    $"WHERE n.parentid={EpicodSchema.T_NODE}.id) AS expandable");
             ApplyFilter(filter, query);
             query.OrderBy("x");
             query.Skip(filter.GetSkipCount()).Limit(filter.PageSize);
 
-            List<TextNode> nodes = new List<TextNode>();
+            List<TextNodeResult> nodes = new List<TextNodeResult>();
             foreach (dynamic d in query.Get())
                 nodes.Add(DynamicToTextNode(d));
 
-            return new DataPage<TextNode>(
+            return new DataPage<TextNodeResult>(
                 filter.PageNumber, filter.PageSize,
                 total, nodes);
         }
@@ -161,14 +164,17 @@ namespace Epicod.Sql
         /// any properties, except the excluded ones if any; or <c>-</c> alone
         /// to exclude any properties, except the included ones if any.</param>
         /// <returns>
-        /// A tuple with 1=node and 2=properties, or null if not found.
+        /// The result or null if not found.
         /// </returns>
-        public Tuple<TextNode, List<TextNodeProperty>> GetNode(int id,
-            IList<string> propFilters = null)
+        public TextNodeResult GetNode(int id, IList<string> propFilters = null)
         {
             EnsureQueryFactory();
-            TextNode node = DynamicToTextNode(
+            TextNodeResult node = DynamicToTextNode(
                 _qf.Query(EpicodSchema.T_NODE)
+                   .Select("id", "parentid", "corpus", "y", "x", "name", "uri")
+                   .SelectRaw("EXISTS(SELECT(id) " +
+                    $"FROM {EpicodSchema.T_NODE} n " +
+                    $"WHERE n.parentid={EpicodSchema.T_NODE}.id) AS expandable")
                    .Where($"{EpicodSchema.T_NODE}.id", id));
             if (node == null) return null;
 
@@ -176,13 +182,13 @@ namespace Epicod.Sql
             Query query = _qf.Query(EpicodSchema.T_PROP)
                 .Where("nodeid", id).OrderBy("name", "value");
 
-            List<TextNodeProperty> props = new List<TextNodeProperty>();
+            node.Properties = new List<TextNodeResultProperty>();
             if (propFilters != null)
             {
                 var bw = GetBlackWhites(propFilters);
 
                 // no whites = no properties
-                if (bw.Item2.Count == 0) return Tuple.Create(node, props);
+                if (bw.Item2.Count == 0) return node;
 
                 // "+" = any properties (except blacks), so filter names
                 // only when no white is equal to ""
@@ -195,9 +201,9 @@ namespace Epicod.Sql
             }
 
             foreach (var d in query.Get())
-                props.Add(DynamicToTextNodeProperty(d));
+                node.Properties.Add(DynamicToTextNodeProperty(d));
 
-            return Tuple.Create(node, props);
+            return node;
         }
 
         private void Dispose(bool disposing)

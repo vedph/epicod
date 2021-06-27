@@ -20,7 +20,7 @@ namespace Epicod.Core
         /// </summary>
         /// <param name="filter">The filter.</param>
         /// <returns>The resulting page.</returns>
-        DataPage<TextNode> GetNodes(TextNodeFilter filter);
+        DataPage<TextNodeResult> GetNodes(TextNodeFilter filter);
 
         /// <summary>
         /// Gets the node with all or a part of its properties.
@@ -33,9 +33,7 @@ namespace Epicod.Core
         /// include the named property. You can use <c>+</c> alone to include
         /// any properties, except the excluded ones if any; or <c>-</c> alone
         /// to exclude any properties, except the included ones if any.</param>
-        /// <returns>A tuple with 1=node and 2=properties, or null if not
-        /// found.</returns>
-        Tuple<TextNode, List<TextNodeProperty>> GetNode(int id,
-            IList<string> propFilters = null);
+        /// <returns>The result or null if not found.</returns>
+        TextNodeResult GetNode(int id, IList<string> propFilters = null);
     }
 }
