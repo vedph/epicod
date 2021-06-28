@@ -2,7 +2,7 @@
   "profiles": {
     "epicod": {
       "commandName": "Project",
-      "commandLineArgs": "scrape-packhum -n"
+      "commandLineArgs": "dump-toc packhum c:\\users\\dfusi\\desktop\\dump.tsv -p region"
     }
   }
 }
