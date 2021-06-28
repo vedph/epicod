@@ -96,7 +96,8 @@ namespace Epicod.Cli
                 stopwatch.Stop();
                 if (stopwatch.ElapsedMilliseconds > 1000)
                 {
-                    Console.WriteLine("\nTime: {0}h{1}'{2}\"",
+                    Console.WriteLine("\nTime: {0}d{1}h{2}'{3}\"",
+                        stopwatch.Elapsed.Days,
                         stopwatch.Elapsed.Hours,
                         stopwatch.Elapsed.Minutes,
                         stopwatch.Elapsed.Seconds);
