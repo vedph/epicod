@@ -169,17 +169,26 @@ namespace Epicod.Sql
         public TextNodeResult GetNode(int id, IList<string> propFilters = null)
         {
             EnsureQueryFactory();
-            TextNodeResult node = DynamicToTextNode(
-                _qf.Query(EpicodSchema.T_NODE)
-                   .Select("id", "parentid", "corpus", "y", "x", "name", "uri")
+
+            var query = _qf.Query(EpicodSchema.T_NODE + " AS n")
+                   .Select("n.id", "n.parentid", "n.corpus", "n.y", "n.x", "n.name", "n.uri")
                    .SelectRaw("EXISTS(SELECT(id) " +
-                    $"FROM {EpicodSchema.T_NODE} n " +
-                    $"WHERE n.parentid={EpicodSchema.T_NODE}.id) AS expandable")
-                   .Where($"{EpicodSchema.T_NODE}.id", id));
+                    $"FROM {EpicodSchema.T_NODE} ns " +
+                    $"WHERE ns.parentid=n.id) AS expandable")
+                   .Where("n.id", id);
+            //var sql = _qf.Compiler.Compile(query).RawSql;
+
+            TextNodeResult node = DynamicToTextNode(query.FirstOrDefault());
+                //_qf.Query(EpicodSchema.T_NODE)
+                //   .Select("id", "parentid", "corpus", "y", "x", "name", "uri")
+                //   .SelectRaw("EXISTS(SELECT(id) " +
+                //    $"FROM {EpicodSchema.T_NODE} ns " +
+                //    $"WHERE ns.parentid={EpicodSchema.T_NODE}.id) AS expandable")
+                //   .Where($"{EpicodSchema.T_NODE}.id", id));
             if (node == null) return null;
 
             // properties
-            Query query = _qf.Query(EpicodSchema.T_PROP)
+            Query propQuery = _qf.Query(EpicodSchema.T_PROP)
                 .Where("nodeid", id).OrderBy("name", "value");
 
             node.Properties = new List<TextNodeResultProperty>();
@@ -192,15 +201,15 @@ namespace Epicod.Sql
 
                 // "+" = any properties (except blacks), so filter names
                 // only when no white is equal to ""
-                if (!bw.Item2.Contains("")) query.WhereIn("name", bw.Item2);
+                if (!bw.Item2.Contains("")) propQuery.WhereIn("name", bw.Item2);
 
                 // "-" = no properties (except whites), so filter names
                 // only when no black is equal to ""
                 if (bw.Item1.Count > 0 && !bw.Item1.Contains(""))
-                    query.WhereNotIn("name", bw.Item1);
+                    propQuery.WhereNotIn("name", bw.Item1);
             }
 
-            foreach (var d in query.Get())
+            foreach (var d in propQuery.Get())
                 node.Properties.Add(DynamicToTextNodeProperty(d));
 
             return node;

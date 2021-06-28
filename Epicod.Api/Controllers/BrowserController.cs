@@ -46,8 +46,10 @@ namespace Epicod.Api.Controllers
             [FromRoute] int id,
             [FromQuery] string propFilters)
         {
-            TextNodeResult node = _browser.GetNode(id,
-                propFilters.Split(new[] { ',' },
+            TextNodeResult node = string.IsNullOrEmpty(propFilters)
+                ? _browser.GetNode(id)
+                : _browser.GetNode(id,
+                    propFilters.Split(new[] { ',' },
                     StringSplitOptions.RemoveEmptyEntries));
             if (node == null) return NotFound();
             return Ok(node);
