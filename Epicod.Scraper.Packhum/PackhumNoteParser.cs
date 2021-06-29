@@ -210,8 +210,9 @@ namespace Epicod.Scraper.Packhum
             // for points is often implicit in the first, like in the above sample
             // for "fin. s. VI". We use defaultToBC for this purpose, but for
             // non-range only dates.
-
-            foreach (string dt in text.Split('/').Reverse())
+            string[] dates = text.Split('/');
+            int dateNr = dates.Length;
+            foreach (string dt in dates.Reverse())
             {
                 HistoricalDate date = new HistoricalDate();
 
@@ -252,10 +253,19 @@ namespace Epicod.Scraper.Packhum
                             break;
                     }
                 }
-                props.Add(new TextNodeProperty(nodeId, PackhumProps.DATE_TXT,
+
+                // all the alternative dates after the 1st are suffixed
+                // (e.g. "date-txt#1", "date-val#1", "date-txt#2"...)
+                string suffix = "";
+                if (dateNr > 1) suffix = $"#{dateNr}";
+
+                props.Add(new TextNodeProperty(nodeId,
+                    PackhumProps.DATE_TXT + suffix,
                     date.ToString()));
+
                 double val = date.GetSortValue();
-                props.Add(new TextNodeProperty(nodeId, PackhumProps.DATE_VAL,
+                props.Add(new TextNodeProperty(nodeId,
+                    PackhumProps.DATE_VAL + suffix,
                     val.ToString(CultureInfo.InvariantCulture)));
 
                 if (firstDt)
@@ -263,6 +273,8 @@ namespace Epicod.Scraper.Packhum
                     firstDt = false;
                     if (val < 0) defaultToBC = true;
                 }
+
+                dateNr--;
             }
 
             return isDate;

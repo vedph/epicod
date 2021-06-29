@@ -77,7 +77,7 @@ namespace Epicod.Sql
                 {
                     corpus = _corpus,
                     parentid = d.id
-                }).OrderBy("x");
+                }).OrderBy("x", "id");
 
             foreach (var child in childrenQuery.Get())
                 DumpNode(child, writer);

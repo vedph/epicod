@@ -444,14 +444,6 @@ namespace Epicod.Scraper.Packhum.Test
                 p => p.Name == PackhumProps.DATE_PHI &&
                 p.Value == "fin. s. VI/init. s. V a."));
 
-            // date-txt (init. s. V a.)
-            Assert.NotNull(props.FirstOrDefault(
-                p => p.Name == PackhumProps.DATE_TXT && p.Value == "c. 490 BC"));
-
-            // date-val (init. s. V a.)
-            Assert.NotNull(props.FirstOrDefault(
-                p => p.Name == PackhumProps.DATE_VAL && p.Value == "-490"));
-
             // date-txt (fin. s. VI)
             Assert.NotNull(props.FirstOrDefault(
                 p => p.Name == PackhumProps.DATE_TXT && p.Value == "c. 510 BC"));
@@ -459,6 +451,14 @@ namespace Epicod.Scraper.Packhum.Test
             // date-val (fin. s. VI)
             Assert.NotNull(props.FirstOrDefault(
                 p => p.Name == PackhumProps.DATE_VAL && p.Value == "-510"));
+
+            // date-txt#2 (init. s. V a.)
+            Assert.NotNull(props.FirstOrDefault(
+                p => p.Name == PackhumProps.DATE_TXT + "#2" && p.Value == "c. 490 BC"));
+
+            // date-val#2 (init. s. V a.)
+            Assert.NotNull(props.FirstOrDefault(
+                p => p.Name == PackhumProps.DATE_VAL + "#2" && p.Value == "-490"));
         }
 
         [Fact]

@@ -247,12 +247,12 @@ namespace Epicod.Scraper.Packhum
             return html;
         }
 
-        private void ScrapeSingleTextItems(WebClient client, HtmlDocument doc)
+        private int ScrapeSingleTextItems(WebClient client, HtmlDocument doc,
+            int x)
         {
             var nodes = doc.DocumentNode.SelectNodes("//li[@class=\"item\"]/a");
             if (nodes != null)
             {
-                int x = 0;
                 foreach (HtmlNode anchor in nodes)
                 {
                     TextNode node = new TextNode
@@ -274,6 +274,7 @@ namespace Epicod.Scraper.Packhum
                     if (_cancel.IsCancellationRequested) break;
                 }
             }
+            return x;
         }
 
         private void ScrapeTexts(WebClient client, string uri)
@@ -286,7 +287,7 @@ namespace Epicod.Scraper.Packhum
             HtmlDocument doc = new HtmlDocument();
             doc.LoadHtml(html);
 
-            // collect range items
+            // collect range items for later
             const string itemsPath = "//li[contains(@class, \"item\")]";
             HtmlNodeCollection nodes = doc.DocumentNode.SelectNodes(itemsPath);
             List<int> rangeIndexes = new List<int>();
@@ -301,9 +302,9 @@ namespace Epicod.Scraper.Packhum
             }
 
             // single text items
-            ScrapeSingleTextItems(client, doc);
+            int x = ScrapeSingleTextItems(client, doc, 0);
 
-            // range items
+            // now process the collected range items
             if (rangeIndexes.Count > 0)
             {
                 Logger?.LogInformation("Ranges to follow: " + rangeIndexes.Count);
@@ -355,7 +356,7 @@ namespace Epicod.Scraper.Packhum
                         // scrape texts (all single-text items)
                         HtmlDocument subDoc = new HtmlDocument();
                         subDoc.LoadHtml(_driver.PageSource);
-                        ScrapeSingleTextItems(client, subDoc);
+                        ScrapeSingleTextItems(client, subDoc, x);
                     }
                     catch (WebDriverTimeoutException)
                     {
