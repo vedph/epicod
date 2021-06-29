@@ -43,8 +43,10 @@ namespace Epicod.Sql
                 writer.Write('\t');
                 i++;
             }
-            // id,pid,title,uri
-            writer.Write($"{d.id}\t{d.parentid}\t{d.title}\t{d.uri}");
+
+            // id,pid,name,uri
+            writer.Write($"{d.id}\t{d.parentid}\t{d.name}\t{d.uri}");
+
             // node properties
             if (_properties?.Count > 0)
             {
@@ -69,7 +71,7 @@ namespace Epicod.Sql
 
             // children
             foreach (var child in _qf.Query(EpicodSchema.T_NODE)
-                .Select("id", "parentid", "y", "x", "title", "uri")
+                .Select("id", "parentid", "y", "x", "name", "uri")
                 .Where("corpus", _corpus)
                 .Where("parentid", d.id).OrderBy("x").Get())
             {
@@ -97,6 +99,7 @@ namespace Epicod.Sql
             // (a) header
             _maxY = (int)_qf.Query(EpicodSchema.T_NODE)
                 .SelectRaw("MAX(y) AS maxy")
+                .Where("corpus", _corpus)
                 .First().maxy;
 
             // y1...N
@@ -107,7 +110,7 @@ namespace Epicod.Sql
             }
 
             // node fields
-            writer.Write("id\tpid\ttitle\turi");
+            writer.Write("id\tpid\tname\turi");
 
             // node properties
             if (properties?.Count > 0)
@@ -119,9 +122,9 @@ namespace Epicod.Sql
 
             // (b) data
             foreach (var d in _qf.Query(EpicodSchema.T_NODE)
-                .Select("id", "parentid", "y", "x", "title", "uri")
+                .Select("id", "parentid", "y", "x", "name", "uri")
                 .Where("corpus", corpus)
-                .Where("y", "1")
+                .Where("y", 1)
                 .OrderBy("x").Get())
             {
                 DumpNode(d, writer);
