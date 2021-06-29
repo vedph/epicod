@@ -1,5 +1,6 @@
 ﻿using Epicod.Core;
 using Epicod.Scraper.Sql;
+using SqlKata;
 using SqlKata.Execution;
 using System;
 using System.Collections.Generic;
@@ -26,7 +27,7 @@ namespace Epicod.Sql
         private void DumpNode(dynamic d, TextWriter writer)
         {
             _count++;
-            if (++_count % 10 == 0) _progress?.Report(_count);
+            if (++_count % 100 == 0) _progress?.Report(_count);
 
             // y.x at y-th column
             int y = d.y;
@@ -38,14 +39,14 @@ namespace Epicod.Sql
             }
             writer.Write($"{d.y}.{d.x}");
             i++;
-            while (i < _maxY)
+            while (i <= _maxY)
             {
                 writer.Write('\t');
                 i++;
             }
 
             // id,pid,name,uri
-            writer.Write($"{d.id}\t{d.parentid}\t{d.name}\t{d.uri}");
+            writer.Write($"\t{d.id}\t{d.parentid ?? 0}\t{d.name ?? ""}\t{d.uri ?? ""}");
 
             // node properties
             if (_properties?.Count > 0)
@@ -70,13 +71,16 @@ namespace Epicod.Sql
             writer.WriteLine();
 
             // children
-            foreach (var child in _qf.Query(EpicodSchema.T_NODE)
+            Query childrenQuery = _qf.Query(EpicodSchema.T_NODE)
                 .Select("id", "parentid", "y", "x", "name", "uri")
-                .Where("corpus", _corpus)
-                .Where("parentid", d.id).OrderBy("x").Get())
-            {
+                .Where(new
+                {
+                    corpus = _corpus,
+                    parentid = d.id
+                }).OrderBy("x");
+
+            foreach (var child in childrenQuery.Get())
                 DumpNode(child, writer);
-            }
         }
 
         public void Dump(string corpus,
@@ -110,7 +114,7 @@ namespace Epicod.Sql
             }
 
             // node fields
-            writer.Write("id\tpid\tname\turi");
+            writer.Write("\tid\tpid\tname\turi");
 
             // node properties
             if (properties?.Count > 0)
