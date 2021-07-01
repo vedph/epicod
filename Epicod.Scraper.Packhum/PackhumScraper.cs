@@ -11,6 +11,7 @@ using OpenQA.Selenium.Support.UI;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Remote;
 using Epicod.Core;
+using System.Linq;
 
 // note: for Selenium you need the chrome driver from https://chromedriver.chromium.org/downloads
 // here it was downloaded for version 91 and stored within the CLI project
@@ -135,7 +136,11 @@ namespace Epicod.Scraper.Packhum
             IList<TextNodeProperty> properties = null)
         {
             node.Corpus = CORPUS;
-            Logger?.LogInformation(node.ToString());
+            Logger?.LogInformation(node.ToString() + " - P: " +
+                (properties != null
+                ? string.Join(", ", properties.Select(p => p.Name))
+                : "-"));
+
             if (!IsDry) _writer.Write(node, properties);
         }
 
