@@ -16,12 +16,12 @@
 
   <ItemGroup>
     <PackageReference Include="Fusi.Antiquity" Version="1.2.0" />
-    <PackageReference Include="Fusi.Tools" Version="1.1.16" />
-    <PackageReference Include="HtmlAgilityPack" Version="1.11.34" />
+    <PackageReference Include="Fusi.Tools" Version="1.1.17" />
+    <PackageReference Include="HtmlAgilityPack" Version="1.11.36" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="5.0.0" />
     <PackageReference Include="Npgsql" Version="5.0.7" />
     <PackageReference Include="Selenium.WebDriver" Version="3.141.0" />
-    <PackageReference Include="Selenium.WebDriver.ChromeDriver" Version="91.0.4472.10100" />
+    <PackageReference Include="Selenium.WebDriver.ChromeDriver" Version="92.0.4515.10700" />
     <PackageReference Include="SqlKata" Version="2.3.7" />
     <PackageReference Include="SqlKata.Execution" Version="2.3.7" />
   </ItemGroup>
