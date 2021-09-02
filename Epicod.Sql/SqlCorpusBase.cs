@@ -190,6 +190,8 @@ namespace Epicod.Sql
                 // all properties
                 Query propQuery = _qf.Query(EpicodSchema.T_PROP)
                     .Where("nodeid", node.Id).OrderBy("name", "value");
+                if (node.Properties == null)
+                    node.Properties = new List<TextNodeResultProperty>();
                 foreach (var d in propQuery.Get())
                     node.Properties.Add(DynamicToTextNodeProperty(d));
             }
