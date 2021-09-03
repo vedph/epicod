@@ -27,8 +27,8 @@ namespace Epicod.Scraper.Packhum
         private static void Clear(QueryFactory queryFactory)
         {
             queryFactory.Query(EpicodSchema.T_PROP)
-                .Join("textnode", $"{EpicodSchema.T_NODE}.id",
-                    $"{EpicodSchema.T_PROP}.nodeid")
+                .Join(EpicodSchema.T_NODE, $"{EpicodSchema.T_NODE}.id",
+                    $"{EpicodSchema.T_PROP}.node_id")
                 .Where("corpus", PackhumScraper.CORPUS).AsDelete();
         }
 
@@ -56,14 +56,14 @@ namespace Epicod.Scraper.Packhum
                 "date-phi", "date-txt", "date-val", "date-nan",
                 "reference"
             };
-            string[] cols = new[] { "nodeid", "name", "value" };
+            string[] cols = new[] { "node_id", "name", "value" };
 
             // get total
             dynamic row = qf.Query(EpicodSchema.T_PROP)
                 .Select($"{EpicodSchema.T_NODE}.id as NodeId",
                     $"{EpicodSchema.T_PROP}.Note")
                 .Join(EpicodSchema.T_NODE, $"{EpicodSchema.T_NODE}.id",
-                    $"{EpicodSchema.T_PROP}.nodeid")
+                    $"{EpicodSchema.T_PROP}.node_id")
                 .Where("corpus", PackhumScraper.CORPUS).AsCount().First();
             int total = (int)row.count;
             int count = 0, injected = 0;
@@ -74,7 +74,7 @@ namespace Epicod.Scraper.Packhum
                 .Select($"{EpicodSchema.T_NODE}.id as NodeId",
                     $"{EpicodSchema.T_PROP}.Note")
                 .Join(EpicodSchema.T_NODE,
-                    $"{EpicodSchema.T_NODE}.id", $"{EpicodSchema.T_PROP}.nodeid")
+                    $"{EpicodSchema.T_NODE}.id", $"{EpicodSchema.T_PROP}.node_id")
                 .Where("corpus", PackhumScraper.CORPUS)
                 .OrderBy($"{EpicodSchema.T_NODE}.id").Get())
             {

@@ -39,7 +39,7 @@ namespace Epicod.Sql
 
         private static void ApplyFilter(TextNodeFilter filter, Query query)
         {
-            query.Where("parentid", filter.ParentId);
+            query.Where("parent_id", filter.ParentId);
             if (!string.IsNullOrEmpty(filter.CorpusId))
                 query.Where("corpus", filter.CorpusId);
         }
@@ -65,10 +65,10 @@ namespace Epicod.Sql
 
             // get page
             Query query = _qf.Query(EpicodSchema.T_NODE)
-                .Select("id", "parentid", "corpus", "y", "x", "name", "uri")
+                .Select("id", "parent_id", "corpus", "y", "x", "name", "uri")
                 .SelectRaw("EXISTS(SELECT(id) " +
                     $"FROM {EpicodSchema.T_NODE} n " +
-                    $"WHERE n.parentid={EpicodSchema.T_NODE}.id) AS expandable");
+                    $"WHERE n.parent_id={EpicodSchema.T_NODE}.id) AS expandable");
             ApplyFilter(filter, query);
             query.OrderBy("x");
             query.Skip(filter.GetSkipCount()).Limit(filter.PageSize);
@@ -101,10 +101,10 @@ namespace Epicod.Sql
             EnsureQueryFactory();
 
             var query = _qf.Query(EpicodSchema.T_NODE + " AS n")
-                   .Select("n.id", "n.parentid", "n.corpus", "n.y", "n.x", "n.name", "n.uri")
+                   .Select("n.id", "n.parent_id", "n.corpus", "n.y", "n.x", "n.name", "n.uri")
                    .SelectRaw("EXISTS(SELECT(id) " +
                     $"FROM {EpicodSchema.T_NODE} ns " +
-                    $"WHERE ns.parentid=n.id) AS expandable")
+                    "WHERE ns.parent_id=n.id) AS expandable")
                    .Where("n.id", id);
             //var sql = _qf.Compiler.Compile(query).RawSql;
 

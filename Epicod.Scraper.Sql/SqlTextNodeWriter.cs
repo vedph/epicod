@@ -30,7 +30,7 @@ namespace Epicod.Scraper.Sql
                 ?? throw new ArgumentNullException(nameof(connString));
             _propCols = new[]
             {
-                "nodeid", "name", "value"
+                "node_id", "name", "value"
             };
         }
 
@@ -57,7 +57,7 @@ namespace Epicod.Scraper.Sql
                     new PostgresCompiler());
             }
 
-            _queryFactory.Query("textnode").Insert(new
+            _queryFactory.Query("text_node").Insert(new
             {
                 id = node.Id,
                 parentid = node.ParentId,
@@ -74,7 +74,7 @@ namespace Epicod.Scraper.Sql
                                    {
                                        p.NodeId, p.Name, p.Value
                                    }).ToArray();
-                _queryFactory.Query("textnodeproperty").Insert(_propCols, data);
+                _queryFactory.Query("text_node_property").Insert(_propCols, data);
             }
         }
     }

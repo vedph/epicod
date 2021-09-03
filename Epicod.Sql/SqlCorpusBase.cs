@@ -57,7 +57,7 @@ namespace Epicod.Sql
             return d != null ? new TextNodeResult
             {
                 Id = d.id,
-                ParentId = d.parentid,
+                ParentId = d.parent_id,
                 Corpus = d.corpus,
                 Y = d.y,
                 X = d.x,
@@ -129,11 +129,11 @@ namespace Epicod.Sql
             EnsureQueryFactory();
 
             var query = _qf.Query(EpicodSchema.T_NODE + " AS n")
-                   .Select("n.id", "n.parentid", "n.corpus", "n.y", "n.x", 
+                   .Select("n.id", "n.parent_id", "n.corpus", "n.y", "n.x",
                         "n.name", "n.uri")
                    .SelectRaw("EXISTS(SELECT(id) " +
                     $"FROM {EpicodSchema.T_NODE} ns " +
-                    $"WHERE ns.parentid=n.id) AS expandable")
+                    "WHERE ns.parent_id=n.id) AS expandable")
                    .Where("n.id", id);
             //var sql = _qf.Compiler.Compile(query).RawSql;
 
@@ -152,7 +152,7 @@ namespace Epicod.Sql
             IList<string> blacks, IList<string> whites)
         {
             Query propQuery = _qf.Query(EpicodSchema.T_PROP)
-                .Where("nodeid", node.Id).OrderBy("name", "value");
+                .Where("node_id", node.Id).OrderBy("name", "value");
 
             node.Properties = new List<TextNodeResultProperty>();
             if (blacks != null || whites != null)
@@ -189,7 +189,7 @@ namespace Epicod.Sql
             {
                 // all properties
                 Query propQuery = _qf.Query(EpicodSchema.T_PROP)
-                    .Where("nodeid", node.Id).OrderBy("name", "value");
+                    .Where("node_id", node.Id).OrderBy("name", "value");
                 if (node.Properties == null)
                     node.Properties = new List<TextNodeResultProperty>();
                 foreach (var d in propQuery.Get())

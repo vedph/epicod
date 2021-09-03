@@ -72,7 +72,7 @@ namespace Epicod.Sql
 
             // children
             Query childrenQuery = _qf.Query(EpicodSchema.T_NODE)
-                .Select("id", "parentid", "y", "x", "name", "uri")
+                .Select("id", "parent_id", "y", "x", "name", "uri")
                 .Where(new
                 {
                     corpus = _corpus,
@@ -126,7 +126,7 @@ namespace Epicod.Sql
 
             // (b) data
             foreach (var d in _qf.Query(EpicodSchema.T_NODE)
-                .Select("id", "parentid", "y", "x", "name", "uri")
+                .Select("id", "parent_id", "y", "x", "name", "uri")
                 .Where("corpus", corpus)
                 .Where("y", 1)
                 .OrderBy("x").Get())

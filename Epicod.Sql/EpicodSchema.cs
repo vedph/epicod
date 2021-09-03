@@ -13,12 +13,12 @@ namespace Epicod.Scraper.Sql
         /// <summary>
         /// The name of the text nodes table.
         /// </summary>
-        public const string T_NODE = "textnode";
+        public const string T_NODE = "text_node";
 
         /// <summary>
         /// The name of the text nodes properties table.
         /// </summary>
-        public const string T_PROP = "textnodeproperty";
+        public const string T_PROP = "text_node_property";
 
         /// <summary>
         /// Gets the DDL SQL representing the schema.
@@ -28,12 +28,10 @@ namespace Epicod.Scraper.Sql
         /// <exception cref="ArgumentException">Invalid database type</exception>
         public static string Get()
         {
-            using (StreamReader reader = new StreamReader(
+            using StreamReader reader = new StreamReader(
                 Assembly.GetExecutingAssembly().GetManifestResourceStream(
-                    "Epicod.Sql.Assets.Schema.pgsql"), Encoding.UTF8))
-            {
-                return reader.ReadToEnd();
-            }
+                    "Epicod.Sql.Assets.Schema.pgsql"), Encoding.UTF8);
+            return reader.ReadToEnd();
         }
     }
 }
