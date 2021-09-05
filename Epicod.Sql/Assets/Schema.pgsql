@@ -17,7 +17,7 @@ CREATE TABLE text_node_property (
 	CONSTRAINT text_node_property_pk PRIMARY KEY (id)
 );
 CREATE INDEX text_node_property_name_idx ON public.text_node_property USING btree (name);
-ALTER TABLE text_node_property ADD CONSTRAINT text_node_property_fk FOREIGN KEY (nodeid) REFERENCES text_node(id) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE text_node_property ADD CONSTRAINT text_node_property_fk FOREIGN KEY (node_id) REFERENCES text_node(id) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AUTH
 
