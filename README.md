@@ -2,6 +2,15 @@
 
 This is work in progress. The solution currently contains some internal-use tools for a VeDPH research project. The scrapers found here are intended for personal research only. Please see the copyright notices of the respective owners.
 
+Quick Docker image build:
+
+```bash
+docker build . -t vedph2020/epicod-api:1.0.0 -t vedph2020/epicod-api:latest
+```
+
+(replace with the current version).
+
+
 ## Prerequisites
 
 A PostgreSQL service. You can use a Dockerized service like (this sample refers to a Windows machine):
