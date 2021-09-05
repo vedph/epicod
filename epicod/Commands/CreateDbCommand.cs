@@ -50,15 +50,11 @@ namespace Epicod.Cli.Commands
             Console.ForegroundColor = ConsoleColor.Red;
             Console.WriteLine("\nCREATE SCRAPER DATABASE\n");
             Console.ResetColor();
-            Console.WriteLine(
-                $"Database name: {_dbName}\n");
+            Console.WriteLine($"Database name: {_dbName}\n");
 
             // create database if not exists
-            string connection = string.Format(CultureInfo.InvariantCulture,
-                _config.GetConnectionString("Default"),
-                _dbName);
-
-            IDbManager manager = new PgSqlDbManager(connection);
+            IDbManager manager = new PgSqlDbManager(
+                _config.GetConnectionString("Default"));
             if (manager.Exists(_dbName))
             {
                 Console.Write($"Database {_dbName} already exists");

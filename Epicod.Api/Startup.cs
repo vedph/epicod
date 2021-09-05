@@ -1,12 +1,19 @@
+using Epicod.Api.Models;
+using Epicod.Api.Services;
 using Epicod.Core;
 using Epicod.Sql;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.IdentityModel.Logging;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Serilog;
 using Serilog.Events;
@@ -15,7 +22,9 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 using System.Text.Json;
+using System.Threading.Tasks;
 
 namespace Epicod.Api
 {
@@ -65,6 +74,71 @@ namespace Epicod.Api
                     .AllowCredentials()
                     .WithOrigins(origins);
             }));
+        }
+
+        private void ConfigureAuthServices(IServiceCollection services)
+        {
+            // identity
+            string csTemplate = Configuration.GetConnectionString("Default");
+
+            services.AddDbContext<ApplicationDbContext>(options =>
+            {
+                options.UseNpgsql(string.Format(csTemplate,
+                    Configuration.GetValue<string>("DatabaseName")));
+            });
+
+            services.AddIdentity<ApplicationUser, ApplicationRole>()
+                .AddEntityFrameworkStores<ApplicationDbContext>()
+                .AddDefaultTokenProviders();
+
+            // authentication service
+            services
+                .AddAuthentication(options =>
+                {
+                    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+                    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+                })
+               .AddJwtBearer(options =>
+               {
+                   // NOTE: remember to set the values in configuration:
+                   // Jwt:SecureKey, Jwt:Audience, Jwt:Issuer
+                   IConfigurationSection jwtSection = Configuration.GetSection("Jwt");
+                   string key = jwtSection["SecureKey"];
+                   if (string.IsNullOrEmpty(key))
+                       throw new ApplicationException("Required JWT SecureKey not found");
+
+                   options.SaveToken = true;
+                   options.RequireHttpsMetadata = false;
+                   options.TokenValidationParameters = new TokenValidationParameters()
+                   {
+                       ValidateIssuer = true,
+                       ValidateAudience = true,
+                       ValidAudience = jwtSection["Audience"],
+                       ValidIssuer = jwtSection["Issuer"],
+                       IssuerSigningKey = new SymmetricSecurityKey(
+                           Encoding.UTF8.GetBytes(key))
+                   };
+
+                   // support refresh
+                   // https://stackoverflow.com/questions/55150099/jwt-token-expiration-time-failing-net-core
+                   options.Events = new JwtBearerEvents
+                   {
+                       OnAuthenticationFailed = context =>
+                       {
+                           if (context.Exception.GetType() ==
+                                typeof(SecurityTokenExpiredException))
+                           {
+                               context.Response.Headers.Add("Token-Expired", "true");
+                           }
+                           return Task.CompletedTask;
+                       }
+                   };
+               });
+#if DEBUG
+            // use to show more information when troubleshooting JWT issues
+            IdentityModelEventSource.ShowPII = true;
+#endif
         }
 
         private static void ConfigureSwaggerServices(IServiceCollection services)
@@ -137,7 +211,7 @@ namespace Epicod.Api
                 .SetCompatibilityVersion(CompatibilityVersion.Version_3_0);
 
             // authentication
-            // ConfigureAuthServices(services);
+            ConfigureAuthServices(services);
 
             // Add framework services
             // for IMemoryCache: https://docs.microsoft.com/en-us/aspnet/core/performance/caching/memory
@@ -153,8 +227,10 @@ namespace Epicod.Api
             //    FileMessageBuilderService>();
 
             // corpus browser
-            services.AddTransient<ICorpusBrowser>((_) =>
-                new SqlCorpusBrowser(Configuration.GetConnectionString("Default")));
+            string cs = string.Format(
+                Configuration.GetConnectionString("Default"),
+                Configuration.GetValue<string>("DatabaseName"));
+            services.AddTransient<ICorpusBrowser>((_) => new SqlCorpusBrowser(cs));
 
             // configuration
             services.AddSingleton(_ => Configuration);
