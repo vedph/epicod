@@ -24,7 +24,7 @@ namespace Epicod.Scraper.Packhum
     /// books, and texts. Each text has as a text property the inscription's
     /// text.
     /// </summary>
-    public sealed class PackhumScraper
+    public sealed class PackhumScraper : IWebScraper
     {
         public const string CORPUS = "packhum";
 
