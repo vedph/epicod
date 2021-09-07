@@ -24,26 +24,15 @@ docker run --volume postgresData://c/data/pgsql -p 5432:5432 --name postgres -e 
 
 A RDBMS is used as the provisional target just to let me examine data with more ease.
 
-To make the schema more flexible, I represent texts in a tree, where each node is either a branch or a leaf (text). This allows to easily and neutrally represent any hierarchy in the corpus being scraped.
+The database schema is currently designed to be able to hold data from different sources and with different formats and modeling. To this end, I have designed a very simple structure to represent the hierarchical organization of each corpus.
 
-Also, every node can have any number of properties, which are name=value pairs. This also ensures a neutral model, which can fit any metadata set.
-Nodes with text (leaves) always have a `text` property.
+In fact, it's easy to realize that whatever corpus we will handle will include a set of texts in some hierarchical structure. For instance, in the case of Packhum this is the one appearing from the site: regions include books, books include texts.
 
-For Packhum I currently define these metadata:
+As we have no clue about the structure of other corpora, nor about the metadata eventually attached to any level of it, I've designed a tree-like structure. In it, the central entity is a (tree) node. The node can correspond to a text, or just to any grouping of texts, like books, or regions. Nodes are stored in table text_node.
 
-- `text`
-- `note`
-- `region`
-- `location`
-- `type`
-- `layout`
-- `date-phi`: the date as found in the note.
-- `date-txt`: the date's text in a conventional normal form (Cadmus).
-- `date-val`: the date's (approximate) numeric value.
-- `date-nan`: a non-numeric date, which cannot be expressed in the conventional normal form.
-- `reference`
+Each node can have any number of metadata, stored in table `text_node_properties` as name=value pairs. Metadata come either from context (the level of the structure being scraped) or by parsing the short information text prepended to each inscription.
 
-All these metadata occur at most once per node, except for `reference`.
+This allows to easily and neutrally represent any hierarchy in the corpus being scraped.
 
 ## Corpora
 

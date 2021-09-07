@@ -313,3 +313,21 @@ Going deeper, we can observe that:
   - aet. Hadriani
 
 Of course this parsing is not fully refined, but is designed to be successful in most cases, because this is enough for this project, based on large numbers.
+
+## Metadata
+
+For Packhum I currently define these metadata:
+
+- `text`: full text.
+- `note`: original unparsed note.
+- `region`: region.
+- `location`: location in region.
+- `type`: type.
+- `layout`: text layout.
+- `date-phi`: the date as found in the note.
+- `date-txt`: the date's text in a conventional normal form (Cadmus).
+- `date-val`: the date's (approximate) numeric value.
+- `date-nan`: a non-numeric date, which cannot be expressed in the conventional normal form.
+- `reference`: zero or more references.
+
+All these metadata occur at most once per node, except for `reference`.
