@@ -228,14 +228,6 @@ If you now look at the target database, you will see nodes in the `text_node` ta
 |10|2|packhum|3|8|IG I² 575 - PHI Greek Inscriptions|<https://inscriptions.packhum.org/text/1761?&amp;bookid=3&amp;location=1701>|
 |11|2|packhum|3|9|IG I² 644 - PHI Greek Inscriptions|<https://inscriptions.packhum.org/text/1762?&amp;bookid=3&amp;location=1701>|
 |12|2|packhum|3|10|IG I² 730 - PHI Greek Inscriptions|<https://inscriptions.packhum.org/text/1763?&amp;bookid=3&amp;location=1701>|
-|13|2|packhum|3|11|IG I² 774 - PHI Greek Inscriptions|<https://inscriptions.packhum.org/text/1764?&amp;bookid=3&amp;location=1701>|
-|14|2|packhum|3|12|IG I² 827 - PHI Greek Inscriptions|<https://inscriptions.packhum.org/text/1776?&amp;bookid=3&amp;location=1701>|
-|15|2|packhum|3|13|IG I² 836 - PHI Greek Inscriptions|<https://inscriptions.packhum.org/text/1777?&amp;bookid=3&amp;location=1701>|
-|16|2|packhum|3|14|IG I² 845 - PHI Greek Inscriptions|<https://inscriptions.packhum.org/text/1778?&amp;bookid=3&amp;location=1701>|
-|17|2|packhum|3|15|IG I² 869 - PHI Greek Inscriptions|<https://inscriptions.packhum.org/text/1781?&amp;bookid=3&amp;location=1701>|
-|18|2|packhum|3|16|IG I² 913,adn - PHI Greek Inscriptions|<https://inscriptions.packhum.org/text/1805?&amp;bookid=3&amp;location=1701>|
-|19|2|packhum|3|17|IG I² 919 - PHI Greek Inscriptions|<https://inscriptions.packhum.org/text/1811?&amp;bookid=3&amp;location=1701>|
-|20|2|packhum|3|18|IG I² 934 - PHI Greek Inscriptions|<https://inscriptions.packhum.org/text/1812?&amp;bookid=3&amp;location=1701>|
 
 Here (numbers refer to Y and X):
 

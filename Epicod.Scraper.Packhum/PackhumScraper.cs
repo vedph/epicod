@@ -41,6 +41,7 @@ namespace Epicod.Scraper.Packhum
         private IProgress<ProgressReport> _progress;
         private ProgressReport _report;
         private int _maxNodeId;
+        private int _maxTextX;
         private TextNode _currentNode;
 
         #region Properties
@@ -338,15 +339,14 @@ namespace Epicod.Scraper.Packhum
             Logger?.LogInformation("Repositioning completed");
         }
 
-        private int ScrapeSingleTextItems(WebClient client, HtmlDocument doc,
-            int x)
+        private void ScrapeSingleTextItems(WebClient client, HtmlDocument doc)
         {
             var nodes = doc.DocumentNode.SelectNodes("//li[@class=\"item\"]/a");
 
             if (nodes != null)
             {
                 Logger?.LogInformation("Text items: " + nodes.Count);
-                if (IsTextLeafScrapingDisabled) return x;
+                if (IsTextLeafScrapingDisabled) return;
 
                 foreach (HtmlNode anchor in nodes)
                 {
@@ -355,7 +355,7 @@ namespace Epicod.Scraper.Packhum
                         Id = GetNextNodeId(),
                         ParentId = _currentNode?.Id ?? 0,
                         Y = 3,
-                        X = ++x,
+                        X = ++_maxTextX,
                         Name = anchor.InnerText.Trim(),
                         Uri = GetAbsoluteHref(anchor)
                     };
@@ -366,7 +366,6 @@ namespace Epicod.Scraper.Packhum
                     if (_cancel.IsCancellationRequested) break;
                 }
             }
-            return x;
         }
 
         private string GetCurrentPath() => string.Join("/", _rangeSteps);
@@ -414,7 +413,7 @@ namespace Epicod.Scraper.Packhum
             // (_driver is not used, so it remains on the current page)
             if (!_consumedRangePaths.Contains(path))
             {
-                ScrapeSingleTextItems(client, doc, 0);
+                ScrapeSingleTextItems(client, doc);
                 _consumedRangePaths.Add(path);
             }
 
@@ -499,6 +498,7 @@ namespace Epicod.Scraper.Packhum
                     // the node URI will be a page dynamically updated via AJAX
                     _rangeSteps.Clear();
                     _consumedRangePaths.Clear();
+                    _maxTextX = 0;
                     ScrapeTexts(client, node.Uri, null);
                 }
                 catch (Exception ex)
