@@ -9,6 +9,15 @@
 
 This corpus contains plain Unicode text with Leiden conventions and minimalist metadata.
 
+## Quick start
+
+You need your PostgreSQL service up and running.
+
+1. create the database: `./epicod create-db epicod` (`epicod` is the database name);
+2. start scraping with note parsing: `./epicod scrape-packhum -n`.
+
+While scraping you will see a running log; a full log will be stored in log files (1 per day) in the program's directory; and you can always query the database being filled with data to see how it's going.
+
 ## Scraper
 
 Root entry: <https://inscriptions.packhum.org/allregions>.
