@@ -1,6 +1,13 @@
 # Packard Humanities Greek Inscriptions
 
-Plain Unicode text with Leiden conventions and minimalist metadata.
+- [Packard Humanities Greek Inscriptions](#packard-humanities-greek-inscriptions)
+  - [Scraper](#scraper)
+  - [Strategy](#strategy)
+  - [Reading Scraper's Log](#reading-scrapers-log)
+  - [Text](#text)
+  - [Metadata](#metadata)
+
+This corpus contains plain Unicode text with Leiden conventions and minimalist metadata.
 
 ## Scraper
 
