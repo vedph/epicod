@@ -42,7 +42,6 @@ namespace Epicod.Scraper.Packhum
         private ProgressReport _report;
         private int _maxNodeId;
         private int _maxTextX;
-        private TextNode _currentNode;
 
         #region Properties
         /// <summary>
@@ -339,7 +338,8 @@ namespace Epicod.Scraper.Packhum
             Logger?.LogInformation("Repositioning completed");
         }
 
-        private void ScrapeSingleTextItems(WebClient client, HtmlDocument doc)
+        private void ScrapeSingleTextItems(WebClient client, HtmlDocument doc,
+            TextNode parentNode)
         {
             var nodes = doc.DocumentNode.SelectNodes("//li[@class=\"item\"]/a");
 
@@ -353,13 +353,12 @@ namespace Epicod.Scraper.Packhum
                     TextNode node = new TextNode
                     {
                         Id = GetNextNodeId(),
-                        ParentId = _currentNode?.Id ?? 0,
+                        ParentId = parentNode.Id,
                         Y = 3,
                         X = ++_maxTextX,
                         Name = anchor.InnerText.Trim(),
                         Uri = GetAbsoluteHref(anchor)
                     };
-                    // WriteNode(node);
                     // if (Delay > 0) Thread.Sleep(Delay);
                     ScrapeText(client, node.Uri, node);
                     ReportProgressFor(node);
@@ -386,7 +385,8 @@ namespace Epicod.Scraper.Packhum
             return indexes;
         }
 
-        private void ScrapeTexts(WebClient client, string uri, string html = null)
+        private void ScrapeTexts(WebClient client, string uri, TextNode parentNode,
+            string html = null)
         {
             // load page unless HTML provided
             string path = GetCurrentPath();
@@ -413,7 +413,7 @@ namespace Epicod.Scraper.Packhum
             // (_driver is not used, so it remains on the current page)
             if (!_consumedRangePaths.Contains(path))
             {
-                ScrapeSingleTextItems(client, doc);
+                ScrapeSingleTextItems(client, doc, parentNode);
                 _consumedRangePaths.Add(path);
             }
 
@@ -452,7 +452,7 @@ namespace Epicod.Scraper.Packhum
 
                 // scrape the newly loaded page passing its already loaded HTML
                 MarkAllItemNodes();
-                ScrapeTexts(client, uri, _driver.PageSource);
+                ScrapeTexts(client, uri, parentNode, _driver.PageSource);
 
                 // pop index from steps
                 _rangeSteps.RemoveAt(_rangeSteps.Count - 1);
@@ -466,7 +466,7 @@ namespace Epicod.Scraper.Packhum
         #endregion
 
         #region Y=2 - books
-        private void ScrapeBooks(WebClient client, string uri)
+        private void ScrapeBooks(WebClient client, string uri, TextNode parentNode)
         {
             Logger?.LogInformation("[B] Books at " + uri);
 
@@ -482,14 +482,13 @@ namespace Epicod.Scraper.Packhum
                 TextNode node = new TextNode
                 {
                     Id = GetNextNodeId(),
-                    ParentId = _currentNode?.Id ?? 0,
+                    ParentId = parentNode.Id,
                     Y = 2,
                     X = ++x,
                     Name = anchor.InnerText.Trim(),
                     Uri = GetAbsoluteHref(anchor)
                 };
                 WriteNode(node);
-                _currentNode = node;
                 ReportProgressFor(node);
 
                 try
@@ -499,7 +498,7 @@ namespace Epicod.Scraper.Packhum
                     _rangeSteps.Clear();
                     _consumedRangePaths.Clear();
                     _maxTextX = 0;
-                    ScrapeTexts(client, node.Uri, null);
+                    ScrapeTexts(client, node.Uri, node, null);
                 }
                 catch (Exception ex)
                 {
@@ -536,10 +535,9 @@ namespace Epicod.Scraper.Packhum
                     Uri = GetAbsoluteHref(anchor)
                 };
                 WriteNode(node);
-                _currentNode = node;
                 ReportProgressFor(node);
 
-                ScrapeBooks(client, node.Uri);
+                ScrapeBooks(client, node.Uri, node);
 
                 if (_cancel.IsCancellationRequested) break;
             }

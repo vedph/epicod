@@ -218,6 +218,7 @@ If you now look at the target database, you will see nodes in the `text_node` ta
 |--|---------|------|-|-|----|---|
 |1|0|packhum|1|1|Attica (IG I-III)|<https://inscriptions.packhum.org/regions/1701>|
 |2|1|packhum|2|1|IG I²|<https://inscriptions.packhum.org/book/3?location=1701>|
+|76|1|packhum|2|2|IG I³|<https://inscriptions.packhum.org/book/4?location=1701>|
 |3|2|packhum|3|1|IG I² 165 - PHI Greek Inscriptions|<https://inscriptions.packhum.org/text/1754?&amp;bookid=3&amp;location=1701>|
 |4|2|packhum|3|2|IG I² 185a - PHI Greek Inscriptions|<https://inscriptions.packhum.org/text/1755?&amp;bookid=3&amp;location=1701>|
 |5|2|packhum|3|3|IG I² 400,Ib - PHI Greek Inscriptions|<https://inscriptions.packhum.org/text/1756?&amp;bookid=3&amp;location=1701>|
@@ -226,14 +227,12 @@ If you now look at the target database, you will see nodes in the `text_node` ta
 |8|2|packhum|3|6|IG I² 522 - PHI Greek Inscriptions|<https://inscriptions.packhum.org/text/1759?&amp;bookid=3&amp;location=1701>|
 |9|2|packhum|3|7|IG I² 561 - PHI Greek Inscriptions|<https://inscriptions.packhum.org/text/1760?&amp;bookid=3&amp;location=1701>|
 |10|2|packhum|3|8|IG I² 575 - PHI Greek Inscriptions|<https://inscriptions.packhum.org/text/1761?&amp;bookid=3&amp;location=1701>|
-|11|2|packhum|3|9|IG I² 644 - PHI Greek Inscriptions|<https://inscriptions.packhum.org/text/1762?&amp;bookid=3&amp;location=1701>|
-|12|2|packhum|3|10|IG I² 730 - PHI Greek Inscriptions|<https://inscriptions.packhum.org/text/1763?&amp;bookid=3&amp;location=1701>|
 
-Here (numbers refer to Y and X):
+Here (numbers refer to Y and X; query is `select * from text_node order by y,parent_id,x;`):
 
 - (1.1) the root node for `Attica (IG I-III)` is the one with `parent_id`=0.
-- (2.1) its direct child is book `IG I²`.
-- (3.1-10) the children of book `IG I²` are inscriptions 165-730.
+- (2.1-2.2) its direct children are books `IG I²` and `IG I³`.
+- (3.1-3.8) the first children of book `IG I²` are inscriptions 165-575.
 
 ## Text
 
