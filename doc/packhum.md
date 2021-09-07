@@ -258,6 +258,10 @@ As you can see, the metadata found before the text were parsed into a number of 
 - the original PHI ID is under `phi` (see at the bottom-right corner); bibliographic references are under `reference`'s.
 - `note` contains the original, unparsed full text from the page. This way, we can refine the parsing algorithm and re-parse all the properties without having to re-scrape the corpus.
 
+Finally, you can fire the API and frontend app to browse the inscriptions as in this screenshot:
+
+![inscriptions browser](img/ui.png)
+
 ## Text
 
 In the end, each text will be found in its own page, having a line for each table row: `table[@class="grk"]/tbody/tr`. In the table, each `tbody/tr` has 2 `td`, the first either empty or with numbering, the second with text. Also, metadata are:
