@@ -218,14 +218,16 @@ If you now look at the target database, you will see nodes in the `text_node` ta
 |--|---------|------|-|-|----|---|
 |1|0|packhum|1|1|Attica (IG I-III)|<https://inscriptions.packhum.org/regions/1701>|
 |2|1|packhum|2|1|IG I²|<https://inscriptions.packhum.org/book/3?location=1701>|
-|3|2|packhum|3|1|165|<https://inscriptions.packhum.org/text/1754?&amp;bookid=3&amp;location=1701>|
 |4|3|packhum|3|1|IG I² 165 - PHI Greek Inscriptions|<https://inscriptions.packhum.org/text/1754?&amp;bookid=3&amp;location=1701>|
-|5|2|packhum|3|2|185a|<https://inscriptions.packhum.org/text/1755?&amp;bookid=3&amp;location=1701>|
 |6|5|packhum|3|2|IG I² 185a - PHI Greek Inscriptions|<https://inscriptions.packhum.org/text/1755?&amp;bookid=3&amp;location=1701>|
-|7|2|packhum|3|3|400,Ib|<https://inscriptions.packhum.org/text/1756?&amp;bookid=3&amp;location=1701>|
 |8|7|packhum|3|3|IG I² 400,Ib - PHI Greek Inscriptions|<https://inscriptions.packhum.org/text/1756?&amp;bookid=3&amp;location=1701>|
-|9|2|packhum|3|4|400,II|<https://inscriptions.packhum.org/text/1757?&amp;bookid=3&amp;location=1701>|
 |10|9|packhum|3|4|IG I² 400,II - PHI Greek Inscriptions|<https://inscriptions.packhum.org/text/1757?&amp;bookid=3&amp;location=1701>|
+|12|11|packhum|3|5|IG I² 503,adn - PHI Greek Inscriptions|<https://inscriptions.packhum.org/text/1758?&amp;bookid=3&amp;location=1701>|
+|14|13|packhum|3|6|IG I² 522 - PHI Greek Inscriptions|<https://inscriptions.packhum.org/text/1759?&amp;bookid=3&amp;location=1701>|
+|16|15|packhum|3|7|IG I² 561 - PHI Greek Inscriptions|<https://inscriptions.packhum.org/text/1760?&amp;bookid=3&amp;location=1701>|
+|18|17|packhum|3|8|IG I² 575 - PHI Greek Inscriptions|<https://inscriptions.packhum.org/text/1761?&amp;bookid=3&amp;location=1701>|
+|20|19|packhum|3|9|IG I² 644 - PHI Greek Inscriptions|<https://inscriptions.packhum.org/text/1762?&amp;bookid=3&amp;location=1701>|
+|22|21|packhum|3|10|IG I² 730 - PHI Greek Inscriptions|<https://inscriptions.packhum.org/text/1763?&amp;bookid=3&amp;location=1701>|
 
 Here the root node for `Attica (IG I-III)` is the one with `parent_id`=0. Its direct child is book `IG I²`.
 

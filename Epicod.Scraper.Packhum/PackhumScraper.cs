@@ -368,10 +368,10 @@ namespace Epicod.Scraper.Packhum
                         Name = anchor.InnerText.Trim(),
                         Uri = GetAbsoluteHref(anchor)
                     };
-                    WriteNode(node);
-                    ReportProgressFor(node);
+                    // WriteNode(node);
                     // if (Delay > 0) Thread.Sleep(Delay);
                     ScrapeText(client, node.Uri, node);
+                    ReportProgressFor(node);
                     if (_cancel.IsCancellationRequested) break;
                 }
             }
