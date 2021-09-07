@@ -9,7 +9,7 @@ using Microsoft.Extensions.Configuration;
 
 namespace Epicod.Cli
 {
-    public sealed class AppOptions
+    public class AppOptions
     {
         public ICommand Command { get; set; }
         public IConfiguration Configuration { get; private set; }

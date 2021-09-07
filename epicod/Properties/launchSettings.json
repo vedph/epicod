@@ -2,7 +2,7 @@
   "profiles": {
     "epicod": {
       "commandName": "Project",
-      "commandLineArgs": "create-db test"
+      "commandLineArgs": "scrape-packhum -n"
     }
   }
 }

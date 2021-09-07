@@ -60,7 +60,7 @@ namespace Epicod.Scraper.Sql
             _queryFactory.Query("text_node").Insert(new
             {
                 id = node.Id,
-                parentid = node.ParentId,
+                parent_id = node.ParentId,
                 corpus = node.Corpus,
                 y = node.Y,
                 x = node.X,

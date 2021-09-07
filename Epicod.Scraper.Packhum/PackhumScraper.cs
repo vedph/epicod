@@ -12,6 +12,8 @@ using OpenQA.Selenium;
 using OpenQA.Selenium.Remote;
 using Epicod.Core;
 using System.Linq;
+using System.Threading.Tasks;
+using Selenium.WebDriver.WaitExtensions;
 
 // note: for Selenium you need the chrome driver from https://chromedriver.chromium.org/downloads
 // here it was downloaded for version 91 and stored within the CLI project
@@ -27,20 +29,23 @@ namespace Epicod.Scraper.Packhum
     public sealed class PackhumScraper : IWebScraper
     {
         public const string CORPUS = "packhum";
+        private const string RANGE_ITEMS_PATH = "//li[contains(@class, \"range\")]";
 
         private readonly ITextNodeWriter _writer;
         private readonly PackhumNoteParser _parser;
+        private readonly RemoteWebDriver _driver;
+        private readonly List<int> _rangeSteps;
+        private readonly HashSet<string> _consumedRangePaths;
         private string _rootUri;
         private CancellationToken _cancel;
         private IProgress<ProgressReport> _progress;
         private ProgressReport _report;
         private int _maxNodeId;
         private TextNode _currentNode;
-        private RemoteWebDriver _driver;
 
         #region Properties
         /// <summary>
-        /// Gets or sets the delay in milliseconds between text requests.
+        /// Gets or sets the delay in milliseconds after each AJAX request.
         /// </summary>
         public int Delay { get; set; }
 
@@ -59,6 +64,15 @@ namespace Epicod.Scraper.Packhum
         /// run mode. When in this mode, no write to database occurs.
         /// </summary>
         public bool IsDry { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether text leaves scraping is
+        /// disabled. When this is true, the single text items links in the texts
+        /// page are not followed. This can be used for diagnostic purposes,
+        /// to speed up debugging when we are interested only in inspecting
+        /// how the scraper behaves in walking the site tree.
+        /// </summary>
+        public bool IsTextLeafScrapingDisabled { get; set; }
 
         /// <summary>
         /// Gets or sets the logger.
@@ -81,7 +95,10 @@ namespace Epicod.Scraper.Packhum
         {
             _writer = writer ?? throw new ArgumentNullException(nameof(writer));
             _parser = new PackhumNoteParser();
-            Delay = 500;
+            _rangeSteps = new List<int>();
+            _consumedRangePaths = new HashSet<string>();
+            _driver = GetChromeDriver();
+            Delay = 1500;
             Timeout = 3 * 60;
         }
 
@@ -115,28 +132,48 @@ namespace Epicod.Scraper.Packhum
 
         // https://www.scrapingbee.com/blog/web-scraping-csharp/
         private string LoadDynamicPage(string uri,
-            Func<ISearchContext, bool> isLoaded,
-            RemoteWebDriver driver = null)
+            Func<ISearchContext, bool> isLoaded)
         {
-            // create a default driver if none was specified
-            if (driver == null)
-            {
-                if (_driver == null) _driver = GetChromeDriver();
-                driver = _driver;
-            }
-
-            WebDriverWait wait = new WebDriverWait(driver,
+            WebDriverWait wait = new WebDriverWait(_driver,
                 new TimeSpan(0, 0, Timeout));
-            driver.Navigate().GoToUrl(uri);
+            _driver.Navigate().GoToUrl(uri);
             wait.Until(c => isLoaded(c));
-            return driver.PageSource;
+            // additional wait time
+            if (Delay > 0) Thread.Sleep(Delay);
+            Logger?.LogInformation("Loaded page hash: " +
+                _driver.PageSource.GetHashCode());
+            return _driver.PageSource;
+        }
+
+        private string LoadDynamicTextsPage(string uri)
+        {
+            try
+            {
+                // loaded when li@class contains unmarked item (range or not)
+                return LoadDynamicPage(uri, c =>
+                {
+                    try
+                    {
+                        // loaded when li@class contains unmarked item (range or not)
+                        return c.FindElement(
+                            By.XPath("//li[contains(@class, \"item\") " +
+                            "and not(@x)]")) != null;
+                    }
+                    catch (NoSuchElementException) { return false; }
+                });
+            }
+            catch (WebDriverTimeoutException)
+            {
+                Logger?.LogError("Timeout at " + uri);
+                return null;
+            }
         }
 
         private void WriteNode(TextNode node,
             IList<TextNodeProperty> properties = null)
         {
             node.Corpus = CORPUS;
-            Logger?.LogInformation(node.ToString() + " - P: " +
+            Logger?.LogInformation(node.ToString() + " | P: " +
                 (properties != null
                 ? string.Join(", ", properties.Select(p => p.Name))
                 : "-"));
@@ -228,36 +265,98 @@ namespace Epicod.Scraper.Packhum
             WriteNode(node, props);
         }
 
-        private string LoadDynamicTextsPage(string uri, RemoteWebDriver driver = null)
+        //private string LoadDynamicTextsPage(string uri)
+        //{
+        //    string html;
+        //    try
+        //    {
+        //        _driver.Navigate().GoToUrl(uri);
+        //        _driver.Wait(5000).ForElement(
+        //            By.XPath("//li[contains(@class, \"item\")]"));
+        //        html = _driver.PageSource;
+        //    }
+        //    catch (WebDriverTimeoutException)
+        //    {
+        //        Logger?.LogError("Timeout at " + uri);
+        //        return null;
+        //    }
+        //    return html;
+        //}
+
+        private void SetAttributeValue(IWebElement element, string name, string value)
+            => _driver.ExecuteScript("arguments[0].setAttribute" +
+                "(arguments[1], arguments[2]);", element, name, value);
+
+        private void MarkAllItemNodes()
         {
-            string html;
-            try
+            // mark all the item/range li elements
+            var elements = _driver.FindElementsByClassName("item");
+            if (elements == null) return;
+
+            foreach (IWebElement element in elements)
+                SetAttributeValue(element, "x", "1");
+
+            //_driver.ExecuteScript("document" +
+            //    ".getElementsByClassName('item')" +
+            //    ".setAttribute('x', 1);");
+        }
+
+        private void LoadTextPageFromPath(string uri, IList<int> indexes)
+        {
+            Logger?.LogInformation("Repositioning to /" +
+                string.Join("/", indexes) +
+                " starting from " + uri);
+
+            // load the root page from uri
+            Logger?.LogInformation("Loading page from " + uri);
+            if (LoadDynamicTextsPage(uri) == null) return;
+
+            // walk the path
+            foreach (int i in indexes)
             {
-                html = LoadDynamicPage(uri, c =>
+                // mark all the item/range li elements with @x=1
+                MarkAllItemNodes();
+                string html = _driver.PageSource;
+
+                // click the li element corresponding to this path step;
+                // this triggers a new AJAX load
+                IWebElement li = _driver.FindElementByXPath(
+                    $"({RANGE_ITEMS_PATH})[{1 + i}]");
+                if (li == null)
                 {
-                    try
-                    {
-                        // loaded when li@class contains item (range or not)
-                        return c.FindElement(
-                            By.XPath("//li[contains(@class, \"item\")]")) != null;
-                    }
-                    catch (NoSuchElementException) { return false; }
-                }, driver);
+                    string error =
+                        $"Expected {i + 1}nth range item li not found in {uri}";
+                    Logger?.LogError(error);
+                    throw new ApplicationException(error);
+                }
+                Logger?.LogInformation("Walking via " + li.Text);
+                _driver.ExecuteScript("arguments[0].click();", li);
+
+                // wait until there are new li items again (the li items
+                // existing before clicking are all marked with @x)
+                _driver.Wait(5000).ForElement(
+                    By.XPath("//li[contains(@class, \"item\") and not(@x)]"));
+                // a new non-@x item is not enough, let the page load all of them
+                // _driver.Wait(Delay);
+                if (Delay > 0) Thread.Sleep(Delay);
+                Logger?.LogInformation("Loaded page hash: " +
+                    _driver.PageSource.GetHashCode());
             }
-            catch (WebDriverTimeoutException)
-            {
-                Logger?.LogError("Timeout at " + uri);
-                return null;
-            }
-            return html;
+            MarkAllItemNodes();
+
+            Logger?.LogInformation("Repositioning completed");
         }
 
         private int ScrapeSingleTextItems(WebClient client, HtmlDocument doc,
             int x)
         {
             var nodes = doc.DocumentNode.SelectNodes("//li[@class=\"item\"]/a");
+
             if (nodes != null)
             {
+                Logger?.LogInformation("Text items: " + nodes.Count);
+                if (IsTextLeafScrapingDisabled) return x;
+
                 foreach (HtmlNode anchor in nodes)
                 {
                     TextNode node = new TextNode
@@ -270,112 +369,108 @@ namespace Epicod.Scraper.Packhum
                         Uri = GetAbsoluteHref(anchor)
                     };
                     WriteNode(node);
-
                     ReportProgressFor(node);
-
-                    if (Delay > 0) Thread.Sleep(Delay);
+                    // if (Delay > 0) Thread.Sleep(Delay);
                     ScrapeText(client, node.Uri, node);
-
                     if (_cancel.IsCancellationRequested) break;
                 }
             }
             return x;
         }
 
-        private void ScrapeTexts(WebClient client, string uri)
+        private string GetCurrentPath() => string.Join("/", _rangeSteps);
+
+        private static IList<int> CollectRangeItemIndexes(HtmlDocument doc)
         {
-            Logger?.LogInformation("Texts at " + uri);
-
-            string html = LoadDynamicTextsPage(uri);
-            if (html == null) return;
-
-            HtmlDocument doc = new HtmlDocument();
-            doc.LoadHtml(html);
-
-            // collect range items for later
-            const string itemsPath = "//li[contains(@class, \"item\")]";
-            HtmlNodeCollection nodes = doc.DocumentNode.SelectNodes(itemsPath);
-            List<int> rangeIndexes = new List<int>();
+            HtmlNodeCollection nodes = doc.DocumentNode.SelectNodes(RANGE_ITEMS_PATH);
+            List<int> indexes = new List<int>();
             if (nodes != null)
             {
                 int i = 0;
                 foreach (HtmlNode li in nodes)
                 {
-                    if (li.HasClass("range")) rangeIndexes.Add(i);
+                    if (li.HasClass("range")) indexes.Add(i);
                     i++;
                 }
             }
+            return indexes;
+        }
 
-            // single text items
-            int x = ScrapeSingleTextItems(client, doc, 0);
+        private void ScrapeTexts(WebClient client, string uri, string html = null)
+        {
+            // load page unless HTML provided
+            string path = GetCurrentPath();
+            Logger?.LogInformation(
+                $"[C] Texts at {uri}{(html != null ? "*" : "")}: path /{path}");
 
-            // now process the collected range items
-            if (rangeIndexes.Count > 0)
+            if (html == null)
             {
-                Logger?.LogInformation("Ranges to follow: " + rangeIndexes.Count);
+                Logger?.LogInformation("Loading page from " + uri);
+                if (LoadDynamicTextsPage(uri) == null) return;
+                // mark all the item nodes with @x=1
+                MarkAllItemNodes();
+                html = _driver.PageSource;
+            }
 
-                for (int i = 0; i < rangeIndexes.Count; i++)
+            // parse HTML
+            HtmlDocument doc = new HtmlDocument();
+            doc.LoadHtml(html);
+
+            // collect range items (li @class="range item"), marking them with @x=1
+            IList<int> rangeIndexes = CollectRangeItemIndexes(doc);
+
+            // follow all the single text items if not already done
+            // (_driver is not used, so it remains on the current page)
+            if (!_consumedRangePaths.Contains(path))
+            {
+                ScrapeSingleTextItems(client, doc, 0);
+                _consumedRangePaths.Add(path);
+            }
+
+            // process the collected range items if any
+            if (rangeIndexes.Count == 0) return;
+            Logger?.LogInformation("Ranges to follow: " + rangeIndexes.Count);
+
+            for (int i = 0; i < rangeIndexes.Count; i++)
+            {
+                // push index on steps
+                _rangeSteps.Add(i);
+
+                // update page by clicking on range item li
+                IWebElement li = _driver.FindElementByXPath(
+                    $"({RANGE_ITEMS_PATH})[{1 + i}]");
+                if (li == null)
                 {
-                    // click the li element and wait for load
-                    IWebElement li = null;
-                    try
-                    {
-                        int index = rangeIndexes[i];
-                        Logger?.LogInformation($"Following range {i + 1}/" +
-                            $"{rangeIndexes.Count} at {index}");
-
-                        // reload the original texts list in the browser
-                        Logger?.LogInformation("Reloading texts list from " + uri);
-                        html = LoadDynamicTextsPage(uri);
-                        if (html == null) return;
-
-                        // get to the targeted li
-                        li = _driver.FindElementByXPath(
-                            $"({itemsPath})[{1 + index}]");
-                        if (li == null)
-                        {
-                            Logger?.LogError($"Expected range li at {index} not found");
-                            continue;
-                        }
-
-                        Logger?.LogInformation($"Clicking on range {li.Text}");
-                        WebDriverWait wait = new WebDriverWait(_driver,
-                            new TimeSpan(0, 0, Timeout));
-                        // https://stackoverflow.com/questions/48665001/can-not-click-on-a-element-elementclickinterceptedexception-in-splinter-selen
-                        _driver.ExecuteScript("arguments[0].click();", li);
-                        // li.Click();
-
-                        Logger?.LogInformation("Waiting for range target to load");
-                        wait.Until(c =>
-                        {
-                            // loaded when li@class contains no range items
-                            try
-                            {
-                                return c.FindElements(
-                                    By.XPath("//li[contains(@class, \"range\")]"))
-                                    .Count == 0;
-                            }
-                            catch (NoSuchElementException) { return true; }
-                        });
-
-                        // scrape texts (all single-text items)
-                        HtmlDocument subDoc = new HtmlDocument();
-                        subDoc.LoadHtml(_driver.PageSource);
-                        ScrapeSingleTextItems(client, subDoc, x);
-                    }
-                    catch (WebDriverTimeoutException)
-                    {
-                        // timeout usually means that we have a rangeset
-                        // inside a rangeset. Just log the error and continue,
-                        // users will provide manual URIs here.
-                        Logger?.LogError($"Timeout on following range {li?.Text} at {uri}");
-                    }
-                    catch (Exception ex)
-                    {
-                        // recover anyway from any other error
-                        Logger?.LogError(ex.ToString());
-                    }
+                    string error = $"Expected {i+1}nth range item li not found in {uri}";
+                    Logger?.LogError(error);
+                    throw new ApplicationException(error);
                 }
+                Logger?.LogInformation($"Range {i + 1}/{rangeIndexes.Count}: " +
+                    GetCurrentPath() + $": \"{li.Text}\"");
+                _driver.ExecuteScript("arguments[0].click();", li);
+
+                // wait until there are new li items again (the li items existing
+                // before clicking are all marked with @x)
+                _driver.Wait(5000).ForElement(
+                    By.XPath("//li[contains(@class, \"item\") and not(@x)]"));
+                // a new non-@x item is not enough, let the page load all of them
+                if (Delay > 0) Thread.Sleep(Delay);
+                // _driver.Wait(Delay);
+
+                Logger?.LogInformation("Loaded page hash: " +
+                    _driver.PageSource.GetHashCode());
+
+                // scrape the newly loaded page passing its already loaded HTML
+                MarkAllItemNodes();
+                ScrapeTexts(client, uri, _driver.PageSource);
+
+                // pop index from steps
+                _rangeSteps.RemoveAt(_rangeSteps.Count - 1);
+
+                // if we're continuing the loop, reload from the root texts page,
+                // marking items in it with @x
+                if (i + 1 < rangeIndexes.Count)
+                    LoadTextPageFromPath(uri, _rangeSteps);
             }
         }
         #endregion
@@ -383,7 +478,7 @@ namespace Epicod.Scraper.Packhum
         #region Y=2 - books
         private void ScrapeBooks(WebClient client, string uri)
         {
-            Logger?.LogInformation("Books at " + uri);
+            Logger?.LogInformation("[B] Books at " + uri);
 
             string html = client.DownloadString(uri);
             HtmlDocument doc = new HtmlDocument();
@@ -404,14 +499,16 @@ namespace Epicod.Scraper.Packhum
                     Uri = GetAbsoluteHref(anchor)
                 };
                 WriteNode(node);
-
                 _currentNode = node;
-
                 ReportProgressFor(node);
 
                 try
                 {
-                    ScrapeTexts(client, node.Uri);
+                    // we're entering the troublesome page here, because
+                    // the node URI will be a page dynamically updated via AJAX
+                    _rangeSteps.Clear();
+                    _consumedRangePaths.Clear();
+                    ScrapeTexts(client, node.Uri, null);
                 }
                 catch (Exception ex)
                 {
@@ -427,7 +524,7 @@ namespace Epicod.Scraper.Packhum
         #region Y=1 - regions
         private void ScrapeRegions(WebClient client, string uri)
         {
-            Logger?.LogInformation("Regions at " + uri);
+            Logger?.LogInformation("[A] Regions at " + uri);
 
             string html = client.DownloadString(uri);
             HtmlDocument doc = new HtmlDocument();
@@ -448,9 +545,7 @@ namespace Epicod.Scraper.Packhum
                     Uri = GetAbsoluteHref(anchor)
                 };
                 WriteNode(node);
-
                 _currentNode = node;
-
                 ReportProgressFor(node);
 
                 ScrapeBooks(client, node.Uri);
@@ -467,7 +562,7 @@ namespace Epicod.Scraper.Packhum
         /// <param name="cancel">The cancel.</param>
         /// <param name="progress">The progress.</param>
         /// <exception cref="ArgumentNullException">rootUrl</exception>
-        public void Scrape(string rootUri,
+        public Task ScrapeAsync(string rootUri,
             CancellationToken cancel,
             IProgress<ProgressReport> progress = null)
         {
@@ -482,6 +577,7 @@ namespace Epicod.Scraper.Packhum
             {
                 ScrapeRegions(client, rootUri);
             }
+            return Task.CompletedTask;
         }
     }
 }

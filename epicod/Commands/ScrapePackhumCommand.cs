@@ -17,23 +17,14 @@ namespace Epicod.Cli.Commands
     public sealed class ScrapePackhumCommand : ICommand
     {
         private readonly IConfiguration _config;
-        private readonly string _dbName;
-        private readonly bool _preflight;
-        private readonly int _delay;
-        private readonly int _timeout;
-        private readonly bool _noteParsing;
         private readonly ILogger _logger;
+        private readonly ScrapePackhumCommandOptions _options;
 
-        public ScrapePackhumCommand(AppOptions options, string dbName,
-            bool preflight, int delay, int timeout, bool noteParsing)
+        public ScrapePackhumCommand(ScrapePackhumCommandOptions options)
         {
-            _config = options.Configuration;
-            _dbName = dbName ?? "epicod";
-            _preflight = preflight;
-            _delay = delay;
-            _timeout = timeout;
-            _logger = options.Logger;
-            _noteParsing = noteParsing;
+            _config = options.AppOptions.Configuration;
+            _logger = options.AppOptions.Logger;
+            _options = options;
         }
 
         public static void Configure(CommandLineApplication command,
@@ -53,12 +44,16 @@ namespace Epicod.Cli.Commands
                 "Preflight mode -- dont' write data to DB",
                 CommandOptionType.NoValue);
 
+            CommandOption noTextOption = command.Option("-x|--no-text",
+                "No texts -- don't follow single text items links",
+                CommandOptionType.NoValue);
+
             CommandOption delayOption = command.Option("-l|--delay",
-                "The delay between text requests in milliseconds",
+                "The delay between text requests in milliseconds (1500ms)",
                 CommandOptionType.SingleValue);
 
             CommandOption timeoutOption = command.Option("-t|--timeout",
-                "The texts page load timeout in seconds",
+                "The texts page load timeout in seconds (120s)",
                 CommandOptionType.SingleValue);
 
             CommandOption noteParsingOption = command.Option("-n|--note",
@@ -69,33 +64,37 @@ namespace Epicod.Cli.Commands
             {
                 int delay = (delayOption.HasValue()
                     && int.TryParse(delayOption.Value(), out int d))
-                    ? d : 500;
+                    ? d : 1500;
                 int timeout = (timeoutOption.HasValue()
                     && int.TryParse(timeoutOption.Value(), out int t))
                     ? t : 2 * 60;
 
                 options.Command = new ScrapePackhumCommand(
-                    options,
-                    dbNameOption.Value(),
-                    preflightOption.HasValue(),
-                    delay,
-                    timeout,
-                    noteParsingOption.HasValue());
+                    new ScrapePackhumCommandOptions
+                    {
+                        AppOptions = options,
+                        DatabaseName = dbNameOption.Value() ?? "epicod",
+                        IsDry = preflightOption.HasValue(),
+                        IsTextLeafScrapingDisabled = noTextOption.HasValue(),
+                        Delay = delay,
+                        Timeout = timeout,
+                        IsNoteParsingEnabled = noteParsingOption.HasValue()
+                    });
                 return 0;
             });
         }
 
-        public Task Run()
+        public async Task Run()
         {
             Console.ForegroundColor = ConsoleColor.Red;
             Console.WriteLine("\nSCRAPE PACKHUM\n");
             Console.ResetColor();
             Console.WriteLine(
-                $"Database name: {_dbName}\n" +
-                $"Preflight: {_preflight}\n" +
-                $"Delay: {_delay}\n" +
-                $"Timeout: {_timeout}\n" +
-                $"Note parsing: {(_noteParsing? "yes":"no")}\n");
+                $"Database name: {_options.DatabaseName}\n" +
+                $"Preflight: {_options.IsDry}\n" +
+                $"Delay: {_options.Delay}\n" +
+                $"Timeout: {_options.Timeout}\n" +
+                $"Note parsing: {(_options.IsNoteParsingEnabled? "yes":"no")}\n");
 
             // check that Selenium driver for Chrome is present
             string path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
@@ -107,27 +106,27 @@ namespace Epicod.Cli.Commands
                     path);
                 Console.ResetColor();
                 Console.WriteLine("You can get it from https://chromedriver.chromium.org/downloads");
-                return Task.CompletedTask;
+                return;
             }
 
             // create database if not exists
             string connection = string.Format(CultureInfo.InvariantCulture,
                 _config.GetConnectionString("Default"),
-                _dbName);
+                _options.DatabaseName);
 
-            if (!_preflight)
+            if (!_options.IsDry)
             {
                 IDbManager manager = new PgSqlDbManager(connection);
-                if (manager.Exists(_dbName))
+                if (manager.Exists(_options.DatabaseName))
                 {
-                    Console.Write($"Clearing {_dbName}...");
-                    manager.ClearDatabase(_dbName);
+                    Console.Write($"Clearing {_options.DatabaseName}...");
+                    manager.ClearDatabase(_options.DatabaseName);
                     Console.WriteLine(" done");
                 }
                 else
                 {
-                    Console.Write($"Creating {_dbName}...");
-                    manager.CreateDatabase(_dbName,
+                    Console.Write($"Creating {_options.DatabaseName}...");
+                    manager.CreateDatabase(_options.DatabaseName,
                         EpicodSchema.Get(), null);
                     Console.WriteLine(" done");
                 }
@@ -139,14 +138,15 @@ namespace Epicod.Cli.Commands
                 ChromePath = _config.GetSection("Selenium")
                     .GetSection("ChromePath-" + OsHelper.GetCode()).Value,
                 Logger = _logger,
-                Delay = _delay,
-                Timeout = _timeout,
-                IsDry = _preflight,
-                IsNoteParsingEnabled = _noteParsing
+                Delay = _options.Delay,
+                Timeout = _options.Timeout,
+                IsDry = _options.IsDry,
+                IsTextLeafScrapingDisabled = _options.IsTextLeafScrapingDisabled,
+                IsNoteParsingEnabled = _options.IsNoteParsingEnabled
             };
             try
             {
-                scraper.Scrape("https://inscriptions.packhum.org/allregions",
+                await scraper.ScrapeAsync("https://inscriptions.packhum.org/allregions",
                     CancellationToken.None,
                     new Progress<ProgressReport>(r =>
                     {
@@ -160,8 +160,17 @@ namespace Epicod.Cli.Commands
                 Console.WriteLine(ex.ToString());
                 Console.ResetColor();
             }
-
-            return Task.CompletedTask;
         }
+    }
+
+    public class ScrapePackhumCommandOptions
+    {
+        public AppOptions AppOptions { get; set; }
+        public string DatabaseName { get; set; }
+        public bool IsDry { get; set; }
+        public bool IsTextLeafScrapingDisabled { get; set; }
+        public int Delay { get; set; }
+        public int Timeout { get; set; }
+        public bool IsNoteParsingEnabled { get; set; }
     }
 }

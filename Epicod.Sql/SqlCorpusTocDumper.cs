@@ -46,7 +46,7 @@ namespace Epicod.Sql
             }
 
             // id,pid,name,uri
-            writer.Write($"\t{d.id}\t{d.parentid ?? 0}\t{d.name ?? ""}\t{d.uri ?? ""}");
+            writer.Write($"\t{d.id}\t{d.parent_id ?? 0}\t{d.name ?? ""}\t{d.uri ?? ""}");
 
             // node properties
             if (_properties?.Count > 0)
@@ -76,7 +76,7 @@ namespace Epicod.Sql
                 .Where(new
                 {
                     corpus = _corpus,
-                    parentid = d.id
+                    parent_id = d.id
                 }).OrderBy("x", "id");
 
             foreach (var child in childrenQuery.Get())
