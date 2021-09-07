@@ -182,7 +182,7 @@ namespace Epicod.Scraper.Packhum
         }
 
         #region Y=3 - texts
-        private void ScrapeText(WebClient client, string uri, TextNode textNode)
+        private void ScrapeText(WebClient client, string uri, TextNode node)
         {
             string html = client.DownloadString(uri);
             HtmlDocument doc = new HtmlDocument();
@@ -216,6 +216,7 @@ namespace Epicod.Scraper.Packhum
             // title
             string title = doc.DocumentNode
                 .SelectSingleNode("//title")?.InnerText?.Trim();
+            if (!string.IsNullOrEmpty(title)) node.Name = title;
 
             // info from span[@class="ti"]
             string note = doc.DocumentNode
@@ -224,16 +225,6 @@ namespace Epicod.Scraper.Packhum
             // PHI ID from //div[@class="docref"]/a
             string phi = doc.DocumentNode
                 .SelectSingleNode("//div[@class=\"docref\"]/a")?.InnerText?.Trim();
-
-            TextNode node = new TextNode
-            {
-                Id = GetNextNodeId(),
-                ParentId = textNode.Id,
-                Y = textNode.Y,
-                X = textNode.X,
-                Name = title,
-                Uri = uri
-            };
 
             // add text and metadata as node's properties
             List<TextNodeProperty> props = new List<TextNodeProperty>
