@@ -41,9 +41,13 @@ The strategy here is:
 
 While scraping, the tree hierarchy of each page is reflected in the target data model, where each page or text corresponds to a node. Each node has Y and X coordinates representing its depth level and sibling number, plus a label got from the page or text.
 
-This strategy can be better explained by looking at the scraper's log (I removed date and time of each entry to improve its readability).
+## Reading Scraper's Log
 
-At first, the root page is loaded, with the list of all the regions (level A). The first region to be followed is Attica. Its node is logged as `[packhum#1]`, i.e. the first node of `packhum` corpus. The `P` section in the entry introduces additional node's properties (metadata), which for non-text nodes are not present (whence `P: -`).
+The scraper saves a full log of its work under the program's directory. There is a log file for each day, named `epicod` plus the date and extension `txt`.
+
+In order to better explain the scraping strategy, and let team members check the process, let's look at the first entries of a sample log. I removed date and time of each entry and some less relevant details to improve its readability.
+
+(1) At first, the root page is loaded, with the list of all the regions (level A). The first region to be followed is Attica. Its node is logged as `[packhum#1]`, i.e. the first node of `packhum` corpus. The `P` section in the entry introduces additional node's properties (metadata), which for non-text nodes are not present (whence `P: -`).
 
 Then (level B), the page for Attica is loaded. There, the first entry found is book `IG I²`, which in turn will be another node, child of the Attica region node.
 
@@ -53,6 +57,177 @@ Then (level B), the page for Attica is loaded. There, the first entry found is b
 [INF] [B] Books at https://inscriptions.packhum.org/regions/1701
 [INF] [packhum#2] @2.1 IG I² | P: -
 ```
+
+Here is a screenshot of the first entries in the Attica region's page:
+
+![region: Attica](img/region.png)
+
+(2) Opening the link for IG I² starts by loading the texts level (C). Once the page is loaded, the script in it triggers the loading of a first (default) list. The `path` indication after the page's URL refers to the relative path followed to walk the tree of range items. Thus, it starts as `/`, i.e. with the root path corresponding to the base page list for the requested region.
+
+Once the page is loaded, its content is inspected. Here, we found 26 text items.
+
+```txt
+[INF] [C] Texts at https://inscriptions.packhum.org/book/3?location=1701: path /
+[INF] Loading page from https://inscriptions.packhum.org/book/3?location=1701
+[INF] Text items: 26
+```
+
+The screenshot here shows the first list, where range items are green, and text items are just "regular" blue links:
+
+![book: IG I](img/book.png)
+
+We first follow each of the text items, scraping it into a node. Its metadata properties names are listed in the log. Nodes are all at level 3, and range from 1 to 26 for entries `165` to `Fasti272b90`.
+
+```txt
+[INF] [packhum#3] @3.1 165 | P: -
+[INF] [packhum#4] @3.1 IG I² 165 - PHI Greek Inscriptions | P: text, note, region, location, date-txt, date-val, date-phi, reference, phi
+[INF] [packhum#5] @3.2 185a | P: -
+[INF] [packhum#6] @3.2 IG I² 185a - PHI Greek Inscriptions | P: text, note, region, location, reference, reference, phi
+[INF] [packhum#7] @3.3 400,Ib | P: -
+[INF] [packhum#8] @3.3 IG I² 400,Ib - PHI Greek Inscriptions | P: text, note, region, location, date-nan, date-phi, reference, phi
+[INF] [packhum#9] @3.4 400,II | P: -
+[INF] [packhum#10] @3.4 IG I² 400,II - PHI Greek Inscriptions | P: text, note, region, location, date-nan, date-phi, reference, phi
+[INF] [packhum#11] @3.5 503,adn | P: -
+[INF] [packhum#12] @3.5 IG I² 503,adn - PHI Greek Inscriptions | P: text, note, region, location, type, date-txt, date-val, date-phi, reference, phi
+[INF] [packhum#13] @3.6 522 | P: -
+[INF] [packhum#14] @3.6 IG I² 522 - PHI Greek Inscriptions | P: text, note, region, location, type, reference, reference, phi
+[INF] [packhum#15] @3.7 561 | P: -
+[INF] [packhum#16] @3.7 IG I² 561 - PHI Greek Inscriptions | P: text, note, region, location, layout, date-txt, date-val, date-phi, reference, phi
+[INF] [packhum#17] @3.8 575 | P: -
+[INF] [packhum#18] @3.8 IG I² 575 - PHI Greek Inscriptions | P: text, note, region, location, date-nan, date-phi, reference, phi
+[INF] [packhum#19] @3.9 644 | P: -
+[INF] [packhum#20] @3.9 IG I² 644 - PHI Greek Inscriptions | P: text, note, region, location, type, reference, phi
+[INF] [packhum#21] @3.10 730 | P: -
+[INF] [packhum#22] @3.10 IG I² 730 - PHI Greek Inscriptions | P: text, note, region, location, type, reference, phi
+[INF] [packhum#23] @3.11 774 | P: -
+[INF] [packhum#24] @3.11 IG I² 774 - PHI Greek Inscriptions | P: text, note, region, location, layout, date-txt, date-val, date-phi, reference, phi
+[INF] [packhum#25] @3.12 827 | P: -
+[INF] [packhum#26] @3.12 IG I² 827 - PHI Greek Inscriptions | P: text, note, region, location, type, date-txt, date-val, date-phi, reference, phi
+[INF] [packhum#27] @3.13 836 | P: -
+[INF] [packhum#28] @3.13 IG I² 836 - PHI Greek Inscriptions | P: text, note, region, location, type, phi
+[INF] [packhum#29] @3.14 845 | P: -
+[INF] [packhum#30] @3.14 IG I² 845 - PHI Greek Inscriptions | P: text, note, region, location, date-txt, date-val, date-phi, reference, phi
+[INF] [packhum#31] @3.15 869 | P: -
+[INF] [packhum#32] @3.15 IG I² 869 - PHI Greek Inscriptions | P: text, note, region, location, date-txt, date-val, date-phi, reference, phi
+[INF] [packhum#33] @3.16 913,adn | P: -
+[INF] [packhum#34] @3.16 IG I² 913,adn - PHI Greek Inscriptions | P: text, note, region, location, type, reference, phi
+[INF] [packhum#35] @3.17 919 | P: -
+[INF] [packhum#36] @3.17 IG I² 919 - PHI Greek Inscriptions | P: text, note, region, location, type, date-txt, date-val, date-phi, reference, phi
+[INF] [packhum#37] @3.18 934 | P: -
+[INF] [packhum#38] @3.18 IG I² 934 - PHI Greek Inscriptions | P: text, note, region, location, date-txt, date-val, date-phi, reference, phi
+[INF] [packhum#39] @3.19 1031 | P: -
+[INF] [packhum#40] @3.19 IG I² 1031 - PHI Greek Inscriptions | P: text, note, region, location, date-txt, date-val, date-phi, reference, phi
+[INF] [packhum#41] @3.20 1046 | P: -
+[INF] [packhum#42] @3.20 IG I² 1046 - PHI Greek Inscriptions | P: text, note, region, location, date-txt, date-val, date-phi, reference, phi
+[INF] [packhum#43] @3.21 1050 | P: -
+[INF] [packhum#44] @3.21 IG I² 1050 - PHI Greek Inscriptions | P: text, note, region, location, reference, reference, reference, phi
+[INF] [packhum#45] @3.22 1054 | P: -
+[INF] [packhum#46] @3.22 IG I² 1054 - PHI Greek Inscriptions | P: text, note, region, location, date-txt, date-val, date-phi, reference, phi
+[INF] [packhum#47] @3.23 1070,2 | P: -
+[INF] [packhum#48] @3.23 IG I² 1070,2 - PHI Greek Inscriptions | P: text, note, region, location, date-txt, date-val, date-phi, reference, phi
+[INF] [packhum#49] @3.24 1077 | P: -
+[INF] [packhum#50] @3.24 IG I² 1077 - PHI Greek Inscriptions | P: text, note, region, location, date-txt, date-val, date-phi, reference, phi
+[INF] [packhum#51] @3.25 1086 | P: -
+[INF] [packhum#52] @3.25 IG I² 1086 - PHI Greek Inscriptions | P: text, note, region, location, type, date-txt, date-val, date-phi, phi
+[INF] [packhum#53] @3.26 Fasti 272b90 | P: -
+[INF] [packhum#54] @3.26 IG I² Fasti 272b90 - PHI Greek Inscriptions | P: text, note, region, location, date-txt, date-val, date-phi, reference, phi
+```
+
+Then we have to follow the green range items. There are 13 of them; we thus start looping range items from 1 to 13. The first cycle in the loop is for range item 1 of 13, whose label is `790 - 800`. You can now see that the relative `path` is `/0` because we have walked down from the "root" list (`/`) to the list loaded from the 1st range, whose index is 0; thus, path is `/0` = 1st child range item in the source list.
+
+Once we "click" on the range item, a new list replaces the existing one in our current page. This list then gets scraped. There are 11 text items here, and no range item.
+
+```txt
+[INF] Ranges to follow: 13
+[INF] Range 1/13: 0: "790 - 800"
+[INF] [C] Texts at https://inscriptions.packhum.org/book/3?location=1701*: path /0
+[INF] Text items: 11
+[INF] [packhum#55] @3.1 790 | P: -
+[INF] [packhum#56] @3.1 IG I² 790 - PHI Greek Inscriptions | P: text, note, region, location, type, reference, phi
+[INF] [packhum#57] @3.2 791 | P: -
+[INF] [packhum#58] @3.2 IG I² 791 - PHI Greek Inscriptions | P: text, note, region, location, type, reference, phi
+[INF] [packhum#59] @3.3 792 | P: -
+[INF] [packhum#60] @3.3 IG I² 792 - PHI Greek Inscriptions | P: text, note, region, location, type, reference, phi
+[INF] [packhum#61] @3.4 793 | P: -
+[INF] [packhum#62] @3.4 IG I² 793 - PHI Greek Inscriptions | P: text, note, region, location, type, reference, phi
+[INF] [packhum#63] @3.5 794 | P: -
+[INF] [packhum#64] @3.5 IG I² 794 - PHI Greek Inscriptions | P: text, note, region, location, type, reference, phi
+[INF] [packhum#65] @3.6 795 | P: -
+[INF] [packhum#66] @3.6 IG I² 795 - PHI Greek Inscriptions | P: text, note, region, location, type, reference, phi
+[INF] [packhum#67] @3.7 796 | P: -
+[INF] [packhum#68] @3.7 IG I² 796 - PHI Greek Inscriptions | P: text, note, region, location, type, reference, phi
+[INF] [packhum#69] @3.8 797 | P: -
+[INF] [packhum#70] @3.8 IG I² 797 - PHI Greek Inscriptions | P: text, note, region, location, type, reference, phi
+[INF] [packhum#71] @3.9 798 | P: -
+[INF] [packhum#72] @3.9 IG I² 798 - PHI Greek Inscriptions | P: text, note, region, location, type, reference, phi
+[INF] [packhum#73] @3.10 799 | P: -
+[INF] [packhum#74] @3.10 IG I² 799 - PHI Greek Inscriptions | P: text, note, region, location, type, reference, phi
+[INF] [packhum#75] @3.11 800 | P: -
+[INF] [packhum#76] @3.11 IG I² 800 - PHI Greek Inscriptions | P: text, note, region, location, type, reference, phi
+```
+
+Here is the corresponding screenshot:
+
+![exploded texts range](img/texts.png)
+
+Note that _this is the same page of the preceding list_. The JS code in the page has replaced the list with another one. So, should you navigate to this page with your browser and then click the back button, you will not get back to the previous list, but rather to the previous page, with no texts list at all.
+
+Here we are lucky enough that there is no range item; so once we have finished scraping the text items, we can go back to the source list. As we have just remembered, we can't simply "go back". We need to restart from the Attica's books list re-loading it, and then click the 1st range item to get back to the list we are processing. These are the corresponding entries in the log:
+
+```txt
+[INF] Repositioning to / starting from https://inscriptions.packhum.org/book/3?location=1701
+[INF] Loading page from https://inscriptions.packhum.org/book/3?location=1701
+[INF] Repositioning completed
+```
+
+We can now keep looping through the range items of our list. We thus move to the 2nd range item (`865,A - 865,B`) by clicking on it, which triggers the update of the list. Note that now the path reads `/1` because we are processing the 2nd child range item (whose zero-based index is 1).
+
+This list happens to have only 2 text items, which get followed. The corresponding nodes are saved.
+
+```txt
+[INF] Range 2/13: 1: "865,A - 865,B"
+[INF] [C] Texts at https://inscriptions.packhum.org/book/3?location=1701*: path /1
+[INF] Text items: 2
+[INF] [packhum#77] @3.1 865,A | P: -
+[INF] [packhum#78] @3.1 IG I² 865,A - PHI Greek Inscriptions | P: text, note, region, location, date-txt, date-val, date-phi, reference, phi
+[INF] [packhum#79] @3.2 865,B | P: -
+[INF] [packhum#80] @3.2 IG I² 865,B - PHI Greek Inscriptions | P: text, note, region, location, date-txt, date-val, date-phi, reference, phi
+```
+
+Again, no range items here. So we need to re-load the "root" list, and then click until we get back to our source list. Once this is done, we click the 3rd range item, and follow its text items, as above.
+
+```txt
+[INF] Repositioning to / starting from https://inscriptions.packhum.org/book/3?location=1701
+[INF] Loading page from https://inscriptions.packhum.org/book/3?location=1701
+[INF] Repositioning completed
+[INF] Range 3/13: 2: "908,1 - 908,2"
+[INF] Loaded page hash: 332857183
+[INF] [C] Texts at https://inscriptions.packhum.org/book/3?location=1701*: path /2
+[INF] Text items: 2
+[INF] [packhum#81] @3.1 908,1 | P: -
+[INF] [packhum#82] @3.1 IG I² 908,1 - PHI Greek Inscriptions | P: text, note, region, location, type, date-txt, date-val, date-phi, reference, reference, phi
+[INF] [packhum#83] @3.2 908,2 | P: -
+[INF] [packhum#84] @3.2 IG I² 908,2 - PHI Greek Inscriptions | P: text, note, region, location, type, date-txt, date-val, date-phi, reference, reference, phi
+```
+
+The process then continues recursively, until all the range items have been followed. Once this happens, we will move to the next book; once all the books are done, we will move on the next region; and once all the regions are done, we have finished.
+
+If you now look at the target database, you will see nodes in the `text_node` table, e.g.:
+
+|id|parent_id|corpus|y|x|name|uri|
+|--|---------|------|-|-|----|---|
+|1|0|packhum|1|1|Attica (IG I-III)|<https://inscriptions.packhum.org/regions/1701>|
+|2|1|packhum|2|1|IG I²|<https://inscriptions.packhum.org/book/3?location=1701>|
+|3|2|packhum|3|1|165|<https://inscriptions.packhum.org/text/1754?&amp;bookid=3&amp;location=1701>|
+|4|3|packhum|3|1|IG I² 165 - PHI Greek Inscriptions|<https://inscriptions.packhum.org/text/1754?&amp;bookid=3&amp;location=1701>|
+|5|2|packhum|3|2|185a|<https://inscriptions.packhum.org/text/1755?&amp;bookid=3&amp;location=1701>|
+|6|5|packhum|3|2|IG I² 185a - PHI Greek Inscriptions|<https://inscriptions.packhum.org/text/1755?&amp;bookid=3&amp;location=1701>|
+|7|2|packhum|3|3|400,Ib|<https://inscriptions.packhum.org/text/1756?&amp;bookid=3&amp;location=1701>|
+|8|7|packhum|3|3|IG I² 400,Ib - PHI Greek Inscriptions|<https://inscriptions.packhum.org/text/1756?&amp;bookid=3&amp;location=1701>|
+|9|2|packhum|3|4|400,II|<https://inscriptions.packhum.org/text/1757?&amp;bookid=3&amp;location=1701>|
+|10|9|packhum|3|4|IG I² 400,II - PHI Greek Inscriptions|<https://inscriptions.packhum.org/text/1757?&amp;bookid=3&amp;location=1701>|
+
+Here the root node for `Attica (IG I-III)` is the one with `parent_id`=0. Its direct child is book `IG I²`.
 
 ## Text
 
@@ -104,4 +279,4 @@ Going deeper, we can observe that:
   - early imp.
   - aet. Hadriani
 
- Of course this parsing is not fully refined, but is designed to be successful in most cases, because this is enough for this project, based on large numbers.
+Of course this parsing is not fully refined, but is designed to be successful in most cases, because this is enough for this project, based on large numbers.
