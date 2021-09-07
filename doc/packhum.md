@@ -234,6 +234,30 @@ Here (numbers refer to Y and X; query is `select * from text_node order by y,par
 - (2.1-2.2) its direct children are books `IG I²` and `IG I³`.
 - (3.1-3.8) the first children of book `IG I²` are inscriptions 165-575.
 
+Also, looking at nodes metadata you get other details, including the full inscription's text. For instance, here are the properties for node 3, corresponding to IG I² 165:
+
+|id|node_id|name|value|
+|--|-------|----|-----|
+|7|3|date-phi|c. 2nd ac|
+|5|3|date-txt|c. II BC|
+|6|3|date-val|-150|
+|4|3|location|Ath.: Od.Evangelistrias?|
+|2|3|note|Att. — Ath.: Od.Evangelistrias? — c. 2nd ac — IG I³, p.972|
+|9|3|phi|PH1754|
+|8|3|reference|IG I³, p.972|
+|1|3|text|1	․․5․․οτο— — —... etc.|
+
+Here is the corresponding page screenshot:
+
+![text IG I² 165](img/text.png)
+
+As you can see, the metadata found before the text were parsed into a number of properties:
+
+- date: the original date is `date-phi`; its approximate calculated value is -150; its "normalized" date text is `date-txt`.
+- place is in `location`;
+- the original PHI ID is under `phi` (see at the bottom-right corner); bibliographic references are under `reference`'s.
+- `note` contains the original, unparsed full text from the page. This way, we can refine the parsing algorithm and re-parse all the properties without having to re-scrape the corpus.
+
 ## Text
 
 In the end, each text will be found in its own page, having a line for each table row: `table[@class="grk"]/tbody/tr`. In the table, each `tbody/tr` has 2 `td`, the first either empty or with numbering, the second with text. Also, metadata are:
