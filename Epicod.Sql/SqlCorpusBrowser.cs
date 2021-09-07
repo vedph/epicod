@@ -70,7 +70,7 @@ namespace Epicod.Sql
                     $"FROM {EpicodSchema.T_NODE} n " +
                     $"WHERE n.parent_id={EpicodSchema.T_NODE}.id) AS expandable");
             ApplyFilter(filter, query);
-            query.OrderBy("y,parent_id,x");
+            query.OrderBy("y", "parent_id", "x");
             query.Skip(filter.GetSkipCount()).Limit(filter.PageSize);
 
             List<TextNodeResult> nodes = new List<TextNodeResult>();
