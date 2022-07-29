@@ -93,7 +93,7 @@ namespace Epicod.Scraper.Packhum
             Match m = _dateRegex.Match(text);
             if (!m.Success) return null;
 
-            Datation d = new Datation();
+            Datation d = new();
             char type = '.';
             switch (m.Groups["m"].Value.ToLowerInvariant())
             {
@@ -214,7 +214,7 @@ namespace Epicod.Scraper.Packhum
             int dateNr = dates.Length;
             foreach (string dt in dates.Reverse())
             {
-                HistoricalDate date = new HistoricalDate();
+                HistoricalDate date = new();
 
                 // then split at - for ranges
                 int i;
@@ -292,7 +292,7 @@ namespace Epicod.Scraper.Packhum
 
             string[] tokens = note.Split(_seps);
 
-            List<TextNodeProperty> props = new List<TextNodeProperty>();
+            List<TextNodeProperty> props = new();
 
             // region
             props.Add(new TextNodeProperty(nodeId, PackhumProps.REGION,

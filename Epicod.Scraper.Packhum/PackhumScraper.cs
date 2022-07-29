@@ -14,6 +14,7 @@ using Epicod.Core;
 using System.Linq;
 using System.Threading.Tasks;
 using Selenium.WebDriver.WaitExtensions;
+using OpenQA.Selenium.Chromium;
 
 // note: for Selenium you need the chrome driver from https://chromedriver.chromium.org/downloads
 // here it was downloaded for version 91 and stored within the CLI project
@@ -33,7 +34,7 @@ namespace Epicod.Scraper.Packhum
 
         private readonly ITextNodeWriter _writer;
         private readonly PackhumNoteParser _parser;
-        private readonly RemoteWebDriver _driver;
+        private readonly ChromeDriver _driver;
         private readonly List<int> _rangeSteps;
         private readonly HashSet<string> _consumedRangePaths;
         private string _rootUri;
@@ -109,7 +110,7 @@ namespace Epicod.Scraper.Packhum
         private string GetAbsoluteHref(HtmlNode a)
         {
             string href = a.GetAttributeValue("href", null);
-            Uri uri = new Uri(href, UriKind.RelativeOrAbsolute);
+            Uri uri = new(href, UriKind.RelativeOrAbsolute);
             return uri.IsAbsoluteUri ? uri.AbsoluteUri : uri.ToAbsolute(_rootUri);
         }
 
@@ -122,7 +123,7 @@ namespace Epicod.Scraper.Packhum
 
         private ChromeDriver GetChromeDriver()
         {
-            ChromeOptions options = new ChromeOptions
+            ChromeOptions options = new()
             {
                 BinaryLocation = ChromePath
             };
@@ -134,7 +135,7 @@ namespace Epicod.Scraper.Packhum
         private string LoadDynamicPage(string uri,
             Func<ISearchContext, bool> isLoaded)
         {
-            WebDriverWait wait = new WebDriverWait(_driver,
+            WebDriverWait wait = new(_driver,
                 new TimeSpan(0, 0, Timeout));
             _driver.Navigate().GoToUrl(uri);
             wait.Until(c => isLoaded(c));
@@ -185,11 +186,11 @@ namespace Epicod.Scraper.Packhum
         private void ScrapeText(WebClient client, string uri, TextNode node)
         {
             string html = client.DownloadString(uri);
-            HtmlDocument doc = new HtmlDocument();
+            HtmlDocument doc = new();
             doc.LoadHtml(html);
 
             // lines from table[@class="grk"]/tbody/tr with 2 td for label and value
-            StringBuilder text = new StringBuilder();
+            StringBuilder text = new();
 
             foreach (HtmlNode trNode in doc.DocumentNode
                 .SelectNodes("//table[@class=\"grk\"]/tr"))
@@ -227,7 +228,7 @@ namespace Epicod.Scraper.Packhum
                 .SelectSingleNode("//div[@class=\"docref\"]/a")?.InnerText?.Trim();
 
             // add text and metadata as node's properties
-            List<TextNodeProperty> props = new List<TextNodeProperty>
+            List<TextNodeProperty> props = new()
             {
                 new TextNodeProperty(node.Id, "text", text.ToString())
             };
@@ -281,7 +282,7 @@ namespace Epicod.Scraper.Packhum
         private void MarkAllItemNodes()
         {
             // mark all the item/range li elements
-            var elements = _driver.FindElementsByClassName("item");
+            var elements = _driver.FindElements(By.ClassName("item"));
             if (elements == null) return;
 
             foreach (IWebElement element in elements)
@@ -309,10 +310,10 @@ namespace Epicod.Scraper.Packhum
                 MarkAllItemNodes();
                 string html = _driver.PageSource;
 
-                // click the li element corresponding to this path step;
-                // this triggers a new AJAX load
-                IWebElement li = _driver.FindElementByXPath(
-                    $"({RANGE_ITEMS_PATH})[{1 + i}]");
+                // click the li element corresponding to this path step.
+                // This triggers a new AJAX load
+                IWebElement li = _driver.FindElement(By.XPath(
+                    $"({RANGE_ITEMS_PATH})[{1 + i}]"));
                 if (li == null)
                 {
                     string error =
@@ -350,7 +351,7 @@ namespace Epicod.Scraper.Packhum
 
                 foreach (HtmlNode anchor in nodes)
                 {
-                    TextNode node = new TextNode
+                    TextNode node = new()
                     {
                         Id = GetNextNodeId(),
                         ParentId = parentNode.Id,
@@ -372,7 +373,7 @@ namespace Epicod.Scraper.Packhum
         private static IList<int> CollectRangeItemIndexes(HtmlDocument doc)
         {
             HtmlNodeCollection nodes = doc.DocumentNode.SelectNodes(RANGE_ITEMS_PATH);
-            List<int> indexes = new List<int>();
+            List<int> indexes = new();
             if (nodes != null)
             {
                 int i = 0;
@@ -403,7 +404,7 @@ namespace Epicod.Scraper.Packhum
             }
 
             // parse HTML
-            HtmlDocument doc = new HtmlDocument();
+            HtmlDocument doc = new();
             doc.LoadHtml(html);
 
             // collect range items (li @class="range item"), marking them with @x=1
@@ -427,8 +428,8 @@ namespace Epicod.Scraper.Packhum
                 _rangeSteps.Add(i);
 
                 // update page by clicking on range item li
-                IWebElement li = _driver.FindElementByXPath(
-                    $"({RANGE_ITEMS_PATH})[{1 + i}]");
+                IWebElement li = _driver.FindElement(By.XPath(
+                    $"({RANGE_ITEMS_PATH})[{1 + i}]"));
                 if (li == null)
                 {
                     string error = $"Expected {i+1}nth range item li not found in {uri}";
@@ -471,7 +472,7 @@ namespace Epicod.Scraper.Packhum
             Logger?.LogInformation("[B] Books at " + uri);
 
             string html = client.DownloadString(uri);
-            HtmlDocument doc = new HtmlDocument();
+            HtmlDocument doc = new();
             doc.LoadHtml(html);
 
             // books are grouped into div's each having ul/li/a books
@@ -479,7 +480,7 @@ namespace Epicod.Scraper.Packhum
             foreach (HtmlNode anchor in doc.DocumentNode.SelectNodes(
                 "//div[@class=\"bookclass\"]//a"))
             {
-                TextNode node = new TextNode
+                TextNode node = new()
                 {
                     Id = GetNextNodeId(),
                     ParentId = parentNode.Id,
@@ -517,7 +518,7 @@ namespace Epicod.Scraper.Packhum
             Logger?.LogInformation("[A] Regions at " + uri);
 
             string html = client.DownloadString(uri);
-            HtmlDocument doc = new HtmlDocument();
+            HtmlDocument doc = new();
             doc.LoadHtml(html);
 
             // regions are in a table, each points to a book
@@ -525,7 +526,7 @@ namespace Epicod.Scraper.Packhum
             foreach (HtmlNode anchor in doc.DocumentNode.SelectNodes(
                 "//table/tbody/tr/td/a"))
             {
-                TextNode node = new TextNode
+                TextNode node = new()
                 {
                     Id = GetNextNodeId(),
                     ParentId = 0,
@@ -562,7 +563,7 @@ namespace Epicod.Scraper.Packhum
             _progress = progress;
             _report = progress != null ? new ProgressReport() : null;
 
-            using (WebClient client = new WebClient())
+            using (WebClient client = new())
             {
                 ScrapeRegions(client, rootUri);
             }

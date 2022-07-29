@@ -37,3 +37,7 @@ This allows to easily and neutrally represent any hierarchy in the corpus being 
 ## Corpora
 
 - [Packhard Humanities Greek Inscriptions](./doc/packhum.md)
+
+## History
+
+- 2022-07-29: upgraded to NET 6.0.

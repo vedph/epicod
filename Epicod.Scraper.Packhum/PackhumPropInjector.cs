@@ -42,14 +42,14 @@ namespace Epicod.Scraper.Packhum
         public int Inject(CancellationToken cancel,
             IProgress<ProgressReport> progress = null)
         {
-            QueryFactory qf = new QueryFactory(
+            QueryFactory qf = new(
                 new NpgsqlConnection(_connString),
                 new PostgresCompiler());
 
             // clear
             Clear(qf);
 
-            PackhumNoteParser parser = new PackhumNoteParser();
+            PackhumNoteParser parser = new();
             string[] names = new[]
             {
                 "region", "location", "type", "layout",
