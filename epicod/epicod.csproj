@@ -28,13 +28,13 @@
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="6.0.1" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="6.0.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="6.0.1" />
-    <PackageReference Include="Npgsql" Version="6.0.5" />
-    <PackageReference Include="SqlKata" Version="2.3.7" />
-    <PackageReference Include="SqlKata.Execution" Version="2.3.7" />
-    <PackageReference Include="Serilog" Version="2.11.0" />
+    <PackageReference Include="Npgsql" Version="6.0.7" />
+    <PackageReference Include="SqlKata" Version="2.4.0" />
+    <PackageReference Include="SqlKata.Execution" Version="2.4.0" />
+    <PackageReference Include="Serilog" Version="2.12.0" />
     <PackageReference Include="Serilog.Extensions.Logging" Version="3.1.0" />
     <PackageReference Include="Serilog.Sinks.File" Version="5.0.0" />
-    <PackageReference Include="Fusi.DbManager.PgSql" Version="2.0.0" />
+    <PackageReference Include="Fusi.DbManager.PgSql" Version="2.0.1" />
     <PackageReference Include="ShellProgressBar" Version="5.2.0" />
   </ItemGroup>
 

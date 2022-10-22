@@ -41,9 +41,11 @@ namespace Epicod.Scraper.Clauss
         public static void Go()
         {
             // using browser
-            ScrapingBrowser browser = new();
-            browser.AllowAutoRedirect = true;
-            browser.IgnoreCookies = true;
+            ScrapingBrowser browser = new()
+            {
+                AllowAutoRedirect = true,
+                IgnoreCookies = true
+            };
             WebPage home = browser.NavigateToPage(new Uri("https://db.edcs.eu/epigr/epitest.php"));
 
             PageWebForm form = home.FindForm("epi");
