@@ -56,8 +56,10 @@ namespace Epicod.Scraper.Clauss
             form["cmd_submit"] = "go";
 
             form.Method = HttpVerb.Post;
-            WebPage result = form.Submit();
-            Debug.WriteLine(result);
+            WebPage result = form.Submit(
+                new Uri("https://db.edcs.eu/epigr/epitest_ergebnis.php"),
+                HttpVerb.Post);
+            Debug.WriteLine(result.Content);
         }
     }
 }
