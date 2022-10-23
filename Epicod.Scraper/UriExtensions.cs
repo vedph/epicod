@@ -15,19 +15,19 @@ namespace Epicod.Scraper
             return uri.IsAbsoluteUri ? uri.PathAndQuery : uri.OriginalString;
         }
 
-        public static string ToAbsolute(this Uri uri, string baseUrl)
+        public static string? ToAbsolute(this Uri uri, string baseUrl)
         {
             if (uri == null)
                 throw new ArgumentNullException(nameof(uri));
             if (baseUrl == null)
                 throw new ArgumentNullException(nameof(baseUrl));
 
-            Uri baseUri = new Uri(baseUrl);
+            Uri baseUri = new(baseUrl);
 
             return uri.ToAbsolute(baseUri);
         }
 
-        public static string ToAbsolute(this Uri uri, Uri baseUri)
+        public static string? ToAbsolute(this Uri uri, Uri baseUri)
         {
             if (uri == null)
                 throw new ArgumentNullException(nameof(uri));

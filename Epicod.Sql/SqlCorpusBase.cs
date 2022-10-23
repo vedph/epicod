@@ -13,7 +13,7 @@ namespace Epicod.Sql
     /// <summary>
     /// Base class for SQL-based corpus handlers.
     /// </summary>
-    public abstract class SqlCorpusBase
+    public abstract class SqlCorpusBase : IDisposable
     {
         private readonly string _connString;
         private bool _disposed;
@@ -21,7 +21,7 @@ namespace Epicod.Sql
         /// <summary>
         /// The query factory.
         /// </summary>
-        protected QueryFactory _qf;
+        protected QueryFactory? _qf;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SqlCorpusBrowser"/> class.
@@ -39,12 +39,9 @@ namespace Epicod.Sql
         /// </summary>
         protected void EnsureQueryFactory()
         {
-            if (_qf == null)
-            {
-                _qf = new QueryFactory(
+            _qf ??= new QueryFactory(
                     new NpgsqlConnection(_connString),
                     new PostgresCompiler());
-            }
         }
 
         /// <summary>
@@ -52,7 +49,7 @@ namespace Epicod.Sql
         /// </summary>
         /// <param name="d">The dynamic or null.</param>
         /// <returns>The text node or null</returns>
-        protected static TextNodeResult DynamicToTextNode(dynamic d)
+        protected static TextNodeResult? DynamicToTextNode(dynamic d)
         {
             return d != null ? new TextNodeResult
             {
@@ -72,7 +69,7 @@ namespace Epicod.Sql
         /// </summary>
         /// <param name="d">The dynamic or null.</param>
         /// <returns>The property or null</returns>
-        protected static TextNodeResultProperty DynamicToTextNodeProperty(
+        protected static TextNodeResultProperty? DynamicToTextNodeProperty(
             dynamic d)
         {
             return d != null ? new TextNodeResultProperty
@@ -89,14 +86,18 @@ namespace Epicod.Sql
         /// </summary>
         /// <param name="names">The names.</param>
         /// <returns>Tuple with list of black and white names.</returns>
-        protected static Tuple<List<string>, List<string>> GetBlackWhites(
+        protected static Tuple<IList<string>, IList<string>> GetBlackWhites(
             IList<string> names)
         {
             if (names == null)
-                return new Tuple<List<string>, List<string>>(null, null);
+            {
+                return new Tuple<IList<string>, IList<string>>(
+                    Array.Empty<string>(),
+                    Array.Empty<string>());
+            }
 
-            List<string> blacks = new List<string>();
-            List<string> whites = new List<string>();
+            IList<string> blacks = new List<string>();
+            IList<string> whites = new List<string>();
 
             foreach (string name in names.Where(n => n.Length > 0))
             {
@@ -104,11 +105,11 @@ namespace Epicod.Sql
                 {
                     case '-':
                         // "-" means no property except for whites
-                        blacks.Add(name.Substring(1));
+                        blacks.Add(name[1..]);
                         break;
                     case '+':
                         // "+" means all the properties except for blacks
-                        whites.Add(name.Substring(1));
+                        whites.Add(name[1..]);
                         break;
                     default:
                         // no prefix means white
@@ -128,14 +129,14 @@ namespace Epicod.Sql
         {
             EnsureQueryFactory();
 
-            var query = _qf.Query(EpicodSchema.T_NODE + " AS n")
+            var query = _qf!.Query(EpicodSchema.T_NODE + " AS n")
                    .Select("n.id", "n.parent_id", "n.corpus", "n.y", "n.x",
                         "n.name", "n.uri")
                    .SelectRaw("EXISTS(SELECT(id) " +
                     $"FROM {EpicodSchema.T_NODE} ns " +
                     "WHERE ns.parent_id=n.id) AS expandable")
                    .Where("n.id", id);
-            //var sql = _qf.Compiler.Compile(query).RawSql;
+            //var sql = _qf.Compiler.Compile(query).RawSql
 
             return DynamicToTextNode(query.FirstOrDefault());
         }
@@ -151,7 +152,7 @@ namespace Epicod.Sql
         protected void LoadProperties(TextNodeResult node,
             IList<string> blacks, IList<string> whites)
         {
-            Query propQuery = _qf.Query(EpicodSchema.T_PROP)
+            Query propQuery = _qf!.Query(EpicodSchema.T_PROP)
                 .Where("node_id", node.Id).OrderBy("name", "value");
 
             node.Properties = new List<TextNodeResultProperty>();
@@ -183,15 +184,14 @@ namespace Epicod.Sql
         /// <param name="node">The node.</param>
         /// <param name="propFilters">The optional property filters.</param>
         protected void LoadProperties(TextNodeResult node,
-            IList<string> propFilters = null)
+            IList<string>? propFilters = null)
         {
             if (propFilters == null)
             {
                 // all properties
-                Query propQuery = _qf.Query(EpicodSchema.T_PROP)
+                Query propQuery = _qf!.Query(EpicodSchema.T_PROP)
                     .Where("node_id", node.Id).OrderBy("name", "value");
-                if (node.Properties == null)
-                    node.Properties = new List<TextNodeResultProperty>();
+                node.Properties ??= new List<TextNodeResultProperty>();
                 foreach (var d in propQuery.Get())
                     node.Properties.Add(DynamicToTextNodeProperty(d));
             }
@@ -202,7 +202,7 @@ namespace Epicod.Sql
             }
         }
 
-        private void Dispose(bool disposing)
+        protected virtual void Dispose(bool disposing)
         {
             if (!_disposed)
             {
@@ -215,13 +215,9 @@ namespace Epicod.Sql
             }
         }
 
-        /// <summary>
-        /// Performs application-defined tasks associated with freeing,
-        /// releasing, or resetting unmanaged resources.
-        /// </summary>
         public void Dispose()
         {
-            // do not change this code. Put cleanup code in 'Dispose(disposing)' method
+            // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
             Dispose(disposing: true);
             GC.SuppressFinalize(this);
         }

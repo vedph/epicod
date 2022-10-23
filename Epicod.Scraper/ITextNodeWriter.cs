@@ -13,6 +13,6 @@ namespace Epicod.Scraper
         /// </summary>
         /// <param name="node">The node.</param>
         /// <param name="properties">The optional node properties.</param>
-        void Write(TextNode node, IList<TextNodeProperty> properties = null);
+        void Write(TextNode node, IList<TextNodeProperty>? properties = null);
     }
 }

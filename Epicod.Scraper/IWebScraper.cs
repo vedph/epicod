@@ -45,7 +45,7 @@ namespace Epicod.Scraper
         /// <summary>
         /// Gets or sets the logger.
         /// </summary>
-        ILogger Logger { get; set; }
+        ILogger? Logger { get; set; }
 
         /// <summary>
         /// Scrapes resources starting from the specified root URI.
@@ -54,6 +54,6 @@ namespace Epicod.Scraper
         /// <param name="cancel">The cancellation token.</param>
         /// <param name="progress">The optional progress reporter.</param>
         Task ScrapeAsync(string rootUri, CancellationToken cancel,
-            IProgress<ProgressReport> progress = null);
+            IProgress<ProgressReport>? progress = null);
     }
 }

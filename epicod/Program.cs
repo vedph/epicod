@@ -8,26 +8,6 @@ using System.Threading.Tasks;
 
 namespace Epicod.Cli
 {
-    // using Microsoft.Extensions.CommandlineUtils:
-    // https://gist.github.com/iamarcel/8047384bfbe9941e52817cf14a79dc34
-    // console app structure:
-    // https://github.com/iamarcel/dotnet-core-neat-console-starter
-
-    // If you need MS configuration, add these packages:
-    //   Install-Package Microsoft.Extensions.Configuration
-    //   Install-Package Microsoft.Extensions.Configuration.Binder
-    //   Install-Package Microsoft.Extensions.Configuration.FileExtensions
-    //   Install-Package Microsoft.Extensions.Configuration.Json
-    // The Binder is required for Get<T> extension method on IConfiguration,
-    // i.e. getting settings POCO objects.
-    // You can get a configuration object like this:
-    // IConfigurationBuilder builder = new ConfigurationBuilder()
-    //   .SetBasePath(Directory.GetCurrentDirectory())
-    //   .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
-    // _configuration = builder.Build();
-    // In this sample you must add appsettings.json as Content/copy if newer
-    // to the project.
-
     public static class Program
     {
 #if DEBUG
@@ -54,7 +34,7 @@ namespace Epicod.Cli
             {
                 // https://github.com/serilog/serilog-sinks-file
                 string logFilePath = Path.Combine(
-                    Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location),
+                    Path.GetDirectoryName(Assembly.GetExecutingAssembly()?.Location) ?? "",
                     "epicod-log.txt");
                 Log.Logger = new LoggerConfiguration()
 #if DEBUG
@@ -71,12 +51,12 @@ namespace Epicod.Cli
 #endif
 
                 Console.OutputEncoding = Encoding.Unicode;
-                Stopwatch stopwatch = new Stopwatch();
+                Stopwatch stopwatch = new();
                 stopwatch.Start();
 
                 Task.Run(async () =>
                 {
-                    AppOptions options = AppOptions.Parse(args);
+                    AppOptions? options = AppOptions.Parse(args);
                     if (options?.Command == null)
                     {
                         // RootCommand will have printed help

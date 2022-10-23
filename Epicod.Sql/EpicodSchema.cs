@@ -28,9 +28,9 @@ namespace Epicod.Scraper.Sql
         /// <exception cref="ArgumentException">Invalid database type</exception>
         public static string Get()
         {
-            using StreamReader reader = new StreamReader(
+            using StreamReader reader = new(
                 Assembly.GetExecutingAssembly().GetManifestResourceStream(
-                    "Epicod.Sql.Assets.Schema.pgsql"), Encoding.UTF8);
+                    "Epicod.Sql.Assets.Schema.pgsql")!, Encoding.UTF8);
             return reader.ReadToEnd();
         }
     }

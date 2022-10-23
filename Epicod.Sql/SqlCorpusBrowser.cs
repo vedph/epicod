@@ -30,7 +30,7 @@ namespace Epicod.Sql
         public IList<string> GetCorpora()
         {
             EnsureQueryFactory();
-            return _qf.Query(EpicodSchema.T_NODE)
+            return _qf!.Query(EpicodSchema.T_NODE)
                     .Select("corpus")
                     .OrderBy("corpus")
                     .Distinct()
@@ -59,7 +59,7 @@ namespace Epicod.Sql
             EnsureQueryFactory();
 
             // get total
-            Query totQuery = _qf.Query(EpicodSchema.T_NODE);
+            Query totQuery = _qf!.Query(EpicodSchema.T_NODE);
             ApplyFilter(filter, totQuery);
             int total = (int)totQuery.AsCount().First().count;
 
@@ -73,7 +73,7 @@ namespace Epicod.Sql
             query.OrderBy("y", "parent_id", "x");
             query.Skip(filter.GetSkipCount()).Limit(filter.PageSize);
 
-            List<TextNodeResult> nodes = new List<TextNodeResult>();
+            List<TextNodeResult> nodes = new();
             foreach (dynamic d in query.Get())
                 nodes.Add(DynamicToTextNode(d));
 
@@ -96,17 +96,17 @@ namespace Epicod.Sql
         /// <returns>
         /// The result or null if not found.
         /// </returns>
-        public TextNodeResult GetNode(int id, IList<string> propFilters = null)
+        public TextNodeResult? GetNode(int id, IList<string>? propFilters = null)
         {
             EnsureQueryFactory();
 
-            var query = _qf.Query(EpicodSchema.T_NODE + " AS n")
+            var query = _qf!.Query(EpicodSchema.T_NODE + " AS n")
                    .Select("n.id", "n.parent_id", "n.corpus", "n.y", "n.x", "n.name", "n.uri")
                    .SelectRaw("EXISTS(SELECT(id) " +
                     $"FROM {EpicodSchema.T_NODE} ns " +
                     "WHERE ns.parent_id=n.id) AS expandable")
                    .Where("n.id", id);
-            //var sql = _qf.Compiler.Compile(query).RawSql;
+            //var sql = _qf.Compiler.Compile(query).RawSql
 
             TextNodeResult node = DynamicToTextNode(query.FirstOrDefault());
             if (node == null) return null;

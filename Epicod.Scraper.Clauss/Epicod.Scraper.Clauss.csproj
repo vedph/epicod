@@ -4,11 +4,15 @@
     <TargetFramework>net6.0</TargetFramework>
     <ImplicitUsings>disable</ImplicitUsings>
 	<Nullable>enable</Nullable>
-    <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="ScrapySharp" Version="3.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Epicod.Core\Epicod.Core.csproj" />
+    <ProjectReference Include="..\Epicod.Scraper\Epicod.Scraper.csproj" />
   </ItemGroup>
 
 </Project>

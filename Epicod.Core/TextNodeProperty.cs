@@ -17,12 +17,12 @@ namespace Epicod.Core
         /// <summary>
         /// Gets or sets the name.
         /// </summary>
-        public string Name { get; set; }
+        public string? Name { get; set; }
 
         /// <summary>
         /// Gets or sets the value.
         /// </summary>
-        public string Value { get; set; }
+        public string? Value { get; set; }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="TextNodeProperty"/> class.
@@ -53,7 +53,7 @@ namespace Epicod.Core
         /// </returns>
         public override string ToString()
         {
-            return $"{Name}={(Value?.Length > 60 ? Value.Substring(0, 60) : Value)} " +
+            return $"{Name}={(Value?.Length > 60 ? Value[..60] : Value)} " +
                 $"(#{NodeId})";
         }
     }

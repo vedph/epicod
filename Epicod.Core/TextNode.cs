@@ -18,7 +18,7 @@
         /// <summary>
         /// Gets or sets the corpus this node comes from.
         /// </summary>
-        public string Corpus { get; set; }
+        public string? Corpus { get; set; }
 
         /// <summary>
         /// Gets or sets the "Y", i.e. the node depth level (1-N).
@@ -33,12 +33,12 @@
         /// <summary>
         /// Gets or sets the node's name.
         /// </summary>
-        public string Name { get; set; }
+        public string? Name { get; set; }
 
         /// <summary>
         /// Gets or sets the URI this node points to.
         /// </summary>
-        public string Uri { get; set; }
+        public string? Uri { get; set; }
 
         /// <summary>
         /// Converts to string.

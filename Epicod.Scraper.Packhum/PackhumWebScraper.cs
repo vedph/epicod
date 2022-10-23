@@ -9,12 +9,10 @@ using OpenQA.Selenium.Chrome;
 using System.Collections.Generic;
 using OpenQA.Selenium.Support.UI;
 using OpenQA.Selenium;
-using OpenQA.Selenium.Remote;
 using Epicod.Core;
 using System.Linq;
 using System.Threading.Tasks;
 using Selenium.WebDriver.WaitExtensions;
-using OpenQA.Selenium.Chromium;
 
 // note: for Selenium you need the chrome driver from https://chromedriver.chromium.org/downloads
 // here it was downloaded for version 91 and stored within the CLI project
@@ -27,7 +25,7 @@ namespace Epicod.Scraper.Packhum
     /// books, and texts. Each text has as a text property the inscription's
     /// text.
     /// </summary>
-    public sealed class PackhumScraper : IWebScraper
+    public sealed class PackhumWebScraper : IWebScraper
     {
         public const string CORPUS = "packhum";
         private const string RANGE_ITEMS_PATH = "//li[contains(@class, \"range\")]";
@@ -37,10 +35,10 @@ namespace Epicod.Scraper.Packhum
         private readonly ChromeDriver _driver;
         private readonly List<int> _rangeSteps;
         private readonly HashSet<string> _consumedRangePaths;
-        private string _rootUri;
+        private string? _rootUri;
         private CancellationToken _cancel;
-        private IProgress<ProgressReport> _progress;
-        private ProgressReport _report;
+        private IProgress<ProgressReport>? _progress;
+        private ProgressReport? _report;
         private int _maxNodeId;
         private int _maxTextX;
 
@@ -58,7 +56,7 @@ namespace Epicod.Scraper.Packhum
         /// <summary>
         /// Gets or sets the Google Chrome path.
         /// </summary>
-        public string ChromePath { get; set; }
+        public string? ChromePath { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether this scraper is in dry
@@ -78,7 +76,7 @@ namespace Epicod.Scraper.Packhum
         /// <summary>
         /// Gets or sets the logger.
         /// </summary>
-        public ILogger Logger { get; set; }
+        public ILogger? Logger { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether this scraper should parse
@@ -88,11 +86,11 @@ namespace Epicod.Scraper.Packhum
         #endregion
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="PackhumScraper"/> class.
+        /// Initializes a new instance of the <see cref="PackhumWebScraper"/> class.
         /// </summary>
         /// <param name="writer">The writer.</param>
         /// <exception cref="ArgumentNullException">writer</exception>
-        public PackhumScraper(ITextNodeWriter writer)
+        public PackhumWebScraper(ITextNodeWriter writer)
         {
             _writer = writer ?? throw new ArgumentNullException(nameof(writer));
             _parser = new PackhumNoteParser();
@@ -107,17 +105,17 @@ namespace Epicod.Scraper.Packhum
         // and keep exploring the branches in a reproducible way)
         private int GetNextNodeId() => ++_maxNodeId;
 
-        private string GetAbsoluteHref(HtmlNode a)
+        private string? GetAbsoluteHref(HtmlNode a)
         {
             string href = a.GetAttributeValue("href", null);
             Uri uri = new(href, UriKind.RelativeOrAbsolute);
-            return uri.IsAbsoluteUri ? uri.AbsoluteUri : uri.ToAbsolute(_rootUri);
+            return uri.IsAbsoluteUri ? uri.AbsoluteUri : uri.ToAbsolute(_rootUri!);
         }
 
         private void ReportProgressFor(TextNode node)
         {
             if (_progress == null) return;
-            _report.Message = new string('-', node.Y - 1) + node.Name;
+            _report!.Message = new string('-', node.Y - 1) + node.Name;
             _progress.Report(_report);
         }
 
@@ -146,7 +144,7 @@ namespace Epicod.Scraper.Packhum
             return _driver.PageSource;
         }
 
-        private string LoadDynamicTextsPage(string uri)
+        private string? LoadDynamicTextsPage(string uri)
         {
             try
             {
@@ -171,7 +169,7 @@ namespace Epicod.Scraper.Packhum
         }
 
         private void WriteNode(TextNode node,
-            IList<TextNodeProperty> properties = null)
+            IList<TextNodeProperty>? properties = null)
         {
             node.Corpus = CORPUS;
             Logger?.LogInformation(node.ToString() + " | P: " +
@@ -215,16 +213,16 @@ namespace Epicod.Scraper.Packhum
             }
 
             // title
-            string title = doc.DocumentNode
+            string? title = doc.DocumentNode
                 .SelectSingleNode("//title")?.InnerText?.Trim();
             if (!string.IsNullOrEmpty(title)) node.Name = title;
 
             // info from span[@class="ti"]
-            string note = doc.DocumentNode
+            string? note = doc.DocumentNode
                 .SelectSingleNode("//span[@class=\"ti\"]")?.InnerText?.Trim();
 
             // PHI ID from //div[@class="docref"]/a
-            string phi = doc.DocumentNode
+            string? phi = doc.DocumentNode
                 .SelectSingleNode("//div[@class=\"docref\"]/a")?.InnerText?.Trim();
 
             // add text and metadata as node's properties
@@ -257,24 +255,6 @@ namespace Epicod.Scraper.Packhum
             WriteNode(node, props);
         }
 
-        //private string LoadDynamicTextsPage(string uri)
-        //{
-        //    string html;
-        //    try
-        //    {
-        //        _driver.Navigate().GoToUrl(uri);
-        //        _driver.Wait(5000).ForElement(
-        //            By.XPath("//li[contains(@class, \"item\")]"));
-        //        html = _driver.PageSource;
-        //    }
-        //    catch (WebDriverTimeoutException)
-        //    {
-        //        Logger?.LogError("Timeout at " + uri);
-        //        return null;
-        //    }
-        //    return html;
-        //}
-
         private void SetAttributeValue(IWebElement element, string name, string value)
             => _driver.ExecuteScript("arguments[0].setAttribute" +
                 "(arguments[1], arguments[2]);", element, name, value);
@@ -287,10 +267,6 @@ namespace Epicod.Scraper.Packhum
 
             foreach (IWebElement element in elements)
                 SetAttributeValue(element, "x", "1");
-
-            //_driver.ExecuteScript("document" +
-            //    ".getElementsByClassName('item')" +
-            //    ".setAttribute('x', 1);");
         }
 
         private void LoadTextPageFromPath(string uri, IList<int> indexes)
@@ -308,7 +284,6 @@ namespace Epicod.Scraper.Packhum
             {
                 // mark all the item/range li elements with @x=1
                 MarkAllItemNodes();
-                string html = _driver.PageSource;
 
                 // click the li element corresponding to this path step.
                 // This triggers a new AJAX load
@@ -319,7 +294,7 @@ namespace Epicod.Scraper.Packhum
                     string error =
                         $"Expected {i + 1}nth range item li not found in {uri}";
                     Logger?.LogError(error);
-                    throw new ApplicationException(error);
+                    throw new InvalidOperationException(error);
                 }
                 Logger?.LogInformation("Walking via " + li.Text);
                 _driver.ExecuteScript("arguments[0].click();", li);
@@ -329,7 +304,7 @@ namespace Epicod.Scraper.Packhum
                 _driver.Wait(5000).ForElement(
                     By.XPath("//li[contains(@class, \"item\") and not(@x)]"));
                 // a new non-@x item is not enough, let the page load all of them
-                // _driver.Wait(Delay);
+                // _driver.Wait(Delay)
                 if (Delay > 0) Thread.Sleep(Delay);
                 Logger?.LogInformation("Loaded page hash: " +
                     _driver.PageSource.GetHashCode());
@@ -360,8 +335,8 @@ namespace Epicod.Scraper.Packhum
                         Name = anchor.InnerText.Trim(),
                         Uri = GetAbsoluteHref(anchor)
                     };
-                    // if (Delay > 0) Thread.Sleep(Delay);
-                    ScrapeText(client, node.Uri, node);
+                    // if (Delay > 0) Thread.Sleep(Delay)
+                    ScrapeText(client, node.Uri!, node);
                     ReportProgressFor(node);
                     if (_cancel.IsCancellationRequested) break;
                 }
@@ -387,7 +362,7 @@ namespace Epicod.Scraper.Packhum
         }
 
         private void ScrapeTexts(WebClient client, string uri, TextNode parentNode,
-            string html = null)
+            string? html = null)
         {
             // load page unless HTML provided
             string path = GetCurrentPath();
@@ -434,7 +409,7 @@ namespace Epicod.Scraper.Packhum
                 {
                     string error = $"Expected {i+1}nth range item li not found in {uri}";
                     Logger?.LogError(error);
-                    throw new ApplicationException(error);
+                    throw new InvalidOperationException(error);
                 }
                 Logger?.LogInformation($"Range {i + 1}/{rangeIndexes.Count}: " +
                     GetCurrentPath() + $": \"{li.Text}\"");
@@ -446,7 +421,7 @@ namespace Epicod.Scraper.Packhum
                     By.XPath("//li[contains(@class, \"item\") and not(@x)]"));
                 // a new non-@x item is not enough, let the page load all of them
                 if (Delay > 0) Thread.Sleep(Delay);
-                // _driver.Wait(Delay);
+                // _driver.Wait(Delay)
 
                 Logger?.LogInformation("Loaded page hash: " +
                     _driver.PageSource.GetHashCode());
@@ -499,7 +474,7 @@ namespace Epicod.Scraper.Packhum
                     _rangeSteps.Clear();
                     _consumedRangePaths.Clear();
                     _maxTextX = 0;
-                    ScrapeTexts(client, node.Uri, node, null);
+                    ScrapeTexts(client, node.Uri!, node, null);
                 }
                 catch (Exception ex)
                 {
@@ -538,7 +513,7 @@ namespace Epicod.Scraper.Packhum
                 WriteNode(node);
                 ReportProgressFor(node);
 
-                ScrapeBooks(client, node.Uri, node);
+                ScrapeBooks(client, node.Uri!, node);
 
                 if (_cancel.IsCancellationRequested) break;
             }
@@ -554,11 +529,9 @@ namespace Epicod.Scraper.Packhum
         /// <exception cref="ArgumentNullException">rootUrl</exception>
         public Task ScrapeAsync(string rootUri,
             CancellationToken cancel,
-            IProgress<ProgressReport> progress = null)
+            IProgress<ProgressReport>? progress = null)
         {
-            if (rootUri == null) throw new ArgumentNullException(nameof(rootUri));
-
-            _rootUri = rootUri;
+            _rootUri = rootUri ?? throw new ArgumentNullException(nameof(rootUri));
             _cancel = cancel;
             _progress = progress;
             _report = progress != null ? new ProgressReport() : null;

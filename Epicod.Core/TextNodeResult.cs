@@ -16,6 +16,6 @@ namespace Epicod.Core
         /// <summary>
         /// Gets or sets the node's properties.
         /// </summary>
-        public List<TextNodeResultProperty> Properties { get; set; }
+        public List<TextNodeResultProperty>? Properties { get; set; }
     }
 }

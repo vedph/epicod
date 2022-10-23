@@ -24,18 +24,16 @@ namespace Epicod.Scraper.Clauss
                     new KeyValuePair<string, string>("cmd_submit", "go"),
                 });
 
-            using (HttpClient client = new(handler: new HttpClientHandler
+            using HttpClient client = new(handler: new HttpClientHandler
             {
                 // 8888 = Fiddler standard port
                 Proxy = new WebProxy(new Uri("http://localhost:8888")),
                 UseProxy = true
-            }))
-            {
-                HttpResponseMessage response = await client.PostAsync(
-                    "https://db.edcs.eu/epigr/epitest.php", formContent);
-                string content = await response.Content.ReadAsStringAsync();
-                Debug.WriteLine(content);
-            }
+            });
+            HttpResponseMessage response = await client.PostAsync(
+                "https://db.edcs.eu/epigr/epitest.php", formContent);
+            string content = await response.Content.ReadAsStringAsync();
+            Debug.WriteLine(content);
         }
 
         public static void Go()

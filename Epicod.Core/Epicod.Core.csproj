@@ -4,6 +4,7 @@
     <TargetFramework>net6.0</TargetFramework>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+	<Nullable>enable</Nullable>
     <Authors>Daniele Fusi</Authors>
     <Company>Fusi</Company>
     <Product>Epicod</Product>

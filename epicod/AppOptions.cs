@@ -11,9 +11,9 @@ namespace Epicod.Cli
 {
     public class AppOptions
     {
-        public ICommand Command { get; set; }
-        public IConfiguration Configuration { get; private set; }
-        public ILogger Logger { get; private set; }
+        public ICommand? Command { get; set; }
+        public IConfiguration? Configuration { get; private set; }
+        public ILogger? Logger { get; private set; }
 
         public AppOptions()
         {
@@ -22,7 +22,7 @@ namespace Epicod.Cli
 
         private void BuildConfiguration()
         {
-            ConfigurationBuilder cb = new ConfigurationBuilder();
+            ConfigurationBuilder cb = new();
             Configuration = cb
                 .AddJsonFile("appsettings.json")
                 .AddEnvironmentVariables()
@@ -32,16 +32,16 @@ namespace Epicod.Cli
                 .CreateLogger(nameof(Program));
         }
 
-        public static AppOptions Parse(string[] args)
+        public static AppOptions? Parse(string[] args)
         {
             if (args == null) throw new ArgumentNullException(nameof(args));
 
-            AppOptions options = new AppOptions();
-            CommandLineApplication app = new CommandLineApplication
+            AppOptions options = new();
+            CommandLineApplication app = new()
             {
                 Name = "Epicod Tool",
                 FullName = "Epigraphy codices CLI - "
-                    + Assembly.GetEntryAssembly().GetName().Version
+                    + Assembly.GetEntryAssembly()!.GetName().Version
             };
             app.HelpOption("-?|-h|--help");
 

@@ -13,10 +13,10 @@ namespace Epicod.Cli.Commands
 {
     public sealed class InjectPackhumPropsCommand : ICommand
     {
-        private readonly IConfiguration _config;
-        private readonly string _dbName;
+        private readonly IConfiguration? _config;
+        private readonly string? _dbName;
         private readonly bool _preflight;
-        private readonly ILogger _logger;
+        private readonly ILogger? _logger;
 
         public InjectPackhumPropsCommand(AppOptions options, string dbName,
             bool preflight)
@@ -67,19 +67,16 @@ namespace Epicod.Cli.Commands
                 _config.GetConnectionString("Default"),
                 _dbName);
 
-            ProgressBar bar = new ProgressBar(100, null, new ProgressBarOptions
+            ProgressBar bar = new(100, null, new ProgressBarOptions
             {
                 // DisplayTimeInRealTime = false,
                 EnableTaskBarProgress = true,
                 CollapseWhenFinished = true
             });
 
-            PackhumPropInjector injector = new PackhumPropInjector(connection);
+            PackhumPropInjector injector = new(connection);
             injector.Inject(CancellationToken.None,
-                new Progress<ProgressReport>(report =>
-                {
-                    bar.Tick(report.Percent);
-                }));
+                new Progress<ProgressReport>(report => bar.Tick(report.Percent)));
 
             return Task.CompletedTask;
         }

@@ -16,14 +16,14 @@ namespace Epicod.Cli.Commands
 {
     public sealed class ScrapePackhumCommand : ICommand
     {
-        private readonly IConfiguration _config;
-        private readonly ILogger _logger;
+        private readonly IConfiguration? _config;
+        private readonly ILogger? _logger;
         private readonly ScrapePackhumCommandOptions _options;
 
         public ScrapePackhumCommand(ScrapePackhumCommandOptions options)
         {
-            _config = options.AppOptions.Configuration;
-            _logger = options.AppOptions.Logger;
+            _config = options.AppOptions?.Configuration;
+            _logger = options.AppOptions?.Logger;
             _options = options;
         }
 
@@ -117,25 +117,24 @@ namespace Epicod.Cli.Commands
             if (!_options.IsDry)
             {
                 IDbManager manager = new PgSqlDbManager(connection);
-                if (manager.Exists(_options.DatabaseName))
+                if (manager.Exists(_options.DatabaseName!))
                 {
                     Console.Write($"Clearing {_options.DatabaseName}...");
-                    manager.ClearDatabase(_options.DatabaseName);
+                    manager.ClearDatabase(_options.DatabaseName!);
                     Console.WriteLine(" done");
                 }
                 else
                 {
                     Console.Write($"Creating {_options.DatabaseName}...");
-                    manager.CreateDatabase(_options.DatabaseName,
+                    manager.CreateDatabase(_options.DatabaseName!,
                         EpicodSchema.Get(), null);
                     Console.WriteLine(" done");
                 }
             }
 
-            PackhumScraper scraper = new PackhumScraper(
-                new SqlTextNodeWriter(connection))
+            PackhumWebScraper scraper = new(new SqlTextNodeWriter(connection))
             {
-                ChromePath = _config.GetSection("Selenium")
+                ChromePath = _config!.GetSection("Selenium")
                     .GetSection("ChromePath-" + OsHelper.GetCode()).Value,
                 Logger = _logger,
                 Delay = _options.Delay,
@@ -148,10 +147,7 @@ namespace Epicod.Cli.Commands
             {
                 await scraper.ScrapeAsync("https://inscriptions.packhum.org/allregions",
                     CancellationToken.None,
-                    new Progress<ProgressReport>(r =>
-                    {
-                        Console.WriteLine(r.Message);
-                    }));
+                    new Progress<ProgressReport>(r => Console.WriteLine(r.Message)));
             }
             catch (Exception ex)
             {
@@ -165,8 +161,8 @@ namespace Epicod.Cli.Commands
 
     public class ScrapePackhumCommandOptions
     {
-        public AppOptions AppOptions { get; set; }
-        public string DatabaseName { get; set; }
+        public AppOptions? AppOptions { get; set; }
+        public string? DatabaseName { get; set; }
         public bool IsDry { get; set; }
         public bool IsTextLeafScrapingDisabled { get; set; }
         public int Delay { get; set; }

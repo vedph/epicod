@@ -7,6 +7,7 @@
     <Authors>Daniele Fusi</Authors>
     <Company>Fusi</Company>
     <Description>Epigraphic codices CLI tool</Description>
+	<Nullable>enable</Nullable>
     <NeutralLanguage>en-US</NeutralLanguage>
     <PackageLicenseExpression>GPL-3.0-or-later</PackageLicenseExpression>
     <Copyright>by Daniele Fusi</Copyright>

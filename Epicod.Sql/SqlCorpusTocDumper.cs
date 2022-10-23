@@ -13,11 +13,10 @@ namespace Epicod.Sql
 {
     public sealed class SqlCorpusTocDumper : SqlCorpusBase
     {
-        private string _corpus;
+        private string? _corpus;
         private int _maxY;
-        private IList<string> _properties;
-        private CancellationToken _cancel;
-        private IProgress<int> _progress;
+        private IList<string>? _properties;
+        private IProgress<int>? _progress;
         private int _count;
 
         public SqlCorpusTocDumper(string connString) : base(connString)
@@ -53,14 +52,14 @@ namespace Epicod.Sql
             {
                 TextNodeResult node = DynamicToTextNode(d);
                 LoadProperties(node, _properties);
-                StringBuilder sb = new StringBuilder();
+                StringBuilder sb = new();
 
                 foreach (string pn in _properties)
                 {
                     sb.Clear();
                     sb.Append('\t');
                     int n = 0;
-                    foreach (var prop in node.Properties.Where(p => p.Name == pn))
+                    foreach (var prop in node.Properties!.Where(p => p.Name == pn))
                     {
                         if (++n > 1) sb.Append(" | ");
                         sb.Append(prop.Value);
@@ -71,7 +70,7 @@ namespace Epicod.Sql
             writer.WriteLine();
 
             // children
-            Query childrenQuery = _qf.Query(EpicodSchema.T_NODE)
+            Query childrenQuery = _qf!.Query(EpicodSchema.T_NODE)
                 .Select("id", "parent_id", "y", "x", "name", "uri")
                 .Where(new
                 {
@@ -84,10 +83,10 @@ namespace Epicod.Sql
         }
 
         public void Dump(string corpus,
-            IList<string> properties,
+            IList<string>? properties,
             TextWriter writer,
             CancellationToken cancel,
-            IProgress<int> progress = null)
+            IProgress<int>? progress = null)
         {
             if (corpus is null) throw new ArgumentNullException(nameof(corpus));
             if (writer is null) throw new ArgumentNullException(nameof(writer));
@@ -96,12 +95,11 @@ namespace Epicod.Sql
 
             _corpus = corpus;
             _properties = properties;
-            _cancel = cancel;
             _progress = progress;
             _count = 0;
 
             // (a) header
-            _maxY = (int)_qf.Query(EpicodSchema.T_NODE)
+            _maxY = (int)_qf!.Query(EpicodSchema.T_NODE)
                 .SelectRaw("MAX(y) AS maxy")
                 .Where("corpus", _corpus)
                 .First().maxy;

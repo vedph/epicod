@@ -87,7 +87,7 @@ namespace Epicod.Scraper.Packhum
         /// a terminus ante/post, 3=true when the datation has an explicit era
         /// set.
         /// </returns>
-        private Tuple<Datation, char, bool> ParseDatation(string text,
+        private Tuple<Datation, char, bool>? ParseDatation(string text,
             bool defaultToBc = false)
         {
             Match m = _dateRegex.Match(text);
@@ -183,7 +183,7 @@ namespace Epicod.Scraper.Packhum
 
             return (IsCenturyDigit(text[i - 1]) && IsCenturyDigit(text[i + 1])) ||
                 (char.IsDigit(text[i - 1]) && char.IsDigit(text[i + 1]))
-                ? $"{text.Substring(0, i)}-{text.Substring(i + 1)}"
+                ? $"{text[..i]}-{text[(i + 1)..]}"
                 : text;
         }
 
@@ -199,8 +199,8 @@ namespace Epicod.Scraper.Packhum
             }
 
             // first split at / for alternatives (e.g. "fin. s. VI/init. s. V a.")
-            // unless / separates Roman or Arabic digits (e.g. "s. VI/V a.");
-            // in the latter case, replace / with - thus making it a range.
+            // unless / separates Roman or Arabic digits (e.g. "s. VI/V a.").
+            // In the latter case, replace / with - thus making it a range.
             bool isDate = false;
             text = PreprocessDateSlash(text);
             bool defaultToBC = false;
@@ -225,11 +225,11 @@ namespace Epicod.Scraper.Packhum
                     // Also, we first parse the end point, as usually in a range
                     // the era is defined only for the 2nd point, and implicitly
                     // applies to the 1st (e.g. 440-430 a.).
-                    var b = ParseDatation(dt.Substring(i + 1), false);
+                    var b = ParseDatation(dt[(i + 1)..], false);
                     if (b == null) continue;
                     date.SetEndPoint(b.Item1);
 
-                    var a = ParseDatation(dt.Substring(0, i), b.Item1.Value < 0);
+                    var a = ParseDatation(dt[..i], b.Item1.Value < 0);
                     if (a == null) continue;
                     isDate = true;
 
@@ -292,11 +292,12 @@ namespace Epicod.Scraper.Packhum
 
             string[] tokens = note.Split(_seps);
 
-            List<TextNodeProperty> props = new();
-
-            // region
-            props.Add(new TextNodeProperty(nodeId, PackhumProps.REGION,
-                tokens[0].Trim()));
+            List<TextNodeProperty> props = new()
+            {
+                // region
+                new TextNodeProperty(nodeId, PackhumProps.REGION,
+                    tokens[0].Trim())
+            };
             bool hasLoc = false, hasType = false, hasDate = false;
 
             for (int i = 1; i < tokens.Length; i++)

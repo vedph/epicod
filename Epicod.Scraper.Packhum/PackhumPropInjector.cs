@@ -29,7 +29,7 @@ namespace Epicod.Scraper.Packhum
             queryFactory.Query(EpicodSchema.T_PROP)
                 .Join(EpicodSchema.T_NODE, $"{EpicodSchema.T_NODE}.id",
                     $"{EpicodSchema.T_PROP}.node_id")
-                .Where("corpus", PackhumScraper.CORPUS).AsDelete();
+                .Where("corpus", PackhumWebScraper.CORPUS).AsDelete();
         }
 
         /// <summary>
@@ -40,7 +40,7 @@ namespace Epicod.Scraper.Packhum
         /// <param name="progress">The optional progress reporter.</param>
         /// <returns>Count of injected properties.</returns>
         public int Inject(CancellationToken cancel,
-            IProgress<ProgressReport> progress = null)
+            IProgress<ProgressReport>? progress = null)
         {
             QueryFactory qf = new(
                 new NpgsqlConnection(_connString),
@@ -50,12 +50,12 @@ namespace Epicod.Scraper.Packhum
             Clear(qf);
 
             PackhumNoteParser parser = new();
-            string[] names = new[]
-            {
-                "region", "location", "type", "layout",
-                "date-phi", "date-txt", "date-val", "date-nan",
-                "reference"
-            };
+            //string[] names = new[]
+            //{
+            //    "region", "location", "type", "layout",
+            //    "date-phi", "date-txt", "date-val", "date-nan",
+            //    "reference"
+            //};
             string[] cols = new[] { "node_id", "name", "value" };
 
             // get total
@@ -64,10 +64,10 @@ namespace Epicod.Scraper.Packhum
                     $"{EpicodSchema.T_PROP}.Note")
                 .Join(EpicodSchema.T_NODE, $"{EpicodSchema.T_NODE}.id",
                     $"{EpicodSchema.T_PROP}.node_id")
-                .Where("corpus", PackhumScraper.CORPUS).AsCount().First();
+                .Where("corpus", PackhumWebScraper.CORPUS).AsCount().First();
             int total = (int)row.count;
             int count = 0, injected = 0;
-            ProgressReport report = progress != null ? new ProgressReport() : null;
+            ProgressReport? report = progress != null ? new ProgressReport() : null;
 
             // process each note
             foreach (var item in qf.Query(EpicodSchema.T_PROP)
@@ -75,7 +75,7 @@ namespace Epicod.Scraper.Packhum
                     $"{EpicodSchema.T_PROP}.Note")
                 .Join(EpicodSchema.T_NODE,
                     $"{EpicodSchema.T_NODE}.id", $"{EpicodSchema.T_PROP}.node_id")
-                .Where("corpus", PackhumScraper.CORPUS)
+                .Where("corpus", PackhumWebScraper.CORPUS)
                 .OrderBy($"{EpicodSchema.T_NODE}.id").Get())
             {
                 IList<TextNodeProperty> props = parser.Parse
@@ -84,13 +84,13 @@ namespace Epicod.Scraper.Packhum
 
                 injected += props.Count;
                 var data = props.Select(
-                    p => new object[] { item.NodeId, p.Name, p.Value })
+                    p => new object[] { item.NodeId, p.Name ?? "", p.Value ?? "" })
                     .ToArray();
                 qf.Query(EpicodSchema.T_PROP).Insert(cols, data);
 
                 if (progress != null && ++count % 10 == 0)
                 {
-                    report.Count = count;
+                    report!.Count = count;
                     report.Percent = count * 100 / total;
                     progress.Report(report);
                 }
@@ -99,7 +99,7 @@ namespace Epicod.Scraper.Packhum
 
             if (progress != null)
             {
-                report.Percent = 100;
+                report!.Percent = 100;
                 progress.Report(report);
             }
 

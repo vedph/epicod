@@ -13,7 +13,7 @@ namespace Epicod.Cli.Commands
 {
     public sealed class DumpCorpusTocCommand : ICommand
     {
-        private readonly IConfiguration _config;
+        private readonly IConfiguration? _config;
         private readonly string _dbName;
         private readonly string _corpus;
         private readonly IList<string> _properties;
@@ -80,9 +80,8 @@ namespace Epicod.Cli.Commands
                 _config.GetConnectionString("Default"),
                 _dbName);
 
-            using StreamWriter writer = new StreamWriter(_outputPath, false,
-                Encoding.UTF8);
-            SqlCorpusTocDumper dumper = new SqlCorpusTocDumper(connection);
+            using StreamWriter writer = new(_outputPath, false, Encoding.UTF8);
+            SqlCorpusTocDumper dumper = new(connection);
             dumper.Dump(_corpus, _properties, writer,
                 CancellationToken.None,
                 new Progress<int>(count =>

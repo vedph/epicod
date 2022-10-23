@@ -11,7 +11,7 @@ namespace Epicod.Core
         /// <summary>
         /// Gets or sets the corpus identifier.
         /// </summary>
-        public string CorpusId { get; set; }
+        public string? CorpusId { get; set; }
 
         /// <summary>
         /// Gets or sets the optional parent node identifier.

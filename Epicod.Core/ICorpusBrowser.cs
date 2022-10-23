@@ -34,6 +34,6 @@ namespace Epicod.Core
         /// any properties, except the excluded ones if any; or <c>-</c> alone
         /// to exclude any properties, except the included ones if any.</param>
         /// <returns>The result or null if not found.</returns>
-        TextNodeResult GetNode(int id, IList<string> propFilters = null);
+        TextNodeResult? GetNode(int id, IList<string>? propFilters = null);
     }
 }

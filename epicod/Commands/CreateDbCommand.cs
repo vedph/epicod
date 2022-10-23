@@ -5,17 +5,16 @@ using Microsoft.Extensions.CommandLineUtils;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System;
-using System.Globalization;
 using System.Threading.Tasks;
 
 namespace Epicod.Cli.Commands
 {
     public sealed class CreateDbCommand : ICommand
     {
-        private readonly IConfiguration _config;
-        private readonly string _dbName;
+        private readonly IConfiguration? _config;
+        private readonly string? _dbName;
 
-        public ILogger Logger { get; }
+        public ILogger? Logger { get; }
 
         public CreateDbCommand(AppOptions options, string dbName)
         {
@@ -55,14 +54,14 @@ namespace Epicod.Cli.Commands
             // create database if not exists
             IDbManager manager = new PgSqlDbManager(
                 _config.GetConnectionString("Default"));
-            if (manager.Exists(_dbName))
+            if (manager.Exists(_dbName!))
             {
                 Console.Write($"Database {_dbName} already exists");
                 return Task.CompletedTask;
             }
 
             Console.Write($"Creating {_dbName}...");
-            manager.CreateDatabase(_dbName,
+            manager.CreateDatabase(_dbName!,
                 EpicodSchema.Get(), null);
             Console.WriteLine(" done");
 
