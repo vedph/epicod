@@ -7,6 +7,14 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Assets\Provinces.txt" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Assets\Provinces.txt" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="ScrapySharp" Version="3.0.0" />
   </ItemGroup>
 

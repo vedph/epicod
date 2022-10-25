@@ -18,6 +18,8 @@ namespace Epicod.Scraper.Clauss
         public Task ScrapeAsync(string rootUri, CancellationToken cancel,
             IProgress<ProgressReport>? progress = null)
         {
+            if (rootUri is null) throw new ArgumentNullException(nameof(rootUri));
+
             throw new NotImplementedException();
         }
     }
