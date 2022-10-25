@@ -1,5 +1,5 @@
 ﻿using Epicod.Cli.Services;
-using Epicod.Scraper.Packhum;
+using Epicod.Scraper.Clauss;
 using Epicod.Scraper.Sql;
 using Fusi.Cli.Commands;
 using Fusi.DbManager;
@@ -10,17 +10,16 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Globalization;
-using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace Epicod.Cli.Commands
 {
-    internal sealed class ScrapePackhumCommand : ICommand
+    internal sealed class ScrapeClaussCommand : ICommand
     {
-        private readonly ScrapePackhumCommandOptions _options;
+        private readonly ScrapeClaussCommandOptions _options;
 
-        private ScrapePackhumCommand(ScrapePackhumCommandOptions options)
+        public ScrapeClaussCommand(ScrapeClaussCommandOptions options)
         {
             _options = options;
         }
@@ -30,7 +29,7 @@ namespace Epicod.Cli.Commands
         {
             if (app == null) throw new ArgumentNullException(nameof(app));
 
-            app.Description = "Scrape Packhum into database";
+            app.Description = "Scrape Clauss into database";
             app.HelpOption("-?|-h|--help");
 
             CommandOption dbNameOption = app.Option("-d|--database",
@@ -70,8 +69,8 @@ namespace Epicod.Cli.Commands
                     && int.TryParse(timeoutOption.Value(), out int t))
                     ? t : 2 * 60;
 
-                context.Command = new ScrapePackhumCommand(
-                    new ScrapePackhumCommandOptions(context)
+                context.Command = new ScrapeClaussCommand(
+                    new ScrapeClaussCommandOptions(context)
                     {
                         DatabaseName = dbNameOption.Value() ?? "epicod",
                         IsDry = preflightOption.HasValue(),
@@ -91,27 +90,14 @@ namespace Epicod.Cli.Commands
         public async Task Run()
         {
             Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine("\nSCRAPE PACKHUM\n");
+            Console.WriteLine("\nSCRAPE CLAUSS\n");
             Console.ResetColor();
             Console.WriteLine(
                 $"Database name: {_options.DatabaseName}\n" +
                 $"Preflight: {_options.IsDry}\n" +
                 $"Delay: {_options.Delay}\n" +
                 $"Timeout: {_options.Timeout}\n" +
-                $"Note parsing: {(_options.IsNoteParsingEnabled? "yes":"no")}\n");
-
-            // check that Selenium driver for Chrome is present
-            string path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
-                OsHelper.IsWindows()? "chromedriver.exe" : "chromedriver");
-            if (!File.Exists(path))
-            {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("The Selenium Chrome driver is expected at " +
-                    path);
-                Console.ResetColor();
-                Console.WriteLine("You can get it from https://chromedriver.chromium.org/downloads");
-                return;
-            }
+                $"Note parsing: {(_options.IsNoteParsingEnabled ? "yes" : "no")}\n");
 
             // create database if not exists
             string connection = string.Format(CultureInfo.InvariantCulture,
@@ -136,10 +122,8 @@ namespace Epicod.Cli.Commands
                 }
             }
 
-            PackhumWebScraper scraper = new(new SqlTextNodeWriter(connection))
+            ClaussWebScraper scraper = new(new SqlTextNodeWriter(connection))
             {
-                ChromePath = _options.Configuration!.GetSection("Selenium")
-                    .GetSection("ChromePath-" + OsHelper.GetCode()).Value,
                 Logger = _options.Logger,
                 Delay = _options.Delay,
                 Timeout = _options.Timeout,
@@ -149,7 +133,7 @@ namespace Epicod.Cli.Commands
             };
             try
             {
-                await scraper.ScrapeAsync("https://inscriptions.packhum.org/allregions",
+                await scraper.ScrapeAsync("https://db.edcs.eu/epigr/epitest.php",
                     CancellationToken.None,
                     new Progress<ProgressReport>(r => Console.WriteLine(r.Message)));
             }
@@ -163,10 +147,10 @@ namespace Epicod.Cli.Commands
         }
     }
 
-    internal class ScrapePackhumCommandOptions :
+    internal class ScrapeClaussCommandOptions :
         CommandOptions<EpicodCliAppContext>
     {
-        public ScrapePackhumCommandOptions(ICliAppContext options)
+        public ScrapeClaussCommandOptions(ICliAppContext options)
             : base((EpicodCliAppContext)options)
         {
         }

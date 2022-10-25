@@ -53,7 +53,9 @@ namespace Epicod.Scraper
         /// <param name="rootUri">The root URI.</param>
         /// <param name="cancel">The cancellation token.</param>
         /// <param name="progress">The optional progress reporter.</param>
+        /// <param name="baseNodeId">The base node ID.</param>
         Task ScrapeAsync(string rootUri, CancellationToken cancel,
-            IProgress<ProgressReport>? progress = null);
+            IProgress<ProgressReport>? progress = null,
+            int baseNodeId = 0);
     }
 }

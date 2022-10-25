@@ -47,6 +47,7 @@ namespace Epicod.Cli
                     ["create-db"] = CreateDbCommand.Configure,
                     ["scrape-packhum"] = ScrapePackhumCommand.Configure,
                     ["inject-packhum"] = InjectPackhumPropsCommand.Configure,
+                    ["scrape-clauss"] = ScrapeClaussCommand.Configure,
                     ["dump-toc"] = DumpCorpusTocCommand.Configure,
                 })
             .Build();

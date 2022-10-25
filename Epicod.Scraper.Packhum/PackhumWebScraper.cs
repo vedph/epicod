@@ -10,7 +10,6 @@ using System.Collections.Generic;
 using OpenQA.Selenium.Support.UI;
 using OpenQA.Selenium;
 using Epicod.Core;
-using System.Linq;
 using System.Threading.Tasks;
 using Selenium.WebDriver.WaitExtensions;
 
@@ -34,7 +33,6 @@ namespace Epicod.Scraper.Packhum
         private readonly ChromeDriver _driver;
         private readonly List<int> _rangeSteps;
         private readonly HashSet<string> _consumedRangePaths;
-        private int _maxNodeId;
         private int _maxTextX;
 
         /// <summary>
@@ -55,24 +53,7 @@ namespace Epicod.Scraper.Packhum
             _driver = GetChromeDriver();
             Delay = 1500;
             Timeout = 3 * 60;
-        }
-
-        // not thread-safe, we cannot parallelize anyway (give time to the server,
-        // and keep exploring the branches in a reproducible way)
-        private int GetNextNodeId() => ++_maxNodeId;
-
-        private string? GetAbsoluteHref(HtmlNode a)
-        {
-            string href = a.GetAttributeValue("href", null);
-            Uri uri = new(href, UriKind.RelativeOrAbsolute);
-            return uri.IsAbsoluteUri ? uri.AbsoluteUri : uri.ToAbsolute(RootUri!);
-        }
-
-        private void ReportProgressFor(TextNode node)
-        {
-            if (Progress == null) return;
-            Report!.Message = new string('-', node.Y - 1) + node.Name;
-            Progress.Report(Report);
+            Corpus = CORPUS;
         }
 
         private ChromeDriver GetChromeDriver()
@@ -122,18 +103,6 @@ namespace Epicod.Scraper.Packhum
                 Logger?.LogError("Timeout at " + uri);
                 return null;
             }
-        }
-
-        private void WriteNode(TextNode node,
-            IList<TextNodeProperty>? properties = null)
-        {
-            node.Corpus = CORPUS;
-            Logger?.LogInformation(node.ToString() + " | P: " +
-                (properties != null
-                ? string.Join(", ", properties.Select(p => p.Name))
-                : "-"));
-
-            if (!IsDry) Writer.Write(node, properties);
         }
 
         #region Y=3 - texts

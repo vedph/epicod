@@ -2,7 +2,7 @@
   "profiles": {
     "epicod": {
       "commandName": "Project",
-      "commandLineArgs": "scrape-packhum -n"
+      "commandLineArgs": "scrape-clauss -p -n -i 200000"
     }
   }
 }

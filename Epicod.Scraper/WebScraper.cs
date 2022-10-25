@@ -1,8 +1,13 @@
-﻿using Fusi.Tools;
+﻿using Epicod.Core;
+using Fusi.Tools;
+using HtmlAgilityPack;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Xml;
 
 namespace Epicod.Scraper
 {
@@ -11,6 +16,13 @@ namespace Epicod.Scraper
     /// </summary>
     public abstract class WebScraper
     {
+        private int _nodeId;
+
+        /// <summary>
+        /// Gets or sets the corpus.
+        /// </summary>
+        protected string Corpus { get; set; }
+
         /// <summary>
         /// Gets the root URI.
         /// </summary>
@@ -80,7 +92,38 @@ namespace Epicod.Scraper
         protected WebScraper(ITextNodeWriter writer)
         {
             Writer = writer ?? throw new ArgumentNullException(nameof(writer));
+            Corpus = "";
         }
+
+        protected string? GetAbsoluteHref(HtmlNode a)
+        {
+            string href = a.GetAttributeValue("href", null);
+            Uri uri = new(href, UriKind.RelativeOrAbsolute);
+            return uri.IsAbsoluteUri ? uri.AbsoluteUri : uri.ToAbsolute(RootUri!);
+        }
+
+        protected void ReportProgressFor(TextNode node)
+        {
+            if (Progress == null) return;
+            Report!.Message = new string('-', node.Y - 1) + node.Name;
+            Progress.Report(Report);
+        }
+
+        protected void WriteNode(TextNode node,
+            IList<TextNodeProperty>? properties = null)
+        {
+            node.Corpus = Corpus;
+            Logger?.LogInformation(node.ToString() + " | P: " +
+                (properties != null
+                ? string.Join(", ", properties.Select(p => p.Name))
+                : "-"));
+
+            if (!IsDry) Writer.Write(node, properties);
+        }
+
+        protected int GetNextNodeId() => Interlocked.Increment(ref _nodeId);
+
+        public int ResetNextNodeId(int n = 0) => _nodeId = n;
 
         /// <summary>
         /// Does the scraping.
@@ -93,15 +136,18 @@ namespace Epicod.Scraper
         /// <param name="rootUri">The root URI.</param>
         /// <param name="cancel">The cancel.</param>
         /// <param name="progress">The progress.</param>
+        /// <param name="baseNodeId">The base node ID.</param>
         /// <exception cref="ArgumentNullException">rootUrl</exception>
         public Task ScrapeAsync(string rootUri,
             CancellationToken cancel,
-            IProgress<ProgressReport>? progress = null)
+            IProgress<ProgressReport>? progress = null,
+            int baseNodeId = 0)
         {
             RootUri = rootUri ?? throw new ArgumentNullException(nameof(rootUri));
             Cancel = cancel;
             Progress = progress;
             Report = progress != null ? new ProgressReport() : null;
+            ResetNextNodeId(baseNodeId);
 
             return DoScrapeAsync();
         }
