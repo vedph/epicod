@@ -38,6 +38,30 @@ This allows to easily and neutrally represent any hierarchy in the corpus being 
 
 - [Packhard Humanities Greek Inscriptions](./doc/packhum.md)
 
+## Database Management
+
+- <https://simplebackups.com/blog/postgresql-pgdump-and-pgrestore-guide-examples>
+
+Quick note about database dump/restore for testers.
+
+```ps1
+pg_dump --username=postgres -f DUMPFILEPATH DBNAME
+```
+
+>Note the usage of `-f` instead of redirecting from console with `>`. This is required in *Windows* to avoid issues with encoding (see [here](https://dba.stackexchange.com/questions/281119/postgresql-pg-dump-e-encoding-option-not-working)).
+
+- restore with [psql](https://www.postgresql.org/docs/current/app-psql.html):
+
+```ps1
+./psql -U USER -d DB_NAME -f DUMPFILEPATH
+```
+
+>The target database must be created first.
+
 ## History
 
+- 2022-10-25:
+  - updated packages.
+  - adding Clauss.
+  - refactored tables to add property type.
 - 2022-07-29: upgraded to NET 6.0.

@@ -16,7 +16,7 @@ namespace Epicod.Scraper.Sql
     {
         private readonly string _connString;
         private readonly string[] _propCols;
-        private QueryFactory _queryFactory;
+        private QueryFactory? _queryFactory;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SqlTextNodeWriter"/>
@@ -37,7 +37,7 @@ namespace Epicod.Scraper.Sql
         private static string ConstrainLength(string text, int max)
         {
             if (string.IsNullOrEmpty(text)) return text;
-            return text.Length > max ? text.Substring(0, max) : text;
+            return text.Length > max ? text[..max] : text;
         }
 
         /// <summary>
@@ -46,33 +46,30 @@ namespace Epicod.Scraper.Sql
         /// <param name="node">The node.</param>
         /// <param name="properties">The optional node properties.</param>
         /// <exception cref="ArgumentNullException">node</exception>
-        public void Write(TextNode node, IList<TextNodeProperty> properties = null)
+        public void Write(TextNode node, IList<TextNodeProperty>? properties = null)
         {
             if (node == null) throw new ArgumentNullException(nameof(node));
 
-            if (_queryFactory == null)
-            {
-                _queryFactory = new QueryFactory(
+            _queryFactory ??= new QueryFactory(
                     new NpgsqlConnection(_connString),
                     new PostgresCompiler());
-            }
 
             _queryFactory.Query("text_node").Insert(new
             {
                 id = node.Id,
-                parent_id = node.ParentId,
+                parent_id = node.ParentId == 0? null : (int?)node.ParentId,
                 corpus = node.Corpus,
                 y = node.Y,
                 x = node.X,
-                name = ConstrainLength(node.Name, 200),
-                uri = ConstrainLength(node.Uri, 300)
+                name = ConstrainLength(node.Name ?? "", 200),
+                uri = ConstrainLength(node.Uri ?? "", 300)
             });
             if (properties?.Count > 0)
             {
                 object[][] data = (from p in properties
                                    select new object[]
                                    {
-                                       p.NodeId, p.Name, p.Value
+                                       p.NodeId, p.Name ?? "", p.Value ?? ""
                                    }).ToArray();
                 _queryFactory.Query("text_node_property").Insert(_propCols, data);
             }

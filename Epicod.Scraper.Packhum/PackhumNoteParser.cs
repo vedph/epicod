@@ -62,14 +62,14 @@ namespace Epicod.Scraper.Packhum
             Match m = _typeRegex.Match(text);
             if (m.Success)
             {
-                props.Add(new TextNodeProperty(nodeId, PackhumProps.TYPE,
+                props.Add(new TextNodeProperty(nodeId, TextNodeProps.TYPE,
                     m.Groups[1].Value));
                 return true;
             }
             m = _writingRegex.Match(text);
             if (m.Success)
             {
-                props.Add(new TextNodeProperty(nodeId, PackhumProps.LAYOUT,
+                props.Add(new TextNodeProperty(nodeId, TextNodeProps.LAYOUT,
                     text.Trim()));
                 return true;
             }
@@ -193,7 +193,7 @@ namespace Epicod.Scraper.Packhum
             // corner cases: non-numeric dates like "early empire"
             if (_cornerDateRegex.IsMatch(text))
             {
-                props.Add(new TextNodeProperty(nodeId, PackhumProps.DATE_NAN,
+                props.Add(new TextNodeProperty(nodeId, TextNodeProps.DATE_NAN,
                     text.Trim()));
                 return true;
             }
@@ -260,13 +260,14 @@ namespace Epicod.Scraper.Packhum
                 if (dateNr > 1) suffix = $"#{dateNr}";
 
                 props.Add(new TextNodeProperty(nodeId,
-                    PackhumProps.DATE_TXT + suffix,
+                    TextNodeProps.DATE_TXT + suffix,
                     date.ToString()));
 
                 double val = date.GetSortValue();
                 props.Add(new TextNodeProperty(nodeId,
-                    PackhumProps.DATE_VAL + suffix,
-                    val.ToString(CultureInfo.InvariantCulture)));
+                    TextNodeProps.DATE_VALUE + suffix,
+                    val.ToString(CultureInfo.InvariantCulture),
+                    TextNodeProps.TYPE_INT));
 
                 if (firstDt)
                 {
@@ -295,7 +296,7 @@ namespace Epicod.Scraper.Packhum
             List<TextNodeProperty> props = new()
             {
                 // region
-                new TextNodeProperty(nodeId, PackhumProps.REGION,
+                new TextNodeProperty(nodeId, TextNodeProps.REGION,
                     tokens[0].Trim())
             };
             bool hasLoc = false, hasType = false, hasDate = false;
@@ -315,7 +316,7 @@ namespace Epicod.Scraper.Packhum
                 if (!hasDate && ParseDate(tokens[i], nodeId, props))
                 {
                     props.Add(new TextNodeProperty(nodeId,
-                        PackhumProps.DATE_PHI, tokens[i].Trim()));
+                        TextNodeProps.DATE_PHI, tokens[i].Trim()));
                     hasDate = true;
                     // there cannot be a location after a date
                     hasLoc = true;
@@ -325,13 +326,13 @@ namespace Epicod.Scraper.Packhum
                 if (!hasLoc && !_refAbbrRegex.IsMatch(tokens[i]))
                 {
                     props.Add(new TextNodeProperty(
-                        nodeId, PackhumProps.LOCATION, tokens[i].Trim()));
+                        nodeId, TextNodeProps.LOCATION, tokens[i].Trim()));
                     hasLoc = true;
                 }
                 else
                 {
                     props.Add(new TextNodeProperty(
-                        nodeId, PackhumProps.REFERENCE, tokens[i].Trim()));
+                        nodeId, TextNodeProps.REFERENCE, tokens[i].Trim()));
                 }
             }
 

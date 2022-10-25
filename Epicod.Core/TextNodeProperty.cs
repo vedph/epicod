@@ -25,6 +25,12 @@ namespace Epicod.Core
         public string? Value { get; set; }
 
         /// <summary>
+        /// Gets or sets the optional data type. This can be used to automatically
+        /// cast the string value into something else, like e.g. a numeric value.
+        /// </summary>
+        public string? Type { get; set; }
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="TextNodeProperty"/> class.
         /// </summary>
         public TextNodeProperty()
@@ -38,11 +44,13 @@ namespace Epicod.Core
         /// <param name="name">The name.</param>
         /// <param name="value">The value.</param>
         /// <exception cref="ArgumentNullException">name or value</exception>
-        public TextNodeProperty(int nodeId, string name, string value)
+        public TextNodeProperty(int nodeId, string name, string value,
+            string? type = null)
         {
             NodeId = nodeId;
             Name = name ?? throw new ArgumentNullException(nameof(name));
             Value = value ?? throw new ArgumentNullException(nameof(value));
+            Type = type;
         }
 
         /// <summary>
@@ -54,7 +62,7 @@ namespace Epicod.Core
         public override string ToString()
         {
             return $"{Name}={(Value?.Length > 60 ? Value[..60] : Value)} " +
-                $"(#{NodeId})";
+                $"(#{NodeId}) [{Type ?? "string"}]";
         }
     }
 }

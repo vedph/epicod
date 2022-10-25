@@ -1,9 +1,9 @@
-﻿namespace Epicod.Scraper.Packhum
+﻿namespace Epicod.Core
 {
     /// <summary>
-    /// Constants for Packhum nodes properties.
+    /// Constants used for text node properties.
     /// </summary>
-    public static class PackhumProps
+    public static class TextNodeProps
     {
         /// <summary>
         /// The inscription's text.
@@ -53,11 +53,14 @@
         /// <summary>
         /// The date's (approximate) numeric value.
         /// </summary>
-        public const string DATE_VAL = "date-val";
+        public const string DATE_VALUE = "date-val";
 
         /// <summary>
         /// A documentary reference.
         /// </summary>
         public const string REFERENCE = "reference";
+
+        // data types
+        public const string TYPE_INT = "integer";
     }
 }

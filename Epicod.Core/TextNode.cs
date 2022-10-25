@@ -11,7 +11,8 @@
         public int Id { get; set; }
 
         /// <summary>
-        /// Gets or sets the optional parent node identifier.
+        /// Gets or sets the optional parent node identifier. This is 0 when
+        /// there is no parent. In the database, 0 will be replaced by NULL.
         /// </summary>
         public int ParentId { get; set; }
 

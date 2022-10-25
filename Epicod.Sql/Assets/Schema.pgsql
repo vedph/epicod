@@ -6,7 +6,8 @@
 	x int NOT NULL,
 	name varchar(200) NOT NULL,
 	uri varchar(300) NULL,
-	CONSTRAINT text_node_pk PRIMARY KEY (id)
+	CONSTRAINT text_node_pk PRIMARY KEY (id),
+	CONSTRAINT text_node_fk FOREIGN KEY (parent_id) REFERENCES text_node(id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 CREATE TABLE text_node_property (
@@ -14,6 +15,7 @@ CREATE TABLE text_node_property (
 	node_id int4 NOT NULL,
 	"name" varchar NOT NULL,
 	value varchar NOT NULL,
+	"type" varchar(100) NULL,
 	CONSTRAINT text_node_property_pk PRIMARY KEY (id)
 );
 CREATE INDEX text_node_property_name_idx ON public.text_node_property USING btree (name);
