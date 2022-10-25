@@ -25,33 +25,17 @@ namespace Epicod.Scraper.Packhum
     /// books, and texts. Each text has as a text property the inscription's
     /// text.
     /// </summary>
-    public sealed class PackhumWebScraper : IWebScraper
+    public sealed class PackhumWebScraper : WebScraper, IWebScraper
     {
         public const string CORPUS = "packhum";
         private const string RANGE_ITEMS_PATH = "//li[contains(@class, \"range\")]";
 
-        private readonly ITextNodeWriter _writer;
         private readonly PackhumNoteParser _parser;
         private readonly ChromeDriver _driver;
         private readonly List<int> _rangeSteps;
         private readonly HashSet<string> _consumedRangePaths;
-        private string? _rootUri;
-        private CancellationToken _cancel;
-        private IProgress<ProgressReport>? _progress;
-        private ProgressReport? _report;
         private int _maxNodeId;
         private int _maxTextX;
-
-        #region Properties
-        /// <summary>
-        /// Gets or sets the delay in milliseconds after each AJAX request.
-        /// </summary>
-        public int Delay { get; set; }
-
-        /// <summary>
-        /// Gets or sets the page load timeout in seconds.
-        /// </summary>
-        public int Timeout { get; set; }
 
         /// <summary>
         /// Gets or sets the Google Chrome path.
@@ -59,40 +43,12 @@ namespace Epicod.Scraper.Packhum
         public string? ChromePath { get; set; }
 
         /// <summary>
-        /// Gets or sets a value indicating whether this scraper is in dry
-        /// run mode. When in this mode, no write to database occurs.
-        /// </summary>
-        public bool IsDry { get; set; }
-
-        /// <summary>
-        /// Gets or sets a value indicating whether text leaves scraping is
-        /// disabled. When this is true, the single text items links in the texts
-        /// page are not followed. This can be used for diagnostic purposes,
-        /// to speed up debugging when we are interested only in inspecting
-        /// how the scraper behaves in walking the site tree.
-        /// </summary>
-        public bool IsTextLeafScrapingDisabled { get; set; }
-
-        /// <summary>
-        /// Gets or sets the logger.
-        /// </summary>
-        public ILogger? Logger { get; set; }
-
-        /// <summary>
-        /// Gets or sets a value indicating whether this scraper should parse
-        /// the text note.
-        /// </summary>
-        public bool IsNoteParsingEnabled { get; set; }
-        #endregion
-
-        /// <summary>
         /// Initializes a new instance of the <see cref="PackhumWebScraper"/> class.
         /// </summary>
         /// <param name="writer">The writer.</param>
         /// <exception cref="ArgumentNullException">writer</exception>
-        public PackhumWebScraper(ITextNodeWriter writer)
+        public PackhumWebScraper(ITextNodeWriter writer) : base(writer)
         {
-            _writer = writer ?? throw new ArgumentNullException(nameof(writer));
             _parser = new PackhumNoteParser();
             _rangeSteps = new List<int>();
             _consumedRangePaths = new HashSet<string>();
@@ -109,14 +65,14 @@ namespace Epicod.Scraper.Packhum
         {
             string href = a.GetAttributeValue("href", null);
             Uri uri = new(href, UriKind.RelativeOrAbsolute);
-            return uri.IsAbsoluteUri ? uri.AbsoluteUri : uri.ToAbsolute(_rootUri!);
+            return uri.IsAbsoluteUri ? uri.AbsoluteUri : uri.ToAbsolute(RootUri!);
         }
 
         private void ReportProgressFor(TextNode node)
         {
-            if (_progress == null) return;
-            _report!.Message = new string('-', node.Y - 1) + node.Name;
-            _progress.Report(_report);
+            if (Progress == null) return;
+            Report!.Message = new string('-', node.Y - 1) + node.Name;
+            Progress.Report(Report);
         }
 
         private ChromeDriver GetChromeDriver()
@@ -177,7 +133,7 @@ namespace Epicod.Scraper.Packhum
                 ? string.Join(", ", properties.Select(p => p.Name))
                 : "-"));
 
-            if (!IsDry) _writer.Write(node, properties);
+            if (!IsDry) Writer.Write(node, properties);
         }
 
         #region Y=3 - texts
@@ -338,7 +294,7 @@ namespace Epicod.Scraper.Packhum
                     // if (Delay > 0) Thread.Sleep(Delay)
                     ScrapeText(client, node.Uri!, node);
                     ReportProgressFor(node);
-                    if (_cancel.IsCancellationRequested) break;
+                    if (Cancel.IsCancellationRequested) break;
                 }
             }
         }
@@ -482,7 +438,7 @@ namespace Epicod.Scraper.Packhum
                     Logger?.LogInformation("Resuming to next book");
                 }
 
-                if (_cancel.IsCancellationRequested) break;
+                if (Cancel.IsCancellationRequested) break;
             }
         }
         #endregion
@@ -515,7 +471,7 @@ namespace Epicod.Scraper.Packhum
 
                 ScrapeBooks(client, node.Uri!, node);
 
-                if (_cancel.IsCancellationRequested) break;
+                if (Cancel.IsCancellationRequested) break;
             }
         }
         #endregion
@@ -523,22 +479,12 @@ namespace Epicod.Scraper.Packhum
         /// <summary>
         /// Scrapes the specified root URI.
         /// </summary>
-        /// <param name="rootUri">The root URI.</param>
-        /// <param name="cancel">The cancel.</param>
-        /// <param name="progress">The progress.</param>
         /// <exception cref="ArgumentNullException">rootUrl</exception>
-        public Task ScrapeAsync(string rootUri,
-            CancellationToken cancel,
-            IProgress<ProgressReport>? progress = null)
+        protected override Task DoScrapeAsync()
         {
-            _rootUri = rootUri ?? throw new ArgumentNullException(nameof(rootUri));
-            _cancel = cancel;
-            _progress = progress;
-            _report = progress != null ? new ProgressReport() : null;
-
             using (WebClient client = new())
             {
-                ScrapeRegions(client, rootUri);
+                ScrapeRegions(client, RootUri!);
             }
             return Task.CompletedTask;
         }

@@ -71,7 +71,7 @@ Available regions are:
 - Umbria / Regio VI
 - Venetia et Histria / Regio X
 
-(A) level 1 (regions): TODO
+(A) level 1 (regions): at root (<https://db.edcs.eu/epigr/epitest.php>), collect each `//form[name='provinzen']/table/tbody//td/input@value`. Each of these values is the value of `p_provinz` in the form at step B.
 
 (B) level 2 (region's inscriptions): get to the page via a form POST to <https://db.edcs.eu/epigr/epitest.php>, filling the form parameters accordingly (`p_provinz`, `s_sprache`=`en`).
 
