@@ -1,22 +1,23 @@
-﻿using HtmlAgilityPack;
-using ScrapySharp.Extensions;
-using ScrapySharp.Network;
+﻿using ScrapySharp.Network;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using ScrapySharp.Html.Forms;
+using Epicod.Core;
 
 namespace Epicod.Scraper.Clauss
 {
     public sealed class ClaussWebScraper : WebScraper, IWebScraper
     {
         public const string CORPUS = "clauss";
+        private readonly ClaussParser _parser;
 
         public ClaussWebScraper(ITextNodeWriter writer) : base(writer)
         {
             Corpus = CORPUS;
+            _parser = new ClaussParser { Logger = Logger };
         }
 
         protected override async Task DoScrapeAsync()
@@ -31,16 +32,10 @@ namespace Epicod.Scraper.Clauss
             if (homePage == null) return;
 
             // scrape regions
-            List<string> regions = new();
-            foreach (HtmlNode node in homePage.Html.CssSelect(
-                "form[name='provinzen'] input"))
-            {
-                string id = node.GetAttributeValue("value");
-                if (!string.IsNullOrEmpty(id) && char.IsUpper(id[0]))
-                    regions.Add(id);
-            }
+            IList<string> regions = _parser.ParseRegions(homePage.Html);
 
-            // process each region
+            // for each region (in alphabetical order)
+            int x = 1;
             foreach (string region in regions.OrderBy(s => s))
             {
                 Logger?.LogInformation("[A] Region: " + region);
@@ -53,9 +48,32 @@ namespace Epicod.Scraper.Clauss
                 form["cmd_submit"] = "go";
                 form.Method = HttpVerb.Post;
 
+                // load region page
                 WebPage regionPage = form.Submit(
                     new Uri("https://db.edcs.eu/epigr/epitest_ergebnis.php"),
                     HttpVerb.Post);
+
+                // parse expected count
+                int expectedCount = _parser.ParseInscriptionCount(regionPage.Html);
+                Logger?.LogInformation($"Expected count: {expectedCount}");
+
+                // write region node
+                TextNode regionNode = new()
+                {
+                    Id = GetNextNodeId(),
+                    Corpus = CORPUS,
+                    Name = region,
+                    ParentId = 0,
+                    Y = 1,
+                    X = x++
+                };
+                WriteNode(regionNode, new List<TextNodeProperty>()
+                {
+                    new TextNodeProperty(regionNode.Id,
+                        "count",
+                        $"{expectedCount}",
+                        "integer")
+                });
 
                 // TODO
             }

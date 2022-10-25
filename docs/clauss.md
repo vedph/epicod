@@ -77,9 +77,9 @@ Available regions are:
 
 This gets a static web page structured as follows:
 
-- `//b` with text "inscriptions found: N": the count of inscriptions. This is read from the page for checking.
+- `//h3/p/b[starts-with(text(), 'inscriptions found')]`: the count of inscriptions. This is read from the page for checking. The number is found after `:` at the end of the text.
 
-- `body/p`: each inscription is in a paragraph.
+- `body/p` (except last, which contains a back "button" as an `img`): each inscription is in a paragraph.
 
 (C) level 3 (inscription): split the content of this `p` at each `br`. The result is metadata and text as follows:
 
