@@ -1,5 +1,7 @@
-﻿using Epicod.Scraper.Packhum;
+﻿using Epicod.Cli.Services;
+using Epicod.Scraper.Packhum;
 using Epicod.Scraper.Sql;
+using Fusi.Cli.Commands;
 using Fusi.DbManager;
 using Fusi.DbManager.PgSql;
 using Fusi.Tools;
@@ -14,53 +16,48 @@ using System.Threading.Tasks;
 
 namespace Epicod.Cli.Commands
 {
-    public sealed class ScrapePackhumCommand : ICommand
+    internal sealed class ScrapePackhumCommand : ICommand
     {
-        private readonly IConfiguration? _config;
-        private readonly ILogger? _logger;
         private readonly ScrapePackhumCommandOptions _options;
 
-        public ScrapePackhumCommand(ScrapePackhumCommandOptions options)
+        private ScrapePackhumCommand(ScrapePackhumCommandOptions options)
         {
-            _config = options.AppOptions?.Configuration;
-            _logger = options.AppOptions?.Logger;
             _options = options;
         }
 
-        public static void Configure(CommandLineApplication command,
-            AppOptions options)
+        public static void Configure(CommandLineApplication app,
+            ICliAppContext context)
         {
-            if (command == null)
-                throw new ArgumentNullException(nameof(command));
+            if (app == null) throw new ArgumentNullException(nameof(app));
 
-            command.Description = "Scrape Packhum into database";
-            command.HelpOption("-?|-h|--help");
+            app.Description = "Scrape Packhum into database";
+            app.HelpOption("-?|-h|--help");
 
-            CommandOption dbNameOption = command.Option("-d|--database",
+            CommandOption dbNameOption = app.Option("-d|--database",
                 "Database name",
                 CommandOptionType.SingleValue);
 
-            CommandOption preflightOption = command.Option("-p|--preflight",
+            CommandOption preflightOption = app.Option("-p|--preflight",
                 "Preflight mode -- dont' write data to DB",
                 CommandOptionType.NoValue);
 
-            CommandOption noTextOption = command.Option("-x|--no-text",
+            CommandOption noTextOption = app.Option("-x|--no-text",
                 "No texts -- don't follow single text items links",
                 CommandOptionType.NoValue);
 
-            CommandOption delayOption = command.Option("-l|--delay",
+            CommandOption delayOption = app.Option("-l|--delay",
                 "The delay between text requests in milliseconds (1500ms)",
                 CommandOptionType.SingleValue);
 
-            CommandOption timeoutOption = command.Option("-t|--timeout",
+            CommandOption timeoutOption = app.Option("-t|--timeout",
                 "The texts page load timeout in seconds (120s)",
                 CommandOptionType.SingleValue);
 
-            CommandOption noteParsingOption = command.Option("-n|--note",
+            CommandOption noteParsingOption = app.Option("-n|--note",
                 "Enable text note parsing",
                 CommandOptionType.NoValue);
 
-            command.OnExecute(() =>
+            app.OnExecute(() =>
             {
                 int delay = (delayOption.HasValue()
                     && int.TryParse(delayOption.Value(), out int d))
@@ -69,10 +66,9 @@ namespace Epicod.Cli.Commands
                     && int.TryParse(timeoutOption.Value(), out int t))
                     ? t : 2 * 60;
 
-                options.Command = new ScrapePackhumCommand(
-                    new ScrapePackhumCommandOptions
+                context.Command = new ScrapePackhumCommand(
+                    new ScrapePackhumCommandOptions(context)
                     {
-                        AppOptions = options,
                         DatabaseName = dbNameOption.Value() ?? "epicod",
                         IsDry = preflightOption.HasValue(),
                         IsTextLeafScrapingDisabled = noTextOption.HasValue(),
@@ -111,7 +107,7 @@ namespace Epicod.Cli.Commands
 
             // create database if not exists
             string connection = string.Format(CultureInfo.InvariantCulture,
-                _config.GetConnectionString("Default"),
+                _options.Context.Configuration!.GetConnectionString("Default"),
                 _options.DatabaseName);
 
             if (!_options.IsDry)
@@ -134,9 +130,9 @@ namespace Epicod.Cli.Commands
 
             PackhumWebScraper scraper = new(new SqlTextNodeWriter(connection))
             {
-                ChromePath = _config!.GetSection("Selenium")
+                ChromePath = _options.Configuration!.GetSection("Selenium")
                     .GetSection("ChromePath-" + OsHelper.GetCode()).Value,
-                Logger = _logger,
+                Logger = _options.Logger,
                 Delay = _options.Delay,
                 Timeout = _options.Timeout,
                 IsDry = _options.IsDry,
@@ -151,7 +147,7 @@ namespace Epicod.Cli.Commands
             }
             catch (Exception ex)
             {
-                _logger?.LogError(ex.ToString());
+                _options.Logger?.LogError(ex.ToString());
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine(ex.ToString());
                 Console.ResetColor();
@@ -159,9 +155,14 @@ namespace Epicod.Cli.Commands
         }
     }
 
-    public class ScrapePackhumCommandOptions
+    internal class ScrapePackhumCommandOptions :
+        CommandOptions<EpicodCliAppContext>
     {
-        public AppOptions? AppOptions { get; set; }
+        public ScrapePackhumCommandOptions(ICliAppContext options)
+            : base((EpicodCliAppContext)options)
+        {
+        }
+
         public string? DatabaseName { get; set; }
         public bool IsDry { get; set; }
         public bool IsTextLeafScrapingDisabled { get; set; }

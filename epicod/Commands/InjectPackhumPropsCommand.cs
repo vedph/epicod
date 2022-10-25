@@ -1,8 +1,9 @@
-﻿using Epicod.Scraper.Packhum;
+﻿using Epicod.Cli.Services;
+using Epicod.Scraper.Packhum;
+using Fusi.Cli.Commands;
 using Fusi.Tools;
 using Microsoft.Extensions.CommandLineUtils;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
 using ShellProgressBar;
 using System;
 using System.Globalization;
@@ -11,45 +12,40 @@ using System.Threading.Tasks;
 
 namespace Epicod.Cli.Commands
 {
-    public sealed class InjectPackhumPropsCommand : ICommand
+    internal sealed class InjectPackhumPropsCommand : ICommand
     {
-        private readonly IConfiguration? _config;
-        private readonly string? _dbName;
-        private readonly bool _preflight;
-        private readonly ILogger? _logger;
+        private readonly InjectPackhumPropsCommandOptions _options;
 
-        public InjectPackhumPropsCommand(AppOptions options, string dbName,
-            bool preflight)
+        private InjectPackhumPropsCommand(InjectPackhumPropsCommandOptions options)
         {
-            _config = options.Configuration;
-            _dbName = dbName ?? "epicod";
-            _preflight = preflight;
-            _logger = options.Logger;
+            _options = options;
         }
 
-        public static void Configure(CommandLineApplication command,
-            AppOptions options)
+        public static void Configure(CommandLineApplication app,
+            ICliAppContext context)
         {
-            if (command == null)
-                throw new ArgumentNullException(nameof(command));
+            if (app == null)
+                throw new ArgumentNullException(nameof(app));
 
-            command.Description = "Parse note from Packhum into database";
-            command.HelpOption("-?|-h|--help");
+            app.Description = "Parse note from Packhum into database";
+            app.HelpOption("-?|-h|--help");
 
-            CommandOption dbNameOption = command.Option("-d|--database",
+            CommandOption dbNameOption = app.Option("-d|--database",
                 "Database name",
                 CommandOptionType.SingleValue);
 
-            CommandOption preflightOption = command.Option("-p|--preflight",
+            CommandOption preflightOption = app.Option("-p|--preflight",
                 "Preflight mode -- dont' write data to DB",
                 CommandOptionType.NoValue);
 
-            command.OnExecute(() =>
+            app.OnExecute(() =>
             {
-                options.Command = new InjectPackhumPropsCommand(
-                    options,
-                    dbNameOption.Value(),
-                    preflightOption.HasValue());
+                context.Command = new InjectPackhumPropsCommand(
+                    new InjectPackhumPropsCommandOptions(context)
+                    {
+                        DatabaseName = dbNameOption.Value(),
+                        IsDry = preflightOption.HasValue()
+                    });
                 return 0;
             });
         }
@@ -60,12 +56,12 @@ namespace Epicod.Cli.Commands
             Console.WriteLine("\nINJECT PACKHUM PROPERTIES\n");
             Console.ResetColor();
             Console.WriteLine(
-                $"Database name: {_dbName}\n" +
-                $"Preflight: {_preflight}\n");
+                $"Database name: {_options.DatabaseName}\n" +
+                $"Preflight: {(_options.IsDry ? "yes" : "no")}\n");
 
             string connection = string.Format(CultureInfo.InvariantCulture,
-                _config.GetConnectionString("Default"),
-                _dbName);
+                _options.Configuration.GetConnectionString("Default"),
+                _options.DatabaseName);
 
             ProgressBar bar = new(100, null, new ProgressBarOptions
             {
@@ -80,5 +76,17 @@ namespace Epicod.Cli.Commands
 
             return Task.CompletedTask;
         }
+    }
+
+    internal class InjectPackhumPropsCommandOptions :
+        CommandOptions<EpicodCliAppContext>
+    {
+        public InjectPackhumPropsCommandOptions(ICliAppContext options)
+            : base((EpicodCliAppContext)options)
+        {
+        }
+
+        public string? DatabaseName { get; set; }
+        public bool IsDry { get; set; }
     }
 }

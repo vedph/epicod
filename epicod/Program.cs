@@ -1,5 +1,11 @@
-﻿using Serilog;
+﻿using Epicod.Cli.Commands;
+using Epicod.Cli.Services;
+using Fusi.Cli.Commands;
+using Microsoft.Extensions.CommandLineUtils;
+using Serilog;
+using Serilog.Extensions.Logging;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
@@ -28,14 +34,33 @@ namespace Epicod.Cli
         }
 #endif
 
+        private static EpicodCliAppContext? GetAppContext(string[] args)
+        {
+            return new CliAppContextBuilder<EpicodCliAppContext>(args)
+                .SetNames("Epicod", "Epicod CLI")
+                .SetLogger(new SerilogLoggerProvider(Log.Logger)
+                    .CreateLogger(nameof(Program)))
+                .SetDefaultConfiguration()
+                .SetCommands(new Dictionary<string,
+                    Action<CommandLineApplication, ICliAppContext>>
+                {
+                    ["create-db"] = CreateDbCommand.Configure,
+                    ["scrape-packhum"] = ScrapePackhumCommand.Configure,
+                    ["inject-packhum"] = InjectPackhumPropsCommand.Configure,
+                    ["dump-toc"] = DumpCorpusTocCommand.Configure,
+                })
+            .Build();
+        }
+
         public static int Main(string[] args)
         {
             try
             {
                 // https://github.com/serilog/serilog-sinks-file
                 string logFilePath = Path.Combine(
-                    Path.GetDirectoryName(Assembly.GetExecutingAssembly()?.Location) ?? "",
-                    "epicod-log.txt");
+                    Path.GetDirectoryName(
+                        Assembly.GetExecutingAssembly().Location) ?? "",
+                        "Epicod-log.txt");
                 Log.Logger = new LoggerConfiguration()
 #if DEBUG
                     .MinimumLevel.Debug()
@@ -45,26 +70,25 @@ namespace Epicod.Cli
                     .Enrich.FromLogContext()
                     .WriteTo.File(logFilePath, rollingInterval: RollingInterval.Day)
                     .CreateLogger();
-
 #if DEBUG
                 DeleteLogs();
 #endif
-
-                Console.OutputEncoding = Encoding.Unicode;
+                Console.OutputEncoding = Encoding.UTF8;
                 Stopwatch stopwatch = new();
                 stopwatch.Start();
 
                 Task.Run(async () =>
                 {
-                    AppOptions? options = AppOptions.Parse(args);
-                    if (options?.Command == null)
+                    EpicodCliAppContext? context = GetAppContext(args);
+
+                    if (context?.Command == null)
                     {
                         // RootCommand will have printed help
                         return 1;
                     }
 
                     Console.Clear();
-                    await options.Command.Run();
+                    await context.Command.Run();
                     return 0;
                 }).Wait();
 
@@ -76,8 +100,7 @@ namespace Epicod.Cli
                 stopwatch.Stop();
                 if (stopwatch.ElapsedMilliseconds > 1000)
                 {
-                    Console.WriteLine("\nTime: {0}d{1}h{2}'{3}\"",
-                        stopwatch.Elapsed.Days,
+                    Console.WriteLine("\nTime: {0}h{1}'{2}\"",
                         stopwatch.Elapsed.Hours,
                         stopwatch.Elapsed.Minutes,
                         stopwatch.Elapsed.Seconds);
