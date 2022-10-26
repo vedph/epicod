@@ -129,10 +129,10 @@ namespace Epicod.Cli.Commands
             };
             try
             {
-                scraper.ResetNextNodeId(_options.BaseNodeId - 1);
                 await scraper.ScrapeAsync("https://db.edcs.eu/epigr/epitest.php",
                     CancellationToken.None,
-                    new Progress<ProgressReport>(r => Console.WriteLine(r.Message)));
+                    new Progress<ProgressReport>(r => Console.WriteLine(r.Message)),
+                    _options.BaseNodeId - 1);
             }
             catch (Exception ex)
             {
