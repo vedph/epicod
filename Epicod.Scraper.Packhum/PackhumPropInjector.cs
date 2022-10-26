@@ -30,6 +30,7 @@ namespace Epicod.Scraper.Packhum
 
         private static void Clear(QueryFactory queryFactory)
         {
+            // TODO refactor
             queryFactory.Query(EpicodSchema.T_PROP)
                 .Join(EpicodSchema.T_NODE, $"{EpicodSchema.T_NODE}.id",
                     $"{EpicodSchema.T_PROP}.node_id")

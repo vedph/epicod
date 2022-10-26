@@ -53,12 +53,17 @@
         /// <summary>
         /// The date's (approximate) numeric value.
         /// </summary>
-        public const string DATE_VALUE = "date-val";
+        public const string DATE_VAL = "date-val";
 
         /// <summary>
         /// A documentary reference.
         /// </summary>
         public const string REFERENCE = "reference";
+
+        /// <summary>
+        /// The languages (ISO 639-3, space-delimited, sorted).
+        /// </summary>
+        public const string LANGUAGES = "languages";
 
         // data types
         public const string TYPE_INT = "integer";

@@ -265,7 +265,7 @@ namespace Epicod.Scraper.Packhum
 
                 double val = date.GetSortValue();
                 props.Add(new TextNodeProperty(nodeId,
-                    TextNodeProps.DATE_VALUE + suffix,
+                    TextNodeProps.DATE_VAL + suffix,
                     val.ToString(CultureInfo.InvariantCulture),
                     TextNodeProps.TYPE_INT));
 

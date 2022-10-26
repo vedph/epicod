@@ -1,4 +1,5 @@
-﻿using Epicod.Scraper.Sql;
+﻿using Epicod.Core;
+using Epicod.Scraper.Sql;
 using Fusi.Antiquity.Chronology;
 using Fusi.Tools;
 using Microsoft.Extensions.Logging;
@@ -34,7 +35,9 @@ namespace Epicod.Scraper.Clauss
             qf.Query(EpicodSchema.T_PROP + " AS tp")
               .Join(EpicodSchema.T_NODE + " AS tn", "tn.id", "tp.node_id")
               .Where("tn.corpus", ClaussWebScraper.CORPUS)
-              .WhereIn("tp.name", new[] {"date-val", "languages"})
+              .WhereLike("tp.name", $"{TextNodeProps.DATE_TXT}%")
+              .OrWhereLike("tp.name", $"{TextNodeProps.DATE_VAL}%")
+              .OrWhere("tp.name", TextNodeProps.LANGUAGES)
               .AsDelete();
         }
 
@@ -101,7 +104,11 @@ namespace Epicod.Scraper.Clauss
             foreach (int a in aYears)
             {
                 foreach (int b in bYears)
-                    dates.Add(HistoricalDate.Parse($"{a} -- {b}")!);
+                {
+                    dates.Add(HistoricalDate.Parse(a != b
+                        ? $"{a} -- {b}"
+                        : $"{a}")!);
+                }
             }
 
             return dates;
@@ -167,11 +174,11 @@ namespace Epicod.Scraper.Clauss
                         {
                             props.Add(new object[]
                             {
-                                oldId, "date-val", date.GetSortValue()
+                                oldId, TextNodeProps.DATE_VAL, date.GetSortValue()
                             });
                             props.Add(new object[]
                             {
-                                oldId, "date-txt", date.ToString()
+                                oldId, TextNodeProps.DATE_TXT, date.ToString()
                             });
                         }
                         if (!IsDry && props.Count > 0)
@@ -196,7 +203,8 @@ namespace Epicod.Scraper.Clauss
                     // languages provided by scanning text
                     case "text":
                         string langs = GetLanguages(row.value);
-                        props.Add(new object[] { id, "languages", langs });
+                        props.Add(
+                            new object[] { id, TextNodeProps.LANGUAGES, langs });
                         break;
                 }
 
@@ -212,15 +220,17 @@ namespace Epicod.Scraper.Clauss
             // save last pending data if any
             if (oldId > 0)
             {
+                int n = 0;
                 foreach (var date in BuildDates(a, b))
                 {
+                    n++;
                     props.Add(new object[]
                     {
-                                oldId, "date-val", date.GetSortValue()
+                        oldId, "date-val" + (n > 1? $"#{n}" : ""), date.GetSortValue()
                     });
                     props.Add(new object[]
                     {
-                                oldId, "date-txt", date.ToString()
+                        oldId, "date-txt" + (n > 1? $"#{n}" : ""), date.ToString()
                     });
                 }
                 if (!IsDry && props.Count > 0)

@@ -66,7 +66,7 @@ namespace Epicod.Scraper.Packhum.Test
                 p => p.Name == TextNodeProps.DATE_TXT && p.Value == "440 -- 410 BC"));
 
             Assert.NotNull(props.FirstOrDefault(
-                p => p.Name == TextNodeProps.DATE_VALUE && p.Value == "-425"));
+                p => p.Name == TextNodeProps.DATE_VAL && p.Value == "-425"));
         }
 
         [Fact]
@@ -95,7 +95,7 @@ namespace Epicod.Scraper.Packhum.Test
                 p => p.Name == TextNodeProps.DATE_TXT && p.Value == "440 -- 410 BC"));
 
             Assert.NotNull(props.FirstOrDefault(
-                p => p.Name == TextNodeProps.DATE_VALUE && p.Value == "-425"));
+                p => p.Name == TextNodeProps.DATE_VAL && p.Value == "-425"));
 
             Assert.NotNull(props.FirstOrDefault(
                 p => p.Name == TextNodeProps.REFERENCE && p.Value == "IG I² 87,f + 141,a, + 174"));
@@ -140,7 +140,7 @@ namespace Epicod.Scraper.Packhum.Test
 
             // date-val
             Assert.NotNull(props.FirstOrDefault(
-                p => p.Name == TextNodeProps.DATE_VALUE && p.Value == "-150"));
+                p => p.Name == TextNodeProps.DATE_VAL && p.Value == "-150"));
         }
 
         [Fact]
@@ -164,7 +164,7 @@ namespace Epicod.Scraper.Packhum.Test
 
             // date-val
             Assert.NotNull(props.FirstOrDefault(
-                p => p.Name == TextNodeProps.DATE_VALUE && p.Value == "-150"));
+                p => p.Name == TextNodeProps.DATE_VAL && p.Value == "-150"));
         }
 
         [Fact]
@@ -188,7 +188,7 @@ namespace Epicod.Scraper.Packhum.Test
 
             // date-val
             Assert.NotNull(props.FirstOrDefault(
-                p => p.Name == TextNodeProps.DATE_VALUE && p.Value == "-550"));
+                p => p.Name == TextNodeProps.DATE_VAL && p.Value == "-550"));
         }
 
         [Fact]
@@ -212,7 +212,7 @@ namespace Epicod.Scraper.Packhum.Test
 
             // date-val
             Assert.NotNull(props.FirstOrDefault(
-                p => p.Name == TextNodeProps.DATE_VALUE && p.Value == "-590"));
+                p => p.Name == TextNodeProps.DATE_VAL && p.Value == "-590"));
         }
 
         [Fact]
@@ -236,7 +236,7 @@ namespace Epicod.Scraper.Packhum.Test
 
             // date-val
             Assert.NotNull(props.FirstOrDefault(
-                p => p.Name == TextNodeProps.DATE_VALUE && p.Value == "-550"));
+                p => p.Name == TextNodeProps.DATE_VAL && p.Value == "-550"));
         }
 
         [Fact]
@@ -260,7 +260,7 @@ namespace Epicod.Scraper.Packhum.Test
 
             // date-val
             Assert.NotNull(props.FirstOrDefault(
-                p => p.Name == TextNodeProps.DATE_VALUE && p.Value == "-510"));
+                p => p.Name == TextNodeProps.DATE_VAL && p.Value == "-510"));
         }
 
         [Fact]
@@ -284,7 +284,7 @@ namespace Epicod.Scraper.Packhum.Test
 
             // date-val
             Assert.NotNull(props.FirstOrDefault(
-                p => p.Name == TextNodeProps.DATE_VALUE && p.Value == "-427"));
+                p => p.Name == TextNodeProps.DATE_VAL && p.Value == "-427"));
         }
 
         [Fact]
@@ -308,7 +308,7 @@ namespace Epicod.Scraper.Packhum.Test
 
             // date-val
             Assert.NotNull(props.FirstOrDefault(
-                p => p.Name == TextNodeProps.DATE_VALUE && p.Value == "-460"));
+                p => p.Name == TextNodeProps.DATE_VAL && p.Value == "-460"));
         }
 
         [Fact]
@@ -332,7 +332,7 @@ namespace Epicod.Scraper.Packhum.Test
 
             // date-val
             Assert.NotNull(props.FirstOrDefault(
-                p => p.Name == TextNodeProps.DATE_VALUE && p.Value == "-440"));
+                p => p.Name == TextNodeProps.DATE_VAL && p.Value == "-440"));
         }
 
         [Fact]
@@ -356,7 +356,7 @@ namespace Epicod.Scraper.Packhum.Test
 
             // date-val
             Assert.NotNull(props.FirstOrDefault(
-                p => p.Name == TextNodeProps.DATE_VALUE && p.Value == "-435"));
+                p => p.Name == TextNodeProps.DATE_VAL && p.Value == "-435"));
         }
 
         [Fact]
@@ -380,7 +380,7 @@ namespace Epicod.Scraper.Packhum.Test
 
             // date-val
             Assert.NotNull(props.FirstOrDefault(
-                p => p.Name == TextNodeProps.DATE_VALUE && p.Value == "435"));
+                p => p.Name == TextNodeProps.DATE_VAL && p.Value == "435"));
         }
 
         [Fact]
@@ -424,7 +424,7 @@ namespace Epicod.Scraper.Packhum.Test
 
             // date-val
             Assert.NotNull(props.FirstOrDefault(
-                p => p.Name == TextNodeProps.DATE_VALUE && p.Value == "-420"));
+                p => p.Name == TextNodeProps.DATE_VAL && p.Value == "-420"));
         }
 
         [Fact]
@@ -450,7 +450,7 @@ namespace Epicod.Scraper.Packhum.Test
 
             // date-val (fin. s. VI)
             Assert.NotNull(props.FirstOrDefault(
-                p => p.Name == TextNodeProps.DATE_VALUE && p.Value == "-510"));
+                p => p.Name == TextNodeProps.DATE_VAL && p.Value == "-510"));
 
             // date-txt#2 (init. s. V a.)
             Assert.NotNull(props.FirstOrDefault(
@@ -458,7 +458,7 @@ namespace Epicod.Scraper.Packhum.Test
 
             // date-val#2 (init. s. V a.)
             Assert.NotNull(props.FirstOrDefault(
-                p => p.Name == TextNodeProps.DATE_VALUE + "#2" && p.Value == "-490"));
+                p => p.Name == TextNodeProps.DATE_VAL + "#2" && p.Value == "-490"));
         }
 
         [Fact]
