@@ -48,6 +48,7 @@ namespace Epicod.Cli
                     ["scrape-packhum"] = ScrapePackhumCommand.Configure,
                     ["inject-packhum"] = InjectPackhumPropsCommand.Configure,
                     ["scrape-clauss"] = ScrapeClaussCommand.Configure,
+                    ["inject-clauss"] = InjectClaussPropsCommand.Configure,
                     ["dump-toc"] = DumpCorpusTocCommand.Configure,
                 })
             .Build();

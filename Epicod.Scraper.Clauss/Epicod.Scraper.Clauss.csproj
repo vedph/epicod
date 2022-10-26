@@ -8,11 +8,13 @@
 
   <ItemGroup>
     <PackageReference Include="ScrapySharp" Version="3.0.0" />
+	<PackageReference Include="Fusi.Antiquity" Version="2.0.0" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Epicod.Core\Epicod.Core.csproj" />
     <ProjectReference Include="..\Epicod.Scraper\Epicod.Scraper.csproj" />
+    <ProjectReference Include="..\Epicod.Sql\Epicod.Sql.csproj" />
   </ItemGroup>
 
 </Project>

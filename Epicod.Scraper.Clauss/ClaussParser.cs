@@ -128,7 +128,9 @@ namespace Epicod.Scraper.Clauss
                             {
                                 NodeId = nodeId,
                                 Name = "image",
-                                Value = m.Groups[1].Value
+                                Value = m.Groups[1].Value.StartsWith("http")
+                                    ? m.Groups[1].Value
+                                    : "https://db.edcs.eu/epigr/" + m.Groups[1].Value
                             });
                         }
                         else
@@ -219,7 +221,7 @@ namespace Epicod.Scraper.Clauss
             }
         }
 
-        private void UnwrapBInA(HtmlNode htmlNode)
+        private static void UnwrapBInA(HtmlNode htmlNode)
         {
             foreach (HtmlNode b in htmlNode.SelectNodes(".//a/b")?.ToArray()
                 ?? Array.Empty<HtmlNode>())

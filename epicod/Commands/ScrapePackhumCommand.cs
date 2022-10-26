@@ -103,7 +103,8 @@ namespace Epicod.Cli.Commands
                 $"Preflight: {_options.IsDry}\n" +
                 $"Delay: {_options.Delay}\n" +
                 $"Timeout: {_options.Timeout}\n" +
-                $"Note parsing: {(_options.IsNoteParsingEnabled? "yes":"no")}\n");
+                $"Note parsing: {(_options.IsNoteParsingEnabled? "yes":"no")}\n" +
+                $"Base node ID: {_options.BaseNodeId}\n");
 
             // check that Selenium driver for Chrome is present
             string path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
@@ -157,6 +158,7 @@ namespace Epicod.Cli.Commands
             };
             try
             {
+                scraper.ResetNextNodeId(_options.BaseNodeId - 1);
                 await scraper.ScrapeAsync("https://inscriptions.packhum.org/allregions",
                     CancellationToken.None,
                     new Progress<ProgressReport>(r => Console.WriteLine(r.Message)));

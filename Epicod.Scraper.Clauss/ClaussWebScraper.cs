@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using ScrapySharp.Html.Forms;
 using Epicod.Core;
 using System.Threading;
+using System.Diagnostics;
 
 namespace Epicod.Scraper.Clauss
 {
@@ -39,9 +40,10 @@ namespace Epicod.Scraper.Clauss
 
             // for each region (in alphabetical order)
             int x = 1;
+            TimeSpan ts = TimeSpan.FromSeconds(0);
             foreach (string region in regions.OrderBy(s => s))
             {
-                Logger?.LogInformation("[A] Region: " + region);
+                Logger?.LogInformation("[A] Region: {Region}", region);
                 if (Delay > 0) Thread.Sleep(Delay);
 
                 PageWebForm form = homePage.FindForm("epi");
@@ -53,13 +55,21 @@ namespace Epicod.Scraper.Clauss
                 form.Method = HttpVerb.Post;
 
                 // load region page
+                Logger?.LogInformation("{Now} Loading page...",
+                    DateTime.Now.ToString("HH:mm:ss"));
+                Stopwatch stopwatch = new();
+                stopwatch.Start();
                 WebPage regionPage = form.Submit(
                     new Uri("https://db.edcs.eu/epigr/epitest_ergebnis.php"),
                     HttpVerb.Post);
+                stopwatch.Stop();
+                ts += stopwatch.Elapsed;
+                Logger?.LogInformation("Page loaded in {Time}", stopwatch.Elapsed);
 
                 // parse expected count
                 int expectedCount = _parser.ParseInscriptionCount(regionPage.Html);
-                Logger?.LogInformation($"Expected count: {expectedCount}");
+                Logger?.LogInformation("Expected count: {ExpectedCount}",
+                    expectedCount);
 
                 // write region node
                 TextNode regionNode = new()
@@ -87,10 +97,13 @@ namespace Epicod.Scraper.Clauss
                     regionPage.Html, IsDry? null : Writer);
                 if (actualCount != expectedCount)
                 {
-                    Logger?.LogError($"Actual inscriptions count ({actualCount}) " +
-                        $"does not match expected count ({expectedCount})");
+                    Logger?.LogError("Actual inscriptions count ({ActualCount}) " +
+                        "does not match expected count ({ExpectedCount})",
+                        actualCount, expectedCount);
                 }
             }
+
+            Logger?.LogInformation("Total page load time: {Time}", ts);
         }
     }
 }

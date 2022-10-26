@@ -91,7 +91,8 @@ namespace Epicod.Cli.Commands
                 $"Database name: {_options.DatabaseName}\n" +
                 $"Preflight: {_options.IsDry}\n" +
                 $"Delay: {_options.Delay}\n" +
-                $"Timeout: {_options.Timeout}\n");
+                $"Timeout: {_options.Timeout}\n" +
+                $"Base node ID: {_options.BaseNodeId}\n");
 
             // create database if not exists
             string connection = string.Format(CultureInfo.InvariantCulture,
@@ -124,10 +125,11 @@ namespace Epicod.Cli.Commands
                 Logger = _options.Logger,
                 Delay = _options.Delay,
                 Timeout = _options.Timeout,
-                IsDry = _options.IsDry
+                IsDry = _options.IsDry,
             };
             try
             {
+                scraper.ResetNextNodeId(_options.BaseNodeId - 1);
                 await scraper.ScrapeAsync("https://db.edcs.eu/epigr/epitest.php",
                     CancellationToken.None,
                     new Progress<ProgressReport>(r => Console.WriteLine(r.Message)));

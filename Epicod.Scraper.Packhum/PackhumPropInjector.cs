@@ -14,7 +14,7 @@ namespace Epicod.Scraper.Packhum
     /// <summary>
     /// Packhum properties injector.
     /// </summary>
-    public sealed class PackhumPropInjector
+    public sealed class PackhumPropInjector : IPropInjector
     {
         private readonly string _connString;
 
@@ -50,12 +50,6 @@ namespace Epicod.Scraper.Packhum
             Clear(qf);
 
             PackhumNoteParser parser = new();
-            //string[] names = new[]
-            //{
-            //    "region", "location", "type", "layout",
-            //    "date-phi", "date-txt", "date-val", "date-nan",
-            //    "reference"
-            //};
             string[] cols = new[] { "node_id", "name", "value" };
 
             // get total
