@@ -1,5 +1,6 @@
 using HtmlAgilityPack;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Text;
 using Xunit;
@@ -43,6 +44,24 @@ namespace Epicod.Scraper.Clauss.Test
             int n = parser.ParseInscriptions(1, doc.DocumentNode, writer);
 
             Assert.Equal(64, n);
+        }
+
+        [Fact]
+        public void ParseInscriptionsBInA_Ok()
+        {
+            string html = LoadResourceText("BInA.html");
+            HtmlDocument doc = new();
+            doc.LoadHtml(html);
+            int id = 0;
+            ClaussParser parser = new(() => ++id);
+            RamTextNodeWriter writer = new();
+
+            int n = parser.ParseInscriptions(1, doc.DocumentNode, writer);
+
+            Assert.Equal(1, n);
+            Assert.Equal(2, writer.Properties[1].Count);
+            Assert.True(writer.Properties[1].Any(p => p.Name == "publication"));
+            Assert.True(writer.Properties[1].Any(p => p.Name == "image"));
         }
     }
 }

@@ -41,6 +41,10 @@ namespace Epicod.Cli.Commands
                 "Preflight mode -- dont' write data to DB",
                 CommandOptionType.NoValue);
 
+            CommandOption clearOption = app.Option("-c|--clear",
+                "Clear the target database before scraping",
+                CommandOptionType.NoValue);
+
             CommandOption noTextOption = app.Option("-x|--no-text",
                 "No texts -- don't follow single text items links",
                 CommandOptionType.NoValue);
@@ -75,6 +79,7 @@ namespace Epicod.Cli.Commands
                     {
                         DatabaseName = dbNameOption.Value() ?? "epicod",
                         IsDry = preflightOption.HasValue(),
+                        IsClearEnabled = clearOption.HasValue(),
                         IsTextLeafScrapingDisabled = noTextOption.HasValue(),
                         Delay = delay,
                         Timeout = timeout,
@@ -123,9 +128,12 @@ namespace Epicod.Cli.Commands
                 IDbManager manager = new PgSqlDbManager(connection);
                 if (manager.Exists(_options.DatabaseName!))
                 {
-                    Console.Write($"Clearing {_options.DatabaseName}...");
-                    manager.ClearDatabase(_options.DatabaseName!);
-                    Console.WriteLine(" done");
+                    if (_options.IsClearEnabled)
+                    {
+                        Console.Write($"Clearing {_options.DatabaseName}...");
+                        manager.ClearDatabase(_options.DatabaseName!);
+                        Console.WriteLine(" done");
+                    }
                 }
                 else
                 {
@@ -173,6 +181,7 @@ namespace Epicod.Cli.Commands
 
         public string? DatabaseName { get; set; }
         public bool IsDry { get; set; }
+        public bool IsClearEnabled { get; set; }
         public bool IsTextLeafScrapingDisabled { get; set; }
         public int Delay { get; set; }
         public int Timeout { get; set; }

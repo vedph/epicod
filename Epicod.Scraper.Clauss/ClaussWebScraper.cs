@@ -45,7 +45,7 @@ namespace Epicod.Scraper.Clauss
                 if (Delay > 0) Thread.Sleep(Delay);
 
                 PageWebForm form = homePage.FindForm("epi");
-                form["p_provinz"] = "Galatia";
+                form["p_provinz"] = region;
                 form["s_sprache"] = "en";
                 form["r_auswahl"] = "und";
                 form["r_sortierung"] = "Provinz";

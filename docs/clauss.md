@@ -95,6 +95,14 @@ AFAIK the `dating` metadatum is always followed by a `to` metadatum to represent
 <b>dating:</b> 121&nbsp;<b>to</b>122&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 ```
 
+### Metadatum: DOI
+
+Either text or `a` element with DOI as its text.
+
+```html
+DOI: <a href="https://doi.org/10.15581/012.26.004" target="_blank">10.15581/012.26.004</a>
+```
+
 ### Metadatum: publication
 
 Always at the start of each inscription. Followed either by a text sibling, or by `a`. In the latter case, the text is a comma delimited list, while `@href` links to a PHP script which gets as parameters `s_language` (`en`) and `bild` with `$` + image file names:

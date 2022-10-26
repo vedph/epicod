@@ -40,8 +40,10 @@ namespace Epicod.Scraper.Clauss
             _targetRegex = new Regex(@"\s+target=""_blank""", RegexOptions.Compiled);
             _aRegex = new Regex(@"<a\s+href=""([^""]+)"">([^<]+)</a>",
                 RegexOptions.Compiled);
-            _latRegex = new Regex("latitude=([-.0-9]+)", RegexOptions.Compiled);
-            _lonRegex = new Regex("longitude=([-.0-9]+)", RegexOptions.Compiled);
+            _latRegex = new Regex(@"latitude=\s*'\s*?([-.0-9]+)",
+                RegexOptions.Compiled);
+            _lonRegex = new Regex(@"longitude=\s*'\s*?([-.0-9]+)",
+                RegexOptions.Compiled);
             _btnRegex = new Regex(
                 @"<a\s+href=""(?:https://db.edcs.eu/epigr/)?partner.php.*?</a>",
                 RegexOptions.Compiled);
@@ -82,13 +84,25 @@ namespace Epicod.Scraper.Clauss
             return 0;
         }
 
+        private Tuple<double, double>? ParsePoint(string text)
+        {
+            Match lat = _latRegex.Match(text);
+            if (!lat.Success) return null;
+            Match lon = _lonRegex.Match(text);
+            if (!lon.Success) return null;
+
+            return Tuple.Create(
+                double.Parse(lon.Groups[1].Value, CultureInfo.InvariantCulture),
+                double.Parse(lat.Groups[1].Value, CultureInfo.InvariantCulture));
+        }
+
         private void ParseMetadatum(int nodeId, string label, string content,
             IList<TextNodeProperty> properties)
         {
             TextNodeProperty p = new()
             {
                 NodeId = nodeId,
-                Name = label
+                Name = label.ToLowerInvariant()
             };
             Match m;
             switch (p.Name)
@@ -98,7 +112,7 @@ namespace Epicod.Scraper.Clauss
                     content = _btnRegex.Replace(content, "").Trim();
                     if (!content.Contains('<'))
                     {
-                        p.Value = content;
+                        p.Value = _wsRegex.Replace(content, " ").Trim();
                         properties.Add(p);
                     }
                     else
@@ -119,9 +133,9 @@ namespace Epicod.Scraper.Clauss
                         }
                         else
                         {
-                            Logger?.LogError("Unexpected element in publication: "
-                                + content);
-                            p.Value = content;
+                            Logger?.LogError("Unexpected element in publication: {Content}",
+                                content);
+                            p.Value = _wsRegex.Replace(content, " ").Trim();
                             properties.Add(p);
                         }
                     }
@@ -130,7 +144,7 @@ namespace Epicod.Scraper.Clauss
                 case "place":
                     if (!content.Contains('<'))
                     {
-                        p.Value = content;
+                        p.Value = _wsRegex.Replace(content, " ").Trim();
                         properties.Add(p);
                     }
                     else
@@ -146,24 +160,29 @@ namespace Epicod.Scraper.Clauss
                             p.Value = m.Groups[2].Value;
                             properties.Add(p);
                             // extract lat and lon from href
-                            properties.Add(new TextNodeProperty
+                            var pt = ParsePoint(m.Groups[1].Value);
+                            if (pt == null)
                             {
-                                NodeId = nodeId,
-                                Name = "lat",
-                                Value = _latRegex.Match(m.Groups[1].Value).Groups[1].Value
-                            });
-                            properties.Add(new TextNodeProperty
+                                Logger?.LogError("Coordinates not found in {Href}",
+                                    m.Groups[1].Value);
+                            }
+                            else
                             {
-                                NodeId = nodeId,
-                                Name = "lon",
-                                Value = _lonRegex.Match(m.Groups[1].Value).Groups[1].Value
-                            });
+                                properties.Add(new TextNodeProperty
+                                {
+                                    NodeId = nodeId,
+                                    Name = "point",
+                                    Value = $"POINT({pt.Item1},{pt.Item2})",
+                                    Type = "point"
+                                });
+                            }
                         }
                         else
                         {
-                            Logger?.LogError("Unexpected element in place: "
-                                + content);
-                            p.Value = content;
+                            Logger?.LogError("Unexpected element in place: {Content}",
+                                content);
+                            p.Value = _wsRegex.Replace(content, " ").Trim();
+                            properties.Add(p);
                         }
                     }
                     break;
@@ -183,12 +202,29 @@ namespace Epicod.Scraper.Clauss
                     }
                     break;
 
-                default:
-                    if (content.IndexOf('<') > -1)
-                        Logger?.LogError($"Unexpected element in {p.Name}: " + content);
-                    p.Value = content;
+                case "comment":
+                    p.Value = _wsRegex.Replace(content, " ").Trim();
                     properties.Add(p);
                     break;
+
+                default:
+                    if (content.IndexOf('<') > -1)
+                    {
+                        Logger?.LogError("Unexpected element in {Name}: {Content}",
+                            p.Name, content);
+                    }
+                    p.Value = _wsRegex.Replace(content, " ").Trim();
+                    properties.Add(p);
+                    break;
+            }
+        }
+
+        private void UnwrapBInA(HtmlNode htmlNode)
+        {
+            foreach (HtmlNode b in htmlNode.SelectNodes(".//a/b")?.ToArray()
+                ?? Array.Empty<HtmlNode>())
+            {
+                b.ParentNode.ReplaceChild(HtmlNode.CreateNode(b.InnerHtml), b);
             }
         }
 
@@ -199,7 +235,8 @@ namespace Epicod.Scraper.Clauss
             ProgressReport? report = Progress != null
                 ? new ProgressReport() : null;
 
-            Logger?.LogInformation($"[B] Inscriptions (#{parentNodeId})");
+            Logger?.LogInformation("[B] Inscriptions (#{ParentNodeId})",
+                parentNodeId);
             int x = 0;
             List<TextNodeProperty> props = new();
 
@@ -207,6 +244,10 @@ namespace Epicod.Scraper.Clauss
             foreach (HtmlNode p in htmlNode.SelectNodes(
                 "html/body/p[position() < last()]"))
             {
+                // unwrap text from a/b as rarely a bold entry occurs inside a,
+                // but this b would disrupt metadata splitting
+                UnwrapBInA(p);
+
                 // extract its inner HTML and normalize it
                 string html = p.InnerHtml.Replace("&nbsp;", " ");
                 html = _wsRegex.Replace(html, " ").Trim();
@@ -221,37 +262,36 @@ namespace Epicod.Scraper.Clauss
                     ParentId = parentNodeId
                 };
 
+                // extract details if any (sometimes it is found inside p)
+                if (html.IndexOf("<details", StringComparison.Ordinal) > -1)
+                {
+                    Match m = _detailsRegex.Match(html);
+                    props.Add(new TextNodeProperty
+                    {
+                        NodeId = node.Id,
+                        Name = "details",
+                        Value = _wsRegex.Replace(m.Groups[1].Value, " ")
+                    });
+                    html = _detailsRegex.Replace(html, "");
+                }
+
                 // parse properties
                 foreach (string part in html.Split("<br>").Select(s => s.Trim()))
                 {
-                    // sometimes details is found inside p, so remove it if any
-                    string purgedPart = part;
-                    if (part.IndexOf("<details", StringComparison.Ordinal) > -1)
-                    {
-                        Match m = _detailsRegex.Match(part);
-                        props.Add(new TextNodeProperty
-                        {
-                            NodeId = node.Id,
-                            Name = "comment",
-                            Value = _wsRegex.Replace(m.Groups[1].Value, " ")
-                        });
-                        purgedPart = _detailsRegex.Replace(part, "");
-                    }
-
                     // text starts without tags
-                    if (!purgedPart.StartsWith("<", StringComparison.Ordinal))
+                    if (!part.StartsWith("<", StringComparison.Ordinal))
                     {
                         props.Add(new TextNodeProperty
                         {
                             NodeId = node.Id,
                             Name = "text",
-                            Value = purgedPart.Trim()
+                            Value = part.Trim()
                         });
                     }
                     // else metadata: <b>NAME:</b> VALUE...
                     else
                     {
-                        foreach (string meta in purgedPart.Split("<b>"))
+                        foreach (string meta in part.Split("<b>"))
                         {
                             Match m = _metaRegex.Match(meta);
                             if (m.Success)
@@ -271,7 +311,7 @@ namespace Epicod.Scraper.Clauss
                     props.Add(new TextNodeProperty
                     {
                         NodeId = node.Id,
-                        Name = "comment",
+                        Name = "details",
                         Value = _wsRegex.Replace(p.OuterHtml, " ")
                     });
                 }

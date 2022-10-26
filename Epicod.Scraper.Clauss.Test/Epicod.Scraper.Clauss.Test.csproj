@@ -9,10 +9,12 @@
 
   <ItemGroup>
     <None Remove="Assets\Achaia.html" />
+    <None Remove="Assets\BInA.html" />
   </ItemGroup>
 
   <ItemGroup>
     <EmbeddedResource Include="Assets\Achaia.html" />
+    <EmbeddedResource Include="Assets\BInA.html" />
   </ItemGroup>
 
   <ItemGroup>

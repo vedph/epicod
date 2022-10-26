@@ -40,6 +40,10 @@ namespace Epicod.Cli.Commands
                 "Preflight mode -- dont' write data to DB",
                 CommandOptionType.NoValue);
 
+            CommandOption clearOption = app.Option("-c|--clear",
+                "Clear the target database before scraping",
+                CommandOptionType.NoValue);
+
             CommandOption delayOption = app.Option("-l|--delay",
                 "The delay between text requests in milliseconds (1500ms)",
                 CommandOptionType.SingleValue);
@@ -66,6 +70,7 @@ namespace Epicod.Cli.Commands
                     {
                         DatabaseName = dbNameOption.Value() ?? "epicod",
                         IsDry = preflightOption.HasValue(),
+                        IsClearEnabled = clearOption.HasValue(),
                         Delay = delay,
                         Timeout = timeout,
                         BaseNodeId = baseNodeIdOption.HasValue()
@@ -98,9 +103,12 @@ namespace Epicod.Cli.Commands
                 IDbManager manager = new PgSqlDbManager(connection);
                 if (manager.Exists(_options.DatabaseName!))
                 {
-                    Console.Write($"Clearing {_options.DatabaseName}...");
-                    manager.ClearDatabase(_options.DatabaseName!);
-                    Console.WriteLine(" done");
+                    if (_options.IsClearEnabled)
+                    {
+                        Console.Write($"Clearing {_options.DatabaseName}...");
+                        manager.ClearDatabase(_options.DatabaseName!);
+                        Console.WriteLine(" done");
+                    }
                 }
                 else
                 {
@@ -126,7 +134,7 @@ namespace Epicod.Cli.Commands
             }
             catch (Exception ex)
             {
-                _options.Logger?.LogError(ex.ToString());
+                _options.Logger?.LogError(ex, "Scraping error");
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine(ex.ToString());
                 Console.ResetColor();
@@ -144,6 +152,7 @@ namespace Epicod.Cli.Commands
 
         public string? DatabaseName { get; set; }
         public bool IsDry { get; set; }
+        public bool IsClearEnabled { get; set; }
         public int Delay { get; set; }
         public int Timeout { get; set; }
         public int BaseNodeId { get; set; }
