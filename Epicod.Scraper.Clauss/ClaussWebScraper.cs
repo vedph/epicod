@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using ScrapySharp.Html.Forms;
 using Epicod.Core;
+using System.Threading;
 
 namespace Epicod.Scraper.Clauss
 {
@@ -17,7 +18,7 @@ namespace Epicod.Scraper.Clauss
         public ClaussWebScraper(ITextNodeWriter writer) : base(writer)
         {
             Corpus = CORPUS;
-            _parser = new ClaussParser { Logger = Logger };
+            _parser = new ClaussParser(GetNextNodeId) { Logger = Logger };
         }
 
         protected override async Task DoScrapeAsync()
@@ -32,13 +33,14 @@ namespace Epicod.Scraper.Clauss
             if (homePage == null) return;
 
             // scrape regions
-            IList<string> regions = _parser.ParseRegions(homePage.Html);
+            IList<string> regions = ClaussParser.ParseRegions(homePage.Html);
 
             // for each region (in alphabetical order)
             int x = 1;
             foreach (string region in regions.OrderBy(s => s))
             {
                 Logger?.LogInformation("[A] Region: " + region);
+                if (Delay > 0) Thread.Sleep(Delay);
 
                 PageWebForm form = homePage.FindForm("epi");
                 form["p_provinz"] = "Galatia";
@@ -75,7 +77,8 @@ namespace Epicod.Scraper.Clauss
                         "integer")
                 });
 
-                // TODO
+                // parse inscriptions in page
+                _parser.ParseInscriptions(regionNode.Id, regionPage.Html, Writer);
             }
         }
     }
