@@ -23,6 +23,8 @@ namespace Epicod.Scraper.Clauss
 
         protected override async Task DoScrapeAsync()
         {
+            _parser.Progress = Progress;
+
             // load root page
             ScrapingBrowser browser = new()
             {

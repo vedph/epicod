@@ -1,6 +1,6 @@
 # Clauss
 
-EDCS: Epigraphik-Datenbank Clauss.
+[EDCS: Epigraphik-Datenbank Clauss](https://db.edcs.eu/epigr/hinweise/hinweis-en.html).
 
 ## Scraper
 
@@ -85,7 +85,7 @@ This gets a static web page structured as follows:
 
 - for text, `br` is not followed by `b`, but directly by a text node. The text can be Latin, Greek, or a mix of the two.
 
-- metadata: in general their value is a text node preceded by a sibling `b` element with their name. See the following subsections for special metadata. Metadata names should be trimmed, the end `:` removed, and eventually split at `/`.
+- metadata: in general their value is a text node preceded by a sibling `b` element with their name. See the following subsections for special metadata. Metadata names should be trimmed, the end `:` removed, and eventually split at `/`. A comment can be found in a `details` element after the inscription's `p` element. Yet, sometimes the details element is found inside `p` (e.g. Galatia CIL 03, 06813 = D 01038 = AE 1888, 00090 = Gerion-2014-199).
 
 ### Metadatum: dating/to
 

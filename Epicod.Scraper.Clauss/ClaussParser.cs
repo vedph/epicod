@@ -1,4 +1,5 @@
 ﻿using Epicod.Core;
+using Fusi.Tools;
 using HtmlAgilityPack;
 using Microsoft.Extensions.Logging;
 using ScrapySharp.Extensions;
@@ -21,8 +22,11 @@ namespace Epicod.Scraper.Clauss
         private readonly Regex _latRegex;
         private readonly Regex _lonRegex;
         private readonly Regex _btnRegex;
+        private readonly Regex _detailsRegex;
 
         public ILogger? Logger { get; set; }
+
+        public IProgress<ProgressReport>? Progress { get; set; }
 
         public ClaussParser(Func<int> idGenerator)
         {
@@ -32,12 +36,16 @@ namespace Epicod.Scraper.Clauss
             _wsRegex = new Regex(@"\s+", RegexOptions.Compiled);
             _endDigitsRegex = new Regex(@"([0-9]+)\s*$",
                 RegexOptions.IgnoreCase | RegexOptions.Compiled);
-            _metaRegex = new Regex(@"^([^<:]+):?</b>(.*)");
+            _metaRegex = new Regex("^([^<:]+):?</b>(.*)");
             _targetRegex = new Regex(@"\s+target=""_blank""", RegexOptions.Compiled);
-            _aRegex = new Regex(@"<a\s+href=""([^""]+)"">([^<]+)</a>", RegexOptions.Compiled);
-            _latRegex = new Regex(@"latitude=([-.0-9]+)", RegexOptions.Compiled);
-            _lonRegex = new Regex(@"longitude=([-.0-9]+)", RegexOptions.Compiled);
-            _btnRegex = new Regex(@"<a\s+href=""https://db.edcs.eu/epigr/partner.php.*?</a>",
+            _aRegex = new Regex(@"<a\s+href=""([^""]+)"">([^<]+)</a>",
+                RegexOptions.Compiled);
+            _latRegex = new Regex("latitude=([-.0-9]+)", RegexOptions.Compiled);
+            _lonRegex = new Regex("longitude=([-.0-9]+)", RegexOptions.Compiled);
+            _btnRegex = new Regex(
+                @"<a\s+href=""(?:https://db.edcs.eu/epigr/)?partner.php.*?</a>",
+                RegexOptions.Compiled);
+            _detailsRegex = new Regex("<details[^>]*>(.*?)</details>",
                 RegexOptions.Compiled);
         }
 
@@ -74,11 +82,12 @@ namespace Epicod.Scraper.Clauss
             return 0;
         }
 
-        private void ParseMetadatum(string label, string content,
+        private void ParseMetadatum(int nodeId, string label, string content,
             IList<TextNodeProperty> properties)
         {
             TextNodeProperty p = new()
             {
+                NodeId = nodeId,
                 Name = label
             };
             Match m;
@@ -87,7 +96,7 @@ namespace Epicod.Scraper.Clauss
                 case "publication":
                     // purge from button
                     content = _btnRegex.Replace(content, "").Trim();
-                    if (content.IndexOf('<') == -1)
+                    if (!content.Contains('<'))
                     {
                         p.Value = content;
                         properties.Add(p);
@@ -103,6 +112,7 @@ namespace Epicod.Scraper.Clauss
                             properties.Add(p);
                             properties.Add(new TextNodeProperty
                             {
+                                NodeId = nodeId,
                                 Name = "image",
                                 Value = m.Groups[1].Value
                             });
@@ -118,7 +128,7 @@ namespace Epicod.Scraper.Clauss
                     break;
 
                 case "place":
-                    if (content.IndexOf('<') == -1)
+                    if (!content.Contains('<'))
                     {
                         p.Value = content;
                         properties.Add(p);
@@ -138,11 +148,13 @@ namespace Epicod.Scraper.Clauss
                             // extract lat and lon from href
                             properties.Add(new TextNodeProperty
                             {
+                                NodeId = nodeId,
                                 Name = "lat",
                                 Value = _latRegex.Match(m.Groups[1].Value).Groups[1].Value
                             });
                             properties.Add(new TextNodeProperty
                             {
+                                NodeId = nodeId,
                                 Name = "lon",
                                 Value = _lonRegex.Match(m.Groups[1].Value).Groups[1].Value
                             });
@@ -164,6 +176,7 @@ namespace Epicod.Scraper.Clauss
                     {
                         properties.Add(new TextNodeProperty
                         {
+                            NodeId = nodeId,
                             Name = "tag",
                             Value = tag
                         });
@@ -183,6 +196,8 @@ namespace Epicod.Scraper.Clauss
             ITextNodeWriter? writer = null)
         {
             if (htmlNode is null) throw new ArgumentNullException(nameof(htmlNode));
+            ProgressReport? report = Progress != null
+                ? new ProgressReport() : null;
 
             Logger?.LogInformation($"[B] Inscriptions (#{parentNodeId})");
             int x = 0;
@@ -209,24 +224,40 @@ namespace Epicod.Scraper.Clauss
                 // parse properties
                 foreach (string part in html.Split("<br>").Select(s => s.Trim()))
                 {
+                    // sometimes details is found inside p, so remove it if any
+                    string purgedPart = part;
+                    if (part.IndexOf("<details", StringComparison.Ordinal) > -1)
+                    {
+                        Match m = _detailsRegex.Match(part);
+                        props.Add(new TextNodeProperty
+                        {
+                            NodeId = node.Id,
+                            Name = "comment",
+                            Value = _wsRegex.Replace(m.Groups[1].Value, " ")
+                        });
+                        purgedPart = _detailsRegex.Replace(part, "");
+                    }
+
                     // text starts without tags
-                    if (!part.StartsWith("<", StringComparison.Ordinal))
+                    if (!purgedPart.StartsWith("<", StringComparison.Ordinal))
                     {
                         props.Add(new TextNodeProperty
                         {
+                            NodeId = node.Id,
                             Name = "text",
-                            Value = part.Trim()
+                            Value = purgedPart.Trim()
                         });
                     }
                     // else metadata: <b>NAME:</b> VALUE...
                     else
                     {
-                        foreach (string meta in part.Split("<b>"))
+                        foreach (string meta in purgedPart.Split("<b>"))
                         {
                             Match m = _metaRegex.Match(meta);
                             if (m.Success)
                             {
-                                ParseMetadatum(m.Groups[1].Value.Trim(),
+                                ParseMetadatum(node.Id,
+                                    m.Groups[1].Value.Trim(),
                                     m.Groups[2].Value.Trim(),
                                     props);
                             }
@@ -234,8 +265,26 @@ namespace Epicod.Scraper.Clauss
                     }
                 }
 
+                // details after p
+                if (p.NextSibling.Name == "details")
+                {
+                    props.Add(new TextNodeProperty
+                    {
+                        NodeId = node.Id,
+                        Name = "comment",
+                        Value = _wsRegex.Replace(p.OuterHtml, " ")
+                    });
+                }
+
                 // write node
                 node.Name = props.Find(p => p.Name == "publication")?.Value ?? "";
+
+                if (Progress != null)
+                {
+                    report!.Message = node.ToString();
+                    Progress.Report(report);
+                }
+
                 writer?.Write(node, props.ToArray());
 
                 props.Clear();
