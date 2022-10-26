@@ -1,6 +1,7 @@
 ﻿using Epicod.Core;
 using Epicod.Scraper.Sql;
 using Fusi.Tools;
+using Microsoft.Extensions.Logging;
 using Npgsql;
 using SqlKata.Compilers;
 using SqlKata.Execution;
@@ -17,6 +18,9 @@ namespace Epicod.Scraper.Packhum
     public sealed class PackhumPropInjector : IPropInjector
     {
         private readonly string _connString;
+
+        public bool IsDry { get; set; }
+        public ILogger? Logger { get; set; }
 
         public PackhumPropInjector(string connString)
         {
@@ -47,7 +51,7 @@ namespace Epicod.Scraper.Packhum
                 new PostgresCompiler());
 
             // clear
-            Clear(qf);
+            if (!IsDry) Clear(qf);
 
             PackhumNoteParser parser = new();
             string[] cols = new[] { "node_id", "name", "value" };
@@ -80,7 +84,7 @@ namespace Epicod.Scraper.Packhum
                 var data = props.Select(
                     p => new object[] { item.NodeId, p.Name ?? "", p.Value ?? "" })
                     .ToArray();
-                qf.Query(EpicodSchema.T_PROP).Insert(cols, data);
+                if (!IsDry) qf.Query(EpicodSchema.T_PROP).Insert(cols, data);
 
                 if (progress != null && ++count % 10 == 0)
                 {

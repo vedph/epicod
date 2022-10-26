@@ -1,13 +1,13 @@
 ﻿using Epicod.Scraper.Sql;
 using Fusi.Antiquity.Chronology;
 using Fusi.Tools;
+using Microsoft.Extensions.Logging;
 using Npgsql;
 using SqlKata;
 using SqlKata.Compilers;
 using SqlKata.Execution;
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -18,6 +18,9 @@ namespace Epicod.Scraper.Clauss
     {
         private readonly string _connString;
         private readonly Regex _grRegex;
+
+        public bool IsDry { get; set; }
+        public ILogger? Logger { get; set; }
 
         public ClaussPropInjector(string connString)
         {
@@ -40,20 +43,68 @@ namespace Epicod.Scraper.Clauss
             return (c > 0x36F && c < 0x400) || (c > 0x1EFF && c < 0x2000);
         }
 
-        private HistoricalDate? BuildDate(string? dating, string? to)
+        private IList<int> ParseYear(string? text)
         {
-            int a = string.IsNullOrEmpty(dating) ?
-                0 : int.Parse(dating, CultureInfo.InvariantCulture);
-            int b = string.IsNullOrEmpty(to) ?
-                0 : int.Parse(to, CultureInfo.InvariantCulture);
+            if (string.IsNullOrEmpty(text)) return Array.Empty<int>();
 
-            if (a == 0 && b == 0) return null;
-            if (a == 0) return HistoricalDate.Parse($"-- {b}");
-            if (b == 0) return HistoricalDate.Parse($"{a} --");
+            if (text.Contains(';'))
+            {
+                List<int> years = new();
+                foreach (string year in text.Split(';',
+                    StringSplitOptions.RemoveEmptyEntries))
+                {
+                    if (!int.TryParse(year, out int n))
+                    {
+                        Logger?.LogError("Invalid dating value: {Value}", year);
+                    }
+                    else years.Add(n);
+                }
+                return years;
+            }
+            else
+            {
+                if (!int.TryParse(text, out int n))
+                {
+                    Logger?.LogError("Invalid dating value: {Value}", text);
+                    return Array.Empty<int>();
+                }
+                else return new[] { n };
+            }
+        }
 
-            return HistoricalDate.Parse(a == b
-                ? $"{a}"
-                : $"{a} -- {b}");
+        private IList<HistoricalDate> BuildDates(string? dating, string? to)
+        {
+            IList<int> aYears = ParseYear(dating);
+            IList<int> bYears = ParseYear(to);
+
+            // not a nor b
+            if (aYears.Count == 0 && bYears.Count == 0)
+                return Array.Empty<HistoricalDate>();
+
+            List<HistoricalDate> dates = new();
+
+            // not a but b
+            if (aYears.Count == 0)
+            {
+                foreach (int b in bYears)
+                    dates.Add(HistoricalDate.Parse($"-- {b}")!);
+            }
+
+            // not b but a
+            if (bYears.Count == 0)
+            {
+                foreach (int a in aYears)
+                    dates.Add(HistoricalDate.Parse($"-- {a}")!);
+            }
+
+            // both a and b
+            foreach (int a in aYears)
+            {
+                foreach (int b in bYears)
+                    dates.Add(HistoricalDate.Parse($"{a} -- {b}")!);
+            }
+
+            return dates;
         }
 
         private string GetLanguages(string text)
@@ -77,7 +128,7 @@ namespace Epicod.Scraper.Clauss
                 new NpgsqlConnection(_connString),
                 new PostgresCompiler());
 
-            Clear(qf);
+            if (!IsDry) Clear(qf);
             string[] cols = new[] { "node_id", "name", "value" };
 
             int count = 0, injected = 0;
@@ -102,33 +153,52 @@ namespace Epicod.Scraper.Clauss
             string? a = null, b = null;
 
             // for each node
+            int oldId = 0;
             foreach (var row in query.Get())
             {
-                int id = row[0];
-                switch (row[1] as string)
+                int id = row.id;
+
+                // whenever the node changes, save its properties if any
+                if (oldId != id)
+                {
+                    if (oldId > 0)
+                    {
+                        foreach (var date in BuildDates(a, b))
+                        {
+                            props.Add(new object[]
+                            {
+                                oldId, "date-val", date.GetSortValue()
+                            });
+                            props.Add(new object[]
+                            {
+                                oldId, "date-txt", date.ToString()
+                            });
+                        }
+                        if (!IsDry && props.Count > 0)
+                        {
+                            qf.Query(EpicodSchema.T_PROP).Insert(cols, props);
+                            injected += props.Count;
+                        }
+                    }
+                    props.Clear();
+                    oldId = id;
+                }
+
+                switch (row.name)
                 {
                     // dating and to are joined into date-val
                     case "dating":
-                        a = row[2];
+                        a = row.value;
                         break;
                     case "to":
-                        b = row[2];
+                        b = row.value;
                         break;
                     // languages provided by scanning text
                     case "text":
-                        string langs = GetLanguages(row[2]);
+                        string langs = GetLanguages(row.value);
                         props.Add(new object[] { id, "languages", langs });
                         break;
                 }
-
-                HistoricalDate? date = BuildDate(a, b);
-                if (date is not null)
-                {
-                    props.Add(new object[] { id, "date-val", date.GetSortValue() });
-                    props.Add(new object[] { id, "date-txt", date.ToString() });
-                }
-                qf.Query(EpicodSchema.T_PROP).Insert(cols, props);
-                injected += props.Count;
 
                 if (progress != null && ++count % 10 == 0)
                 {
@@ -139,6 +209,28 @@ namespace Epicod.Scraper.Clauss
                 if (cancel.IsCancellationRequested) break;
             }
 
+            // save last pending data if any
+            if (oldId > 0)
+            {
+                foreach (var date in BuildDates(a, b))
+                {
+                    props.Add(new object[]
+                    {
+                                oldId, "date-val", date.GetSortValue()
+                    });
+                    props.Add(new object[]
+                    {
+                                oldId, "date-txt", date.ToString()
+                    });
+                }
+                if (!IsDry && props.Count > 0)
+                {
+                    qf.Query(EpicodSchema.T_PROP).Insert(cols, props);
+                    injected += props.Count;
+                }
+            }
+
+            // completed
             if (progress != null)
             {
                 report!.Percent = 100;

@@ -23,6 +23,7 @@ namespace Epicod.Scraper.Clauss
         private readonly Regex _lonRegex;
         private readonly Regex _btnRegex;
         private readonly Regex _detailsRegex;
+        private readonly Regex _yearRegex;
 
         public ILogger? Logger { get; set; }
 
@@ -49,6 +50,7 @@ namespace Epicod.Scraper.Clauss
                 RegexOptions.Compiled);
             _detailsRegex = new Regex("<details[^>]*>(.*?)</details>",
                 RegexOptions.Compiled);
+            _yearRegex = new Regex(@"-?\d+", RegexOptions.Compiled);
         }
 
         public static IList<string> ParseRegions(HtmlNode htmlNode)

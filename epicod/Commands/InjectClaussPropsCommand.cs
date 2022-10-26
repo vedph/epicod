@@ -43,7 +43,7 @@ namespace Epicod.Cli.Commands
                 context.Command = new InjectClaussPropsCommand(
                     new InjectClaussPropsCommandOptions(context)
                     {
-                        DatabaseName = dbNameOption.Value(),
+                        DatabaseName = dbNameOption.Value() ?? "epicod",
                         IsDry = preflightOption.HasValue()
                     });
                 return 0;
@@ -70,7 +70,11 @@ namespace Epicod.Cli.Commands
                 CollapseWhenFinished = true
             });
 
-            ClaussPropInjector injector = new(connection);
+            ClaussPropInjector injector = new(connection)
+            {
+                IsDry = _options.IsDry,
+                Logger = _options.Logger
+            };
             injector.Inject(CancellationToken.None,
                 new Progress<ProgressReport>(report => bar.Tick(report.Percent)));
 
@@ -84,9 +88,10 @@ namespace Epicod.Cli.Commands
         public InjectClaussPropsCommandOptions(ICliAppContext options)
             : base((EpicodCliAppContext)options)
         {
+            DatabaseName = "epicod";
         }
 
-        public string? DatabaseName { get; set; }
+        public string DatabaseName { get; set; }
         public bool IsDry { get; set; }
     }
 }
