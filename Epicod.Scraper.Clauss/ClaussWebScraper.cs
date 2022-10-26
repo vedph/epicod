@@ -69,16 +69,25 @@ namespace Epicod.Scraper.Clauss
                     Y = 1,
                     X = x++
                 };
-                WriteNode(regionNode, new List<TextNodeProperty>()
+                if (!IsDry)
                 {
-                    new TextNodeProperty(regionNode.Id,
-                        "count",
-                        $"{expectedCount}",
-                        "integer")
-                });
+                    WriteNode(regionNode, new List<TextNodeProperty>()
+                    {
+                        new TextNodeProperty(regionNode.Id,
+                            "count",
+                            $"{expectedCount}",
+                            "integer")
+                    });
+                }
 
                 // parse inscriptions in page
-                _parser.ParseInscriptions(regionNode.Id, regionPage.Html, Writer);
+                int actualCount = _parser.ParseInscriptions(regionNode.Id,
+                    regionPage.Html, IsDry? null : Writer);
+                if (actualCount != expectedCount)
+                {
+                    Logger?.LogError($"Actual inscriptions count ({actualCount}) " +
+                        $"does not match expected count ({expectedCount})");
+                }
             }
         }
     }

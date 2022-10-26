@@ -65,21 +65,6 @@ namespace Epicod.Scraper
         public bool IsDry { get; set; }
 
         /// <summary>
-        /// Gets or sets a value indicating whether text leaves scraping is
-        /// disabled. When this is true, the single text items links in the texts
-        /// page are not followed. This can be used for diagnostic purposes,
-        /// to speed up debugging when we are interested only in inspecting
-        /// how the scraper behaves in walking the site tree.
-        /// </summary>
-        public bool IsTextLeafScrapingDisabled { get; set; }
-
-        /// <summary>
-        /// Gets or sets a value indicating whether note parsing is enabled
-        /// while scraping.
-        /// </summary>
-        public bool IsNoteParsingEnabled { get; set; }
-
-        /// <summary>
         /// Gets or sets the logger.
         /// </summary>
         public ILogger? Logger { get; set; }

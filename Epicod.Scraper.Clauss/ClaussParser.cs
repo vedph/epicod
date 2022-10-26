@@ -16,9 +16,11 @@ namespace Epicod.Scraper.Clauss
         private readonly Regex _wsRegex;
         private readonly Regex _endDigitsRegex;
         private readonly Regex _metaRegex;
+        private readonly Regex _targetRegex;
         private readonly Regex _aRegex;
         private readonly Regex _latRegex;
         private readonly Regex _lonRegex;
+        private readonly Regex _btnRegex;
 
         public ILogger? Logger { get; set; }
 
@@ -30,10 +32,13 @@ namespace Epicod.Scraper.Clauss
             _wsRegex = new Regex(@"\s+", RegexOptions.Compiled);
             _endDigitsRegex = new Regex(@"([0-9]+)\s*$",
                 RegexOptions.IgnoreCase | RegexOptions.Compiled);
-            _metaRegex = new Regex(@"^([^<:]+):?</b>([^<]+)");
-            _aRegex = new Regex(@"<a\s+href=""([^""]+)"">([^<]+)</a>");
-            _latRegex = new Regex(@"latitude=([-.0-9]+)");
-            _lonRegex = new Regex(@"longitude=([-.0-9]+)");
+            _metaRegex = new Regex(@"^([^<:]+):?</b>(.*)");
+            _targetRegex = new Regex(@"\s+target=""_blank""", RegexOptions.Compiled);
+            _aRegex = new Regex(@"<a\s+href=""([^""]+)"">([^<]+)</a>", RegexOptions.Compiled);
+            _latRegex = new Regex(@"latitude=([-.0-9]+)", RegexOptions.Compiled);
+            _lonRegex = new Regex(@"longitude=([-.0-9]+)", RegexOptions.Compiled);
+            _btnRegex = new Regex(@"<a\s+href=""https://db.edcs.eu/epigr/partner.php.*?</a>",
+                RegexOptions.Compiled);
         }
 
         public static IList<string> ParseRegions(HtmlNode htmlNode)
@@ -76,18 +81,26 @@ namespace Epicod.Scraper.Clauss
             {
                 Name = label
             };
-            if (content.IndexOf('<') == -1) p.Value = content;
-            else
+            Match m;
+            switch (p.Name)
             {
-                Match m;
-                switch (p.Name)
-                {
-                    case "publication":
+                case "publication":
+                    // purge from button
+                    content = _btnRegex.Replace(content, "").Trim();
+                    if (content.IndexOf('<') == -1)
+                    {
+                        p.Value = content;
+                        properties.Add(p);
+                    }
+                    else
+                    {
                         // <a href="image-link-via-script">csv list</a>
+                        content = _targetRegex.Replace(content, "");
                         m = _aRegex.Match(content);
                         if (m.Success)
                         {
                             p.Value = m.Groups[2].Value;
+                            properties.Add(p);
                             properties.Add(new TextNodeProperty
                             {
                                 Name = "image",
@@ -99,18 +112,29 @@ namespace Epicod.Scraper.Clauss
                             Logger?.LogError("Unexpected element in publication: "
                                 + content);
                             p.Value = content;
+                            properties.Add(p);
                         }
-                        break;
+                    }
+                    break;
 
-                    case "place":
+                case "place":
+                    if (content.IndexOf('<') == -1)
+                    {
+                        p.Value = content;
+                        properties.Add(p);
+                    }
+                    else
+                    {
                         // script, a, noscript: just extract from first <a>
                         // the place name and its lat/lon from href
+                        content = _targetRegex.Replace(content, "");
                         m = _aRegex.Match(content);
                         if (m.Success)
                         {
                             // rename place as location
                             p.Name = "location";
                             p.Value = m.Groups[2].Value;
+                            properties.Add(p);
                             // extract lat and lon from href
                             properties.Add(new TextNodeProperty
                             {
@@ -129,39 +153,38 @@ namespace Epicod.Scraper.Clauss
                                 + content);
                             p.Value = content;
                         }
-                        break;
+                    }
+                    break;
 
-                    case "inscription genus / personal status":
-                        // tags, semicolon delimited
-                        foreach (string tag in content.Split(';',
-                            StringSplitOptions.RemoveEmptyEntries)
-                            .Select(s => s.Trim()).Where(s => s.Length > 0))
+                case "inscription genus / personal status":
+                    // tags, semicolon delimited
+                    foreach (string tag in content.Split(';',
+                        StringSplitOptions.RemoveEmptyEntries)
+                        .Select(s => s.Trim()).Where(s => s.Length > 0))
+                    {
+                        properties.Add(new TextNodeProperty
                         {
-                            properties.Add(new TextNodeProperty
-                            {
-                                Name = "tag",
-                                Value = tag
-                            });
-                        }
-                        break;
+                            Name = "tag",
+                            Value = tag
+                        });
+                    }
+                    break;
 
-                    default:
-                        Logger?.LogError($"Unexpected element in {p.Name}: "
-                            + content);
-                        p.Value = content;
-                        break;
-                }
+                default:
+                    if (content.IndexOf('<') > -1)
+                        Logger?.LogError($"Unexpected element in {p.Name}: " + content);
+                    p.Value = content;
+                    properties.Add(p);
+                    break;
             }
-
-            properties.Add(p);
         }
 
         public int ParseInscriptions(int parentNodeId, HtmlNode htmlNode,
-            ITextNodeWriter writer)
+            ITextNodeWriter? writer = null)
         {
             if (htmlNode is null) throw new ArgumentNullException(nameof(htmlNode));
-            if (writer is null) throw new ArgumentNullException(nameof(writer));
 
+            Logger?.LogInformation($"[B] Inscriptions (#{parentNodeId})");
             int x = 0;
             List<TextNodeProperty> props = new();
 
@@ -212,9 +235,8 @@ namespace Epicod.Scraper.Clauss
                 }
 
                 // write node
-                node.Name = props.FirstOrDefault(
-                    p => p.Name == "publication")?.Value ?? "";
-                writer.Write(node, props.ToArray());
+                node.Name = props.Find(p => p.Name == "publication")?.Value ?? "";
+                writer?.Write(node, props.ToArray());
 
                 props.Clear();
             }

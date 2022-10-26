@@ -40,10 +40,6 @@ namespace Epicod.Cli.Commands
                 "Preflight mode -- dont' write data to DB",
                 CommandOptionType.NoValue);
 
-            CommandOption noTextOption = app.Option("-x|--no-text",
-                "No texts -- don't follow single text items links",
-                CommandOptionType.NoValue);
-
             CommandOption delayOption = app.Option("-l|--delay",
                 "The delay between text requests in milliseconds (1500ms)",
                 CommandOptionType.SingleValue);
@@ -51,10 +47,6 @@ namespace Epicod.Cli.Commands
             CommandOption timeoutOption = app.Option("-t|--timeout",
                 "The texts page load timeout in seconds (120s)",
                 CommandOptionType.SingleValue);
-
-            CommandOption noteParsingOption = app.Option("-n|--note",
-                "Enable text note parsing",
-                CommandOptionType.NoValue);
 
             CommandOption baseNodeIdOption = app.Option("-i|--id",
                 "Set the base node ID value (default=0)",
@@ -74,10 +66,8 @@ namespace Epicod.Cli.Commands
                     {
                         DatabaseName = dbNameOption.Value() ?? "epicod",
                         IsDry = preflightOption.HasValue(),
-                        IsTextLeafScrapingDisabled = noTextOption.HasValue(),
                         Delay = delay,
                         Timeout = timeout,
-                        IsNoteParsingEnabled = noteParsingOption.HasValue(),
                         BaseNodeId = baseNodeIdOption.HasValue()
                             ? int.Parse(baseNodeIdOption.Value(),
                                 CultureInfo.InvariantCulture)
@@ -96,8 +86,7 @@ namespace Epicod.Cli.Commands
                 $"Database name: {_options.DatabaseName}\n" +
                 $"Preflight: {_options.IsDry}\n" +
                 $"Delay: {_options.Delay}\n" +
-                $"Timeout: {_options.Timeout}\n" +
-                $"Note parsing: {(_options.IsNoteParsingEnabled ? "yes" : "no")}\n");
+                $"Timeout: {_options.Timeout}\n");
 
             // create database if not exists
             string connection = string.Format(CultureInfo.InvariantCulture,
@@ -127,9 +116,7 @@ namespace Epicod.Cli.Commands
                 Logger = _options.Logger,
                 Delay = _options.Delay,
                 Timeout = _options.Timeout,
-                IsDry = _options.IsDry,
-                IsTextLeafScrapingDisabled = _options.IsTextLeafScrapingDisabled,
-                IsNoteParsingEnabled = _options.IsNoteParsingEnabled
+                IsDry = _options.IsDry
             };
             try
             {
@@ -157,10 +144,8 @@ namespace Epicod.Cli.Commands
 
         public string? DatabaseName { get; set; }
         public bool IsDry { get; set; }
-        public bool IsTextLeafScrapingDisabled { get; set; }
         public int Delay { get; set; }
         public int Timeout { get; set; }
-        public bool IsNoteParsingEnabled { get; set; }
         public int BaseNodeId { get; set; }
     }
 }

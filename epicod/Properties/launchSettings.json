@@ -2,7 +2,7 @@
   "profiles": {
     "epicod": {
       "commandName": "Project",
-      "commandLineArgs": "scrape-clauss -p -n -i 200000"
+      "commandLineArgs": "scrape-clauss -p -i 200000"
     }
   }
 }
