@@ -165,7 +165,7 @@ namespace Epicod.Cli.Commands
             }
             catch (Exception ex)
             {
-                _options.Logger?.LogError(ex.ToString());
+                _options.Logger?.LogError(ex, "Scraping error");
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine(ex.ToString());
                 Console.ResetColor();
