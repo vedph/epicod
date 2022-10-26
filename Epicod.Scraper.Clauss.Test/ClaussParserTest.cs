@@ -42,7 +42,7 @@ namespace Epicod.Scraper.Clauss.Test
 
             int n = parser.ParseInscriptions(1, doc.DocumentNode, writer);
 
-            Assert.Equal(2031, n);
+            Assert.Equal(64, n);
         }
     }
 }
