@@ -10,6 +10,7 @@ using SqlKata.Execution;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -130,6 +131,28 @@ namespace Epicod.Scraper.Clauss
             return lat ? "lat" : "grc";
         }
 
+        private void CollectDateProps(int nodeId, string a, string b,
+            IList<object[]> props)
+        {
+            int n = 0;
+            foreach (var date in BuildDates(a, b))
+            {
+                n++;
+                props.Add(new object[]
+                {
+                    nodeId,
+                    TextNodeProps.DATE_VAL + (n > 1? $"#{n}" : ""),
+                    date.GetSortValue()
+                });
+                props.Add(new object[]
+                {
+                    nodeId,
+                    TextNodeProps.DATE_TXT + (n > 1? $"#{n}" : ""),
+                    date.ToString()
+                });
+            }
+        }
+
         public int Inject(CancellationToken cancel,
             IProgress<ProgressReport>? progress = null)
         {
@@ -172,17 +195,7 @@ namespace Epicod.Scraper.Clauss
                 {
                     if (oldId > 0)
                     {
-                        foreach (var date in BuildDates(a.ToString(), b.ToString()))
-                        {
-                            props.Add(new object[]
-                            {
-                                oldId, TextNodeProps.DATE_VAL, date.GetSortValue()
-                            });
-                            props.Add(new object[]
-                            {
-                                oldId, TextNodeProps.DATE_TXT, date.ToString()
-                            });
-                        }
+                        CollectDateProps(oldId, a.ToString(), b.ToString(), props);
                         injected += props.Count;
                         if (!IsDry && props.Count > 0)
                             qf.Query(EpicodSchema.T_PROP).Insert(cols, props);
@@ -224,24 +237,10 @@ namespace Epicod.Scraper.Clauss
             // save last pending data if any
             if (oldId > 0)
             {
-                int n = 0;
-                foreach (var date in BuildDates(a.ToString(), b.ToString()))
-                {
-                    n++;
-                    props.Add(new object[]
-                    {
-                        oldId, "date-val" + (n > 1? $"#{n}" : ""), date.GetSortValue()
-                    });
-                    props.Add(new object[]
-                    {
-                        oldId, "date-txt" + (n > 1? $"#{n}" : ""), date.ToString()
-                    });
-                }
+                CollectDateProps(oldId, a.ToString(), b.ToString(), props);
+                injected += props.Count;
                 if (!IsDry && props.Count > 0)
-                {
                     qf.Query(EpicodSchema.T_PROP).Insert(cols, props);
-                    injected += props.Count;
-                }
             }
 
             // completed
