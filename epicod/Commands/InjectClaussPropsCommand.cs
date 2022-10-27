@@ -75,8 +75,10 @@ namespace Epicod.Cli.Commands
                 IsDry = _options.IsDry,
                 Logger = _options.Logger
             };
-            injector.Inject(CancellationToken.None,
+            int injected = injector.Inject(CancellationToken.None,
                 new Progress<ProgressReport>(report => bar.Tick(report.Percent)));
+
+            Console.WriteLine("\n\nInjected: " + injected);
 
             return Task.CompletedTask;
         }

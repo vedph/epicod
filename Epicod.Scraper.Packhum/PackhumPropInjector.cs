@@ -28,13 +28,21 @@ namespace Epicod.Scraper.Packhum
                 throw new ArgumentNullException(nameof(connString));
         }
 
-        private static void Clear(QueryFactory queryFactory)
+        private static void Clear(QueryFactory qf)
         {
-            // TODO refactor
-            queryFactory.Query(EpicodSchema.T_PROP)
-                .Join(EpicodSchema.T_NODE, $"{EpicodSchema.T_NODE}.id",
-                    $"{EpicodSchema.T_PROP}.node_id")
-                .Where("corpus", PackhumWebScraper.CORPUS).AsDelete();
+            qf.Query(EpicodSchema.T_PROP + " AS tp")
+              .Join(EpicodSchema.T_NODE + " AS tn", "tn.id", "tp.node_id")
+              .Where("tn.corpus", PackhumWebScraper.CORPUS)
+              .WhereLike("tp.name", $"{TextNodeProps.DATE_TXT}%")
+              .OrWhereLike("tp.name", $"{TextNodeProps.DATE_VAL}%")
+              .OrWhereIn("tp.name", new[]
+                {
+                  TextNodeProps.DATE_PHI,
+                  TextNodeProps.REGION,
+                  TextNodeProps.LOCATION,
+                  TextNodeProps.REFERENCE
+              })
+              .AsDelete();
         }
 
         /// <summary>

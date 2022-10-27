@@ -46,7 +46,7 @@ namespace Epicod.Scraper.Clauss
             return (c > 0x36F && c < 0x400) || (c > 0x1EFF && c < 0x2000);
         }
 
-        private IList<int> ParseYear(string? text)
+        private IList<int> ParseYears(string? text)
         {
             if (string.IsNullOrEmpty(text)) return Array.Empty<int>();
 
@@ -58,7 +58,7 @@ namespace Epicod.Scraper.Clauss
                 {
                     if (!int.TryParse(year, out int n))
                     {
-                        Logger?.LogError("Invalid dating value: {Value}", year);
+                        Logger?.LogError("Invalid date value: {Value}", year);
                     }
                     else years.Add(n);
                 }
@@ -68,7 +68,7 @@ namespace Epicod.Scraper.Clauss
             {
                 if (!int.TryParse(text, out int n))
                 {
-                    Logger?.LogError("Invalid dating value: {Value}", text);
+                    Logger?.LogError("Invalid date value: {Value}", text);
                     return Array.Empty<int>();
                 }
                 else return new[] { n };
@@ -77,8 +77,8 @@ namespace Epicod.Scraper.Clauss
 
         private IList<HistoricalDate> BuildDates(string? dating, string? to)
         {
-            IList<int> aYears = ParseYear(dating);
-            IList<int> bYears = ParseYear(to);
+            IList<int> aYears = ParseYears(dating);
+            IList<int> bYears = ParseYears(to);
 
             // not a nor b
             if (aYears.Count == 0 && bYears.Count == 0)
@@ -97,7 +97,7 @@ namespace Epicod.Scraper.Clauss
             if (bYears.Count == 0)
             {
                 foreach (int a in aYears)
-                    dates.Add(HistoricalDate.Parse($"-- {a}")!);
+                    dates.Add(HistoricalDate.Parse($"{a} --")!);
             }
 
             // both a and b
@@ -181,11 +181,9 @@ namespace Epicod.Scraper.Clauss
                                 oldId, TextNodeProps.DATE_TXT, date.ToString()
                             });
                         }
+                        injected += props.Count;
                         if (!IsDry && props.Count > 0)
-                        {
                             qf.Query(EpicodSchema.T_PROP).Insert(cols, props);
-                            injected += props.Count;
-                        }
                     }
                     props.Clear();
                     oldId = id;

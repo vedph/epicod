@@ -2,7 +2,7 @@
   "profiles": {
     "epicod": {
       "commandName": "Project",
-      "commandLineArgs": "inject-clauss -p"
+      "commandLineArgs": "inject-clauss"
     }
   }
 }
