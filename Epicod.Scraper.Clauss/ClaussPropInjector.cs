@@ -10,6 +10,7 @@ using SqlKata.Execution;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 
@@ -32,13 +33,14 @@ namespace Epicod.Scraper.Clauss
 
         private static void Clear(QueryFactory qf)
         {
-            qf.Query(EpicodSchema.T_PROP + " AS tp")
+            Query query = qf.Query(EpicodSchema.T_PROP + " AS tp")
               .Join(EpicodSchema.T_NODE + " AS tn", "tn.id", "tp.node_id")
               .Where("tn.corpus", ClaussWebScraper.CORPUS)
-              .WhereLike("tp.name", $"{TextNodeProps.DATE_TXT}%")
-              .OrWhereLike("tp.name", $"{TextNodeProps.DATE_VAL}%")
-              .OrWhere("tp.name", TextNodeProps.LANGUAGES)
-              .AsDelete();
+              .Where(q => q.WhereLike("tp.name", $"{TextNodeProps.DATE_TXT}%")
+                .OrWhereLike("tp.name", $"{TextNodeProps.DATE_VAL}%")
+                .OrWhere("tp.name", TextNodeProps.LANGUAGES))
+              .Select("tp.id");
+            qf.Query(EpicodSchema.T_PROP).WhereIn("id", query).Delete();
         }
 
         private static bool IsInGreekRange(char c)
@@ -157,7 +159,7 @@ namespace Epicod.Scraper.Clauss
                          .OrderBy("tn.id");
 
             List<object[]> props = new();
-            string? a = null, b = null;
+            StringBuilder a = new(), b = new();
 
             // for each node
             int oldId = 0;
@@ -170,7 +172,7 @@ namespace Epicod.Scraper.Clauss
                 {
                     if (oldId > 0)
                     {
-                        foreach (var date in BuildDates(a, b))
+                        foreach (var date in BuildDates(a.ToString(), b.ToString()))
                         {
                             props.Add(new object[]
                             {
@@ -186,6 +188,8 @@ namespace Epicod.Scraper.Clauss
                             qf.Query(EpicodSchema.T_PROP).Insert(cols, props);
                     }
                     props.Clear();
+                    a.Clear();
+                    b.Clear();
                     oldId = id;
                 }
 
@@ -193,10 +197,12 @@ namespace Epicod.Scraper.Clauss
                 {
                     // dating and to are joined into date-val
                     case "dating":
-                        a = row.value;
+                        if (a.Length > 0) a.Append(';');
+                        a.Append(row.value);
                         break;
                     case "to":
-                        b = row.value;
+                        if (b.Length > 0) b.Append(';');
+                        b.Append(row.value);
                         break;
                     // languages provided by scanning text
                     case "text":
@@ -219,7 +225,7 @@ namespace Epicod.Scraper.Clauss
             if (oldId > 0)
             {
                 int n = 0;
-                foreach (var date in BuildDates(a, b))
+                foreach (var date in BuildDates(a.ToString(), b.ToString()))
                 {
                     n++;
                     props.Add(new object[]

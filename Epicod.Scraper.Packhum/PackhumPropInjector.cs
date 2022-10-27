@@ -3,6 +3,7 @@ using Epicod.Scraper.Sql;
 using Fusi.Tools;
 using Microsoft.Extensions.Logging;
 using Npgsql;
+using SqlKata;
 using SqlKata.Compilers;
 using SqlKata.Execution;
 using System;
@@ -30,7 +31,7 @@ namespace Epicod.Scraper.Packhum
 
         private static void Clear(QueryFactory qf)
         {
-            qf.Query(EpicodSchema.T_PROP + " AS tp")
+            Query query = qf.Query(EpicodSchema.T_PROP + " AS tp")
               .Join(EpicodSchema.T_NODE + " AS tn", "tn.id", "tp.node_id")
               .Where("tn.corpus", PackhumWebScraper.CORPUS)
               .WhereLike("tp.name", $"{TextNodeProps.DATE_TXT}%")
@@ -42,7 +43,8 @@ namespace Epicod.Scraper.Packhum
                   TextNodeProps.LOCATION,
                   TextNodeProps.REFERENCE
               })
-              .AsDelete();
+              .Select("tp.id");
+            qf.Query(EpicodSchema.T_PROP).WhereIn("id", query).Delete();
         }
 
         /// <summary>
