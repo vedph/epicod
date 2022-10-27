@@ -58,8 +58,39 @@ pg_dump --username=postgres -f DUMPFILEPATH DBNAME
 
 >The target database must be created first.
 
+## Useful Queries
+
+- count properties for a corpus:
+
+select count(*) from text_node_property tnp 
+inner join text_node tn on tnp.node_id = tn.id 
+where tn.corpus = 'clauss';
+
+- count injected properties for PHI:
+
+```sql
+select count(*) from text_node_property tnp 
+inner join text_node tn on tnp.node_id = tn.id 
+where tn.corpus = 'packhum' and
+(tnp.name like 'date-val%' 
+ or tnp.name like 'date-txt%'
+ or tnp.name in ('date-phi','region','location','reference'));
+```
+
+- count injected properties for Clauss:
+
+```sql
+select count(*) from text_node_property tnp 
+inner join text_node tn on tnp.node_id = tn.id 
+where tn.corpus = 'clauss' and
+(tnp.name like 'date-val%' 
+ or tnp.name like 'date-txt%'
+ or tnp.name in ('languages'));
+```
+
 ## History
 
+- 2022-10-27: completed Clauss.
 - 2022-10-25:
   - updated packages.
   - adding Clauss.
