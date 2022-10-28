@@ -129,6 +129,9 @@ namespace Epicod.Scraper.Packhum
             // normalize WS
             string s = NormalizeWS(text);
 
+            // replace (?) with ?
+            s = s.Replace("(?)", "?");
+
             // extract [...] and (...)
             s = ExtractHints(s);
 
@@ -214,8 +217,16 @@ namespace Epicod.Scraper.Packhum
             return SplitAtRegexWithSep(text, _splitPtRegex);
         }
 
-        private string PreprocessDatation(string text)
+        /// <summary>
+        /// Preprocesses the datation.
+        /// </summary>
+        /// <param name="text">The datation text.</param>
+        /// <returns>Preprocessed text.</returns>
+        /// <exception cref="ArgumentNullException">text</exception>
+        public string PreprocessDatation(string text)
         {
+            if (text is null) throw new ArgumentNullException(nameof(text));
+
             // detach a./p. when attached to N
             string s = _apSuffixRegex.Replace(text, "$1 $2");
 
