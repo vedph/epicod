@@ -330,12 +330,13 @@ General forms:
 A1. preprocess: this is required to avoid splitting in a wrong way:
 
 - normalize whitespaces, just to ease later processing.
-- `or`/`od.`/`oder` + ( `sh.`/`shortly`/`slightly`) + `lat.`/`later`/`aft.`/`after`/`früher`/`später` + (`?`) => wrap in `()` and normalize language.
+- extract `[...]` or `(...)` into hints.
+- `or`/`od.`/`oder` + ( `sh.`/`shortly`/`slightly`) + `lat.`/`later`/`aft.`/`after`/`earlier`/`früher`/`später` + (`?`) => wrap in `()` and normalize language.
+- `at the earliest` => wrap in `()` if not already inside brackets.
 - `,\s+early$` => wrap in `()`.
 - `,\s*([0-3]?[0-9])?\s*(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[^\s]*` => `{d=N,m=N}`.
 - `w/` and `w//` => `w`(these are wrong parsing cases: not a date).
 - `July/August` => `July-August`.
-- extract `[...]` or `(...)` into hints.
 
 >Note: corner cases were defined by this query:
 
@@ -358,7 +359,7 @@ A2. split at any of the following separators (_unless_ inside `()` or `[]`; thes
 
 (B) split into datation points at `[0-9IVX?]-[0-9IVX]` (start from the last date to supply era and hints).
 
-(C) single datation point: `PREFIX? N SUFFIX? ERA?`:
+(C) single datation point: `PREFIX? N SUFFIX?`:
 
 C1. preprocessing:
 
@@ -446,6 +447,8 @@ Examples:
 - 10th-11th c. AD or later
 - 114-120 AD or sh.aft.
 - 122 AD or shortly after
+- 1st c. BC or earlier
+- 1st c. BC at the earliest
 - 122 AD (or slightly later)
 - 11/12 AD (A) and 21/22 AD (B)
 - 115 AD, 7 Feb.

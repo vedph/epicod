@@ -9,6 +9,9 @@ using System.Text.RegularExpressions;
 
 namespace Epicod.Scraper.Packhum
 {
+    /// <summary>
+    /// Packard Humanities date parser.
+    /// </summary>
     public sealed class PackhumDateParser
     {
         private readonly Regex _wsRegex;
@@ -20,7 +23,8 @@ namespace Epicod.Scraper.Packhum
 
         private readonly Regex _apSuffixRegex;
         private readonly Regex _caRegex;
-        private readonly Regex _splitRegex;
+        private readonly Regex _splitQmkRegex;
+        private readonly Regex _splitSlashRegex;
 
         // state
         private bool _globalCa;
@@ -34,8 +38,8 @@ namespace Epicod.Scraper.Packhum
 
             _orModifierRegex = new Regex(
                 @"(?:or |od\.|oder )" +
-                @"(?<l>shortly |slightly |sh\.)?" +
-                @"(?<m>later|lat\.|after|aft.|früher|später)\??",
+                @"(?<l>shortly |slightly |sh\.)? ?" +
+                @"(?<m>later|lat\.|after|aft.|earlier|früher|später)\??",
                 RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
             _earlyModifierRegex = new Regex(", early$", RegexOptions.Compiled);
@@ -51,14 +55,16 @@ namespace Epicod.Scraper.Packhum
             // date preprocessing
             _apSuffixRegex = new Regex(@"([0-9])(a\.|p\.)", RegexOptions.Compiled);
             _caRegex = new Regex(@"^ca?\.", RegexOptions.Compiled);
-            _splitRegex = new Regex(@"[0-9]\?\s+[0-9]", RegexOptions.Compiled);
+            _splitQmkRegex = new Regex(@"[0-9]\?\s+[0-9]", RegexOptions.Compiled);
+            _splitSlashRegex = new Regex("[^0-9IVX]/[^0-9IVX]",
+                RegexOptions.Compiled);
 
             _hints = new List<string>();
         }
 
         private static int GetMonthNumber(string month)
         {
-            return month[3..].ToLowerInvariant() switch
+            return month[..3].ToLowerInvariant() switch
             {
                 "jan" => 1,
                 "feb" => 2,
@@ -67,7 +73,7 @@ namespace Epicod.Scraper.Packhum
                 "may" => 5,
                 "jun" => 6,
                 "jul" => 7,
-                "ago" => 8,
+                "aug" => 8,
                 "sep" => 9,
                 "oct" => 10,
                 "nov" => 11,
@@ -80,42 +86,62 @@ namespace Epicod.Scraper.Packhum
 
         private string ExtractHints(string text)
         {
-            char[] opChars = new[] { '[', '(' };
+            char[] clChars = new[] { ']', ')' };
 
-            // find 1st [ or (
-            int i = text.IndexOfAny(opChars);
+            // find 1st ] or )
+            int i = text.LastIndexOfAny(clChars);
             if (i == -1) return text;
 
             StringBuilder sb = new(text);
             while (i > -1)
             {
-                // find next ] or )
-                int start = i;
-                char c = text[i] == '[' ? ']' : ')';
-                i = text.IndexOf(c, i + 1);
-                if (i == -1) i = text.Length - 1;
+                // find next [ or (
+                int end = i;
+                char c = text[i] == ']' ? '[' : '(';
+                i = text.LastIndexOf(c, i - 1);
+                if (i == -1) i = 0;
 
                 // extract and remove hint
-                _hints.Add(text[start..(i + 1)]);
-                sb.Remove(start, i + 1 - start);
+                _hints.Add(text[i..(end + 1)]);
+                sb.Remove(i, end + 1 - i);
 
-                // find next [ or (
-                i = text.IndexOfAny(opChars, i + 1);
+                // find next ] or )
+                i = text.LastIndexOfAny(clChars, i - 1);
             }
 
             return sb.ToString();
         }
 
-        private string PreprocessForSplit(string text)
+        /// <summary>
+        /// Preprocesses date text for split (see A1 in docs).
+        /// </summary>
+        /// <param name="text">The text.</param>
+        /// <exception cref="ArgumentNullException">text</exception>
+        public string PreprocessForSplit(string text)
         {
+            if (text is null) throw new ArgumentNullException(nameof(text));
+
             // normalize WS
             string s = NormalizeWS(text);
 
-            // or...: wrap in ()
-            s = _orModifierRegex.Replace(s, (Match m) => "(" + m.Value + ")");
+            // extract [...] and (...)
+            s = ExtractHints(s);
 
-            // , early... : wrap in 
-            s = _earlyModifierRegex.Replace(s, (Match m) => "(" + m.Value + ")");
+            // or...earlier/later: wrap in () normalizing expression
+            s = _orModifierRegex.Replace(s, (Match m) =>
+            {
+                return "(or " +
+                       (m.Groups["l"].Length > 0 ? "shortly " : "") +
+                       (m.Groups["m"].Value[0] == 'f' ||
+                        m.Groups["m"].Value[0] == 'e' ? "earlier" : "later")
+                        + ")";
+            });
+
+            // at the earliest => wrap in ()
+            s = s.Replace("at the earliest", "(at the earliest)");
+
+            // , early... : wrap in ()
+            s = _earlyModifierRegex.Replace(s, " (early)");
 
             // date suffix: wrap in {d=N,m=N} ({} are never used in PHI dates)
             s = _dateSuffixRegex.Replace(s, (Match m) =>
@@ -131,27 +157,38 @@ namespace Epicod.Scraper.Packhum
             s = _wRegex.Replace(s, "w");
             s = s.Replace("July/August", "July-August");
 
-            // extract [...] and (...)
-            return ExtractHints(s);
+            // re-extract hints eventually injected by preprocessing,
+            // and re-normalize whitespace
+            return NormalizeWS(ExtractHints(s));
         }
 
-        private IList<string> SplitDates(string text)
+        /// <summary>
+        /// Splits the dates in the specified date text (see A2 in docs).
+        /// </summary>
+        /// <param name="text">The text.</param>
+        /// <returns>Date(s) text(s).</returns>
+        /// <exception cref="ArgumentNullException">text</exception>
+        public IList<string> SplitDates(string text)
         {
-            string s = PreprocessForSplit(text);
+            if (text is null) throw new ArgumentNullException(nameof(text));
 
-            // corner case: split at regex
-            if (_splitRegex.IsMatch(text))
+            // corner case: split at question mark
+            if (_splitQmkRegex.IsMatch(text))
             {
                 int i = text.LastIndexOf('?');
                 Debug.Assert(i > -1);
                 string tail = text[(i + 1)..];
-                return (from split in _splitRegex.Split(s)
+                return (from split in _splitQmkRegex.Split(text)
                         select split + tail).ToList();
             }
 
-            // normal split
+            // corner case: split at slash
+            if (_splitSlashRegex.IsMatch(text))
+                return _splitSlashRegex.Split(text);
+
+            // normal split at conjunctions or comma
             return (from split in
-                s.Split(_dateSeps, StringSplitOptions.RemoveEmptyEntries)
+                text.Split(_dateSeps, StringSplitOptions.RemoveEmptyEntries)
                 select NormalizeWS(split))
                 .ToList();
         }
@@ -191,7 +228,8 @@ namespace Epicod.Scraper.Packhum
             if (string.IsNullOrEmpty(text)) return Array.Empty<HistoricalDate>();
 
             Reset();
-            foreach (string s in SplitDates(text))
+            string s = PreprocessForSplit(text);
+            foreach (string singleDate in SplitDates(s))
             {
                 // TODO
             }
