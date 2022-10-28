@@ -1,10 +1,12 @@
 # Packard Humanities Greek Inscriptions
 
 - [Packard Humanities Greek Inscriptions](#packard-humanities-greek-inscriptions)
+  - [Quick start](#quick-start)
   - [Scraper](#scraper)
   - [Strategy](#strategy)
   - [Reading Scraper's Log](#reading-scrapers-log)
   - [Text](#text)
+    - [Date](#date)
   - [Metadata](#metadata)
 
 This corpus contains plain Unicode text with Leiden conventions and minimalist metadata.
@@ -309,26 +311,124 @@ Att. — Lamptrai: Thiti — s. V a. — Elliot(1962) 56-58 (+) — SEG 32.19
 Going deeper, we can observe that:
 
 - type usually is a word in `[]` (e.g. `[pottery]`), or is related to the writing direction or layout (e.g. `stoich.` with an optional letters count, `non-stoich.`, `boustr.`, `retrogr.`).
-- date has a number of forms: I quote an example for each observed pattern:
-  - 2nd ac
-  - c. 2nd ac
-  - s. V a.
-  - s. VI/V a.
-  - med. s. V a.
-  - fin. s. V a.
-  - fin. s. VI/init. s. V a.
-  - 4th c. BC
-  - 427 a.
-  - 525-500? BC
-  - c. 480? a.
-  - c. 380-370 BC
-  - c. 425-400? a.
-  - ante 450 a.
-  - post 427 a.
-  - early imp.
-  - aet. Hadriani
+- date has a number of forms.
 
-Of course this parsing is not fully refined, but is designed to be successful in most cases, because this is enough for this project, based on large numbers.
+### Date
+
+Query template for inspection:
+
+```sql
+select distinct tnp.value from text_node_property tnp
+where tnp.name='date-phi' and value ilike '%nach%'
+order by tnp.value
+```
+
+General forms:
+
+(A) splitting:
+
+A1. preprocess: this is required to avoid splitting in a wrong way:
+
+- `or`/`od.`/`oder` + ( `sh.`/`shortly`/`slightly`) + `lat.`/`later`/`aft.`/`after`/`früher`/`später` => wrap in `()` and normalize language.
+- `,\s+early` => wrap in `()`.
+- `,\s*([0-3]?[0-9])?\s*(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[^\s]*` => `{d=N,m=N}`.
+
+A2. split at any of the following separators _unless_ inside `()` or `[]`:
+
+- " and "
+- " or "
+- " od."
+- " oder "
+- " & "
+- ","
+
+(B) single datation point: `PREFIX? N SUFFIX? ERA?`.
+
+B1. preprocessing:
+
+- detach suffix: `([0-9])(a\.|p\.)` > `$1 $2`.
+- remove suffixed `?`: any PREFIX + `?` without space: remove `?` (e.g. `early?` becomes `early`).
+- `later than the early`, `later [0-9][stndrdth]-1st half` => remove (e.g. `later 2nd-1st half 3rd c. AD`).
+- `mid-` > `med.` + space. This is because this prefix is not separated by space from the next N.
+- `c.`, `ca.` = about.
+- `?`, `(?)` = dubious.
+- `(...)`, `[...]` (`[]` can include `()`: e.g. `129/130 or 245/246 AD [229/230 AD (Tataki, Ed. Pr.)]`): hint. Stash and remove. Note that we might have multiple `()` because of A1 preprocessing.
+- lookup periods and stop if match.
+
+B2. analysis:
+
+- PREFIX: in this order:
+  - optionally any of:
+    - `ante`
+    - `post`
+  - optionally any of:
+    - `init.`, `beg.`, `Anf.`
+    - `med.`, `middle`, `mid`
+    - `fin.`, `end`, `Ende`, `Wende`
+    - `early`, `eher`
+    - `early\s*/\s*mid`
+    - `late`
+    - `1st\s+half`, `2nd\s+half`, `1.\s*Halfte`, `2.\s*Halfte`
+    - `mid\s*/\s*2nd half`, `middle\s*/\s*2nd half`
+  - `s.`
+- N (number: N=Arabic, R=Roman):
+  - `N` = year.
+  - `R` = century.
+  - `N.` = century.
+  - `N` + `st`|`nd`|`rd`|`th` = century.
+  - `N/N` = year span.
+  - `R/R` = centuries range.
+- SUFFIX:
+  - `BC`, `ac`, `a.`, `v.Chr.`
+  - `AD`, `pc`, `p.`, `n.Chr.`
+
+Examples:
+
+- 65
+- 65 AD
+- 65 AD?
+- 113-120 p.?
+- 139p.
+- 101/0 BC
+- 100/101 AD
+- 100/101 BC
+- 100-102 AD
+- 100-102 BC
+- 100-102 AD?
+- 113-102/1 BC
+- 2nd ac
+- c. 2nd ac
+- s. V a.
+- s. VI/V a.
+- beg. 116 AD
+- med. s. V a.
+- fin. s. V a.
+- fin. s. VI/init. s. V a.
+- 4th c. BC
+- 427 a.
+- 525-500? BC
+- c. 480? a.
+- c. 380-370 BC
+- c. 425-400? a.
+- ante 450 a.
+- post 427 a.
+- 107-98 BC (Per. VIA)
+- early imp.
+- aet. Hadriani
+- 10th-11th c. AD or later
+- 114-120 AD or sh.aft.
+- 122 AD or shortly after
+- 122 AD (or slightly later)
+- 11/12 AD (A) and 21/22 AD (B)
+- 115 AD, 7 Feb.
+- 128/7 BC at the latest
+- 13.2.139 n.Chr.
+- 146-108 BC (Per. V), early
+- 147-161 (or 139-141) AD
+
+Errors: `117-138 n.Chr.Jh.n.Chr. (Chapot)`.
+
+There can be multiple dates, separated by " and ", " or ", `&`, comma, e.g. `100 or 101 AD`, `10/11 AD and 65/66 or 119/120 AD`, `111, 75 or 46 BC`, `114, 116, & 156 AD`. The comma is also used to add month or day and month (`120 AD, Nov.`, `115 AD, 7 Feb.`, `147 AD, March`).
 
 ## Metadata
 

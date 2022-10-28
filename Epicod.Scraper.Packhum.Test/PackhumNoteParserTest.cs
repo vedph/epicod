@@ -10,8 +10,8 @@ namespace Epicod.Scraper.Packhum.Test
         [Fact]
         public void Parse_RegionLocation_Ok()
         {
-            PackhumNoteParser parser = new();
-            IList<TextNodeProperty> props = parser.Parse("Att. — Lamptrai: Thiti", 1);
+            PackhumParser parser = new();
+            IList<TextNodeProperty> props = parser.ParseNote("Att. — Lamptrai: Thiti", 1);
 
             Assert.Equal(2, props.Count);
 
@@ -25,9 +25,9 @@ namespace Epicod.Scraper.Packhum.Test
         [Fact]
         public void Parse_RegionLocationType_Ok()
         {
-            PackhumNoteParser parser = new();
+            PackhumParser parser = new();
             IList<TextNodeProperty> props =
-                parser.Parse("Att. — Athens: Akropolis — stoich. 28", 1);
+                parser.ParseNote("Att. — Athens: Akropolis — stoich. 28", 1);
 
             Assert.Equal(3, props.Count);
 
@@ -44,9 +44,9 @@ namespace Epicod.Scraper.Packhum.Test
         [Fact]
         public void Parse_RegionLocationTypeDate_Ok()
         {
-            PackhumNoteParser parser = new();
+            PackhumParser parser = new();
             IList<TextNodeProperty> props =
-                parser.Parse("Att. — Athens: Akropolis — stoich. 28 — 440-410 a.", 1);
+                parser.ParseNote("Att. — Athens: Akropolis — stoich. 28 — 440-410 a.", 1);
 
             Assert.Equal(6, props.Count);
 
@@ -72,9 +72,9 @@ namespace Epicod.Scraper.Packhum.Test
         [Fact]
         public void Parse_RegionLocationTypeDateRefs_Ok()
         {
-            PackhumNoteParser parser = new();
+            PackhumParser parser = new();
             IList<TextNodeProperty> props =
-                parser.Parse("Att. — Athens: Akropolis — stoich. 28 " +
+                parser.ParseNote("Att. — Athens: Akropolis — stoich. 28 " +
                 "— 440-410 a. — IG I² 87,f + 141,a, + 174 — IG I³, Add.p.950", 1);
 
             Assert.Equal(8, props.Count);
@@ -107,8 +107,8 @@ namespace Epicod.Scraper.Packhum.Test
         [Fact]
         public void Parse_RegionType_Ok()
         {
-            PackhumNoteParser parser = new();
-            IList<TextNodeProperty> props = parser.Parse("Att. — [pottery]", 1);
+            PackhumParser parser = new();
+            IList<TextNodeProperty> props = parser.ParseNote("Att. — [pottery]", 1);
 
             Assert.Equal(2, props.Count);
 
@@ -122,8 +122,8 @@ namespace Epicod.Scraper.Packhum.Test
         [Fact]
         public void Parse_RegionDate_CenturyWithOrd_Ok()
         {
-            PackhumNoteParser parser = new();
-            IList<TextNodeProperty> props = parser.Parse("Att. — 2nd a.", 1);
+            PackhumParser parser = new();
+            IList<TextNodeProperty> props = parser.ParseNote("Att. — 2nd a.", 1);
 
             Assert.Equal(4, props.Count);
 
@@ -146,8 +146,8 @@ namespace Epicod.Scraper.Packhum.Test
         [Fact]
         public void Parse_RegionDate_AboutCenturyWithOrd_Ok()
         {
-            PackhumNoteParser parser = new();
-            IList<TextNodeProperty> props = parser.Parse("Att. — c. 2nd a.", 1);
+            PackhumParser parser = new();
+            IList<TextNodeProperty> props = parser.ParseNote("Att. — c. 2nd a.", 1);
 
             Assert.Equal(4, props.Count);
 
@@ -170,8 +170,8 @@ namespace Epicod.Scraper.Packhum.Test
         [Fact]
         public void Parse_RegionDate_Century_Ok()
         {
-            PackhumNoteParser parser = new();
-            IList<TextNodeProperty> props = parser.Parse("Att. — s. VI a.", 1);
+            PackhumParser parser = new();
+            IList<TextNodeProperty> props = parser.ParseNote("Att. — s. VI a.", 1);
 
             Assert.Equal(4, props.Count);
 
@@ -194,8 +194,8 @@ namespace Epicod.Scraper.Packhum.Test
         [Fact]
         public void Parse_RegionDate_InitCentury_Ok()
         {
-            PackhumNoteParser parser = new();
-            IList<TextNodeProperty> props = parser.Parse("Att. — init. s. VI a.", 1);
+            PackhumParser parser = new();
+            IList<TextNodeProperty> props = parser.ParseNote("Att. — init. s. VI a.", 1);
 
             Assert.Equal(4, props.Count);
 
@@ -218,8 +218,8 @@ namespace Epicod.Scraper.Packhum.Test
         [Fact]
         public void Parse_RegionDate_MedCentury_Ok()
         {
-            PackhumNoteParser parser = new();
-            IList<TextNodeProperty> props = parser.Parse("Att. — med. s. VI a.", 1);
+            PackhumParser parser = new();
+            IList<TextNodeProperty> props = parser.ParseNote("Att. — med. s. VI a.", 1);
 
             Assert.Equal(4, props.Count);
 
@@ -242,8 +242,8 @@ namespace Epicod.Scraper.Packhum.Test
         [Fact]
         public void Parse_RegionDate_FinCentury_Ok()
         {
-            PackhumNoteParser parser = new();
-            IList<TextNodeProperty> props = parser.Parse("Att. — fin. s. VI a.", 1);
+            PackhumParser parser = new();
+            IList<TextNodeProperty> props = parser.ParseNote("Att. — fin. s. VI a.", 1);
 
             Assert.Equal(4, props.Count);
 
@@ -266,8 +266,8 @@ namespace Epicod.Scraper.Packhum.Test
         [Fact]
         public void Parse_RegionDate_Year_Ok()
         {
-            PackhumNoteParser parser = new();
-            IList<TextNodeProperty> props = parser.Parse("Att. — 427 a.", 1);
+            PackhumParser parser = new();
+            IList<TextNodeProperty> props = parser.ParseNote("Att. — 427 a.", 1);
 
             Assert.Equal(4, props.Count);
 
@@ -290,8 +290,8 @@ namespace Epicod.Scraper.Packhum.Test
         [Fact]
         public void Parse_RegionDate_AnteYear_Ok()
         {
-            PackhumNoteParser parser = new();
-            IList<TextNodeProperty> props = parser.Parse("Att. — ante 450 a.", 1);
+            PackhumParser parser = new();
+            IList<TextNodeProperty> props = parser.ParseNote("Att. — ante 450 a.", 1);
 
             Assert.Equal(4, props.Count);
 
@@ -314,8 +314,8 @@ namespace Epicod.Scraper.Packhum.Test
         [Fact]
         public void Parse_RegionDate_PostYear_Ok()
         {
-            PackhumNoteParser parser = new();
-            IList<TextNodeProperty> props = parser.Parse("Att. — post 450 a.", 1);
+            PackhumParser parser = new();
+            IList<TextNodeProperty> props = parser.ParseNote("Att. — post 450 a.", 1);
 
             Assert.Equal(4, props.Count);
 
@@ -338,8 +338,8 @@ namespace Epicod.Scraper.Packhum.Test
         [Fact]
         public void Parse_RegionDate_YearRangeBC_Ok()
         {
-            PackhumNoteParser parser = new();
-            IList<TextNodeProperty> props = parser.Parse("Att. — 440-430 a.", 1);
+            PackhumParser parser = new();
+            IList<TextNodeProperty> props = parser.ParseNote("Att. — 440-430 a.", 1);
 
             Assert.Equal(4, props.Count);
 
@@ -362,8 +362,8 @@ namespace Epicod.Scraper.Packhum.Test
         [Fact]
         public void Parse_RegionDate_YearRangeAD_Ok()
         {
-            PackhumNoteParser parser = new();
-            IList<TextNodeProperty> props = parser.Parse("Att. — 430-440 p.", 1);
+            PackhumParser parser = new();
+            IList<TextNodeProperty> props = parser.ParseNote("Att. — 430-440 p.", 1);
 
             Assert.Equal(4, props.Count);
 
@@ -386,8 +386,8 @@ namespace Epicod.Scraper.Packhum.Test
         [Fact]
         public void Parse_RegionDate_Nan_Ok()
         {
-            PackhumNoteParser parser = new();
-            IList<TextNodeProperty> props = parser.Parse("Att. — early imp.", 1);
+            PackhumParser parser = new();
+            IList<TextNodeProperty> props = parser.ParseNote("Att. — early imp.", 1);
 
             Assert.Equal(3, props.Count);
 
@@ -406,8 +406,8 @@ namespace Epicod.Scraper.Packhum.Test
         [Fact]
         public void Parse_RegionDate_SlashAsRange_Ok()
         {
-            PackhumNoteParser parser = new();
-            IList<TextNodeProperty> props = parser.Parse("Att. — 430/410 a.", 1);
+            PackhumParser parser = new();
+            IList<TextNodeProperty> props = parser.ParseNote("Att. — 430/410 a.", 1);
 
             Assert.Equal(4, props.Count);
 
@@ -430,9 +430,9 @@ namespace Epicod.Scraper.Packhum.Test
         [Fact]
         public void Parse_RegionDate_SlashAsTwoDates_Ok()
         {
-            PackhumNoteParser parser = new();
+            PackhumParser parser = new();
             IList<TextNodeProperty> props =
-                parser.Parse("Att. — fin. s. VI/init. s. V a.", 1);
+                parser.ParseNote("Att. — fin. s. VI/init. s. V a.", 1);
 
             Assert.Equal(6, props.Count);
 
@@ -464,8 +464,8 @@ namespace Epicod.Scraper.Packhum.Test
         [Fact]
         public void Parse_RegionRef_Ok()
         {
-            PackhumNoteParser parser = new();
-            IList<TextNodeProperty> props = parser.Parse("Att. — IG I³, Add.p.950", 1);
+            PackhumParser parser = new();
+            IList<TextNodeProperty> props = parser.ParseNote("Att. — IG I³, Add.p.950", 1);
 
             Assert.Equal(2, props.Count);
 

@@ -29,7 +29,7 @@ namespace Epicod.Scraper.Packhum
         public const string CORPUS = "packhum";
         private const string RANGE_ITEMS_PATH = "//li[contains(@class, \"range\")]";
 
-        private readonly PackhumNoteParser _parser;
+        private readonly PackhumParser _parser;
         private readonly ChromeDriver _driver;
         private readonly List<int> _rangeSteps;
         private readonly HashSet<string> _consumedRangePaths;
@@ -62,7 +62,7 @@ namespace Epicod.Scraper.Packhum
         /// <exception cref="ArgumentNullException">writer</exception>
         public PackhumWebScraper(ITextNodeWriter writer) : base(writer)
         {
-            _parser = new PackhumNoteParser();
+            _parser = new PackhumParser();
             _rangeSteps = new List<int>();
             _consumedRangePaths = new HashSet<string>();
             _driver = GetChromeDriver();
@@ -180,7 +180,7 @@ namespace Epicod.Scraper.Packhum
                 {
                     try
                     {
-                        var noteProps = _parser.Parse(note, node.Id);
+                        var noteProps = _parser.ParseNote(note, node.Id);
                         props.AddRange(noteProps);
                     }
                     catch (Exception ex)

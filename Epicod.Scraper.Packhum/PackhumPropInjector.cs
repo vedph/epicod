@@ -64,7 +64,7 @@ namespace Epicod.Scraper.Packhum
             // clear
             if (!IsDry) Clear(qf);
 
-            PackhumNoteParser parser = new();
+            PackhumParser parser = new();
             string[] cols = new[] { "node_id", "name", "value" };
 
             // get total
@@ -87,7 +87,7 @@ namespace Epicod.Scraper.Packhum
                 .Where("corpus", PackhumWebScraper.CORPUS)
                 .OrderBy($"{EpicodSchema.T_NODE}.id").Get())
             {
-                IList<TextNodeProperty> props = parser.Parse
+                IList<TextNodeProperty> props = parser.ParseNote
                     (item.Note, item.NodeId);
                 if (props.Count == 0) continue;
 

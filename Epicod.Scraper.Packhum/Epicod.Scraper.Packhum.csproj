@@ -16,6 +16,14 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Assets\NanDates.csv" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Assets\NanDates.csv" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Fusi.Antiquity" Version="2.0.0" />
     <PackageReference Include="Fusi.Tools" Version="2.1.9" />
     <PackageReference Include="HtmlAgilityPack" Version="1.11.46" />

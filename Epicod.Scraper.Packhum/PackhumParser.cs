@@ -1,10 +1,14 @@
 ﻿using Epicod.Core;
 using Fusi.Antiquity.Chronology;
 using Fusi.Tools;
+using OpenQA.Selenium;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using System.Linq;
+using System.Reflection;
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace Epicod.Scraper.Packhum
@@ -12,7 +16,7 @@ namespace Epicod.Scraper.Packhum
     /// <summary>
     /// A simple parser for a Packhum text note.
     /// </summary>
-    public sealed class PackhumNoteParser
+    public sealed class PackhumParser
     {
         private readonly char[] _seps;
         private readonly Regex _typeRegex;
@@ -20,11 +24,12 @@ namespace Epicod.Scraper.Packhum
         private readonly Regex _cornerDateRegex;
         private readonly Regex _dateRegex;
         private readonly Regex _refAbbrRegex;
+        private Dictionary<string, HistoricalDate>? _nanDates;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="PackhumNoteParser"/> class.
+        /// Initializes a new instance of the <see cref="PackhumParser"/> class.
         /// </summary>
-        public PackhumNoteParser()
+        public PackhumParser()
         {
             _seps = new[] { '\u2014' };
 
@@ -32,7 +37,8 @@ namespace Epicod.Scraper.Packhum
             _typeRegex = new Regex(@"^\s*\[([^]]+)\]\s*$");
 
             // type as writing direction/layout
-            _writingRegex = new Regex(@"^\s*(?:stoich|non-stoich|boustr|retrogr)\.\s*\d*\s*$");
+            _writingRegex = new Regex(
+                @"^\s*(?:stoich|non-stoich|boustr|retrogr)\.\s*\d*\s*$");
 
             _cornerDateRegex = new Regex(@"^\s*(early|late|aet\.)");
 
@@ -174,7 +180,8 @@ namespace Epicod.Scraper.Packhum
             return Tuple.Create(d, type, m.Groups["era"].Length > 0);
         }
 
-        private static bool IsCenturyDigit(char c) => c == 'I' || c == 'V' || c == 'X';
+        private static bool IsCenturyDigit(char c)
+            => c == 'I' || c == 'V' || c == 'X';
 
         private static string PreprocessDateSlash(string text)
         {
@@ -187,21 +194,44 @@ namespace Epicod.Scraper.Packhum
                 : text;
         }
 
-        private bool ParseDate(string text, int nodeId,
-            List<TextNodeProperty> props)
+        private void EnsureNanLoaded()
         {
+            if (_nanDates != null) return;
+
+            _nanDates = new();
+            using StreamReader reader = new(Assembly.GetExecutingAssembly()
+                .GetManifestResourceStream(
+                    "Epicod.Scraper.Packhum.Assets.NanDates.csv")!,
+                Encoding.UTF8);
+
+            string? line;
+            while ((line = reader.ReadLine()) != null)
+            {
+                if (string.IsNullOrEmpty(line)) continue;
+                string[] cols = line.Split(',');
+                _nanDates[cols[0].ToLowerInvariant()] =
+                    HistoricalDate.Parse(cols[1])!;
+            }
+        }
+
+        public IList<HistoricalDate> ParseDates(string text)
+        {
+            if (string.IsNullOrEmpty(text)) return Array.Empty<HistoricalDate>();
+
             // corner cases: non-numeric dates like "early empire"
+            // https://raw.githubusercontent.com/sommerschield/iphi/main/train/data/iphi_dates.py
             if (_cornerDateRegex.IsMatch(text))
             {
-                props.Add(new TextNodeProperty(nodeId, TextNodeProps.DATE_NAN,
-                    text.Trim()));
-                return true;
+                string nan = text.Trim();
+                EnsureNanLoaded();
+                nan = nan.ToLowerInvariant();
+                if (_nanDates!.ContainsKey(nan)) return new[] { _nanDates[nan] };
+                else return Array.Empty<HistoricalDate>();
             }
 
             // first split at / for alternatives (e.g. "fin. s. VI/init. s. V a.")
             // unless / separates Roman or Arabic digits (e.g. "s. VI/V a.").
             // In the latter case, replace / with - thus making it a range.
-            bool isDate = false;
             text = PreprocessDateSlash(text);
             bool defaultToBC = false;
             bool firstDt = true;
@@ -210,9 +240,11 @@ namespace Epicod.Scraper.Packhum
             // for points is often implicit in the first, like in the above sample
             // for "fin. s. VI". We use defaultToBC for this purpose, but for
             // non-range only dates.
-            string[] dates = text.Split('/');
-            int dateNr = dates.Length;
-            foreach (string dt in dates.Reverse())
+            string[] textDates = text.Split('/');
+            int dateNr = textDates.Length;
+            List<HistoricalDate> dates = new();
+
+            foreach (string dt in textDates.Reverse())
             {
                 HistoricalDate date = new();
 
@@ -231,7 +263,6 @@ namespace Epicod.Scraper.Packhum
 
                     var a = ParseDatation(dt[..i], b.Item1.Value < 0);
                     if (a == null) continue;
-                    isDate = true;
 
                     date.SetStartPoint(a.Item1);
                 }
@@ -239,7 +270,6 @@ namespace Epicod.Scraper.Packhum
                 {
                     var p = ParseDatation(dt, defaultToBC);
                     if (p == null) continue;
-                    isDate = true;
                     switch (p.Item2)
                     {
                         case 'a':
@@ -254,31 +284,44 @@ namespace Epicod.Scraper.Packhum
                     }
                 }
 
-                // all the alternative dates after the 1st are suffixed
-                // (e.g. "date-txt#1", "date-val#1", "date-txt#2"...)
-                string suffix = "";
-                if (dateNr > 1) suffix = $"#{dateNr}";
-
-                props.Add(new TextNodeProperty(nodeId,
-                    TextNodeProps.DATE_TXT + suffix,
-                    date.ToString()));
-
-                double val = date.GetSortValue();
-                props.Add(new TextNodeProperty(nodeId,
-                    TextNodeProps.DATE_VAL + suffix,
-                    val.ToString(CultureInfo.InvariantCulture),
-                    TextNodeProps.TYPE_INT));
-
+                dates.Add(date);
                 if (firstDt)
                 {
                     firstDt = false;
-                    if (val < 0) defaultToBC = true;
+                    if (date.GetSortValue() < 0) defaultToBC = true;
                 }
 
                 dateNr--;
             }
 
-            return isDate;
+            // restore original order
+            dates.Reverse();
+            return dates;
+        }
+
+        private bool ParseDate(string text, int nodeId,
+            List<TextNodeProperty> props)
+        {
+            IList<HistoricalDate> dates = ParseDates(text);
+            int n = 0;
+
+            foreach (HistoricalDate date in dates)
+            {
+                // all the alternative dates after the 1st are suffixed
+                // (e.g. "date-txt#1", "date-val#1", "date-txt#2"...)
+                string suffix = ++n > 1? $"#{n}" : "";
+
+                props.Add(new TextNodeProperty(nodeId,
+                    TextNodeProps.DATE_TXT + suffix,
+                    date.ToString()));
+
+                props.Add(new TextNodeProperty(nodeId,
+                    TextNodeProps.DATE_VAL + suffix,
+                    date.GetSortValue().ToString(CultureInfo.InvariantCulture),
+                    TextNodeProps.TYPE_INT));
+            }
+
+            return dates.Count > 0;
         }
 
         /// <summary>
@@ -287,9 +330,10 @@ namespace Epicod.Scraper.Packhum
         /// <param name="note">The note.</param>
         /// <param name="nodeId">The node identifier.</param>
         /// <returns>Properties parsed from note.</returns>
-        public IList<TextNodeProperty> Parse(string note, int nodeId)
+        public IList<TextNodeProperty> ParseNote(string note, int nodeId)
         {
-            if (string.IsNullOrEmpty(note)) return Array.Empty<TextNodeProperty>();
+            if (string.IsNullOrEmpty(note))
+                return Array.Empty<TextNodeProperty>();
 
             string[] tokens = note.Split(_seps);
 
