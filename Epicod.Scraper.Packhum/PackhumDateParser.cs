@@ -1,9 +1,10 @@
 ﻿using Fusi.Antiquity.Chronology;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Globalization;
+using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -14,56 +15,70 @@ namespace Epicod.Scraper.Packhum
     /// </summary>
     public sealed class PackhumDateParser
     {
-        private readonly Regex _wsRegex;
-        private readonly Regex _orModifierRegex;
-        private readonly Regex _earlyModifierRegex;
-        private readonly Regex _dateSuffixRegex;
-        private readonly Regex _wRegex;
-        private readonly string[] _dateSeps;
+        #region Constants
+        // preprocessing for split
+        private static readonly Regex _wsRegex =
+            new(@"\s+", RegexOptions.Compiled);
 
-        private readonly Regex _apSuffixRegex;
-        private readonly Regex _caRegex;
-        private readonly Regex _splitQmkRegex;
-        private readonly Regex _splitSlashRegex;
-        private readonly Regex _splitPtRegex;
+        private static readonly Regex _orModifierRegex = new(
+            @"(?:or |od\.|oder )" +
+            @"(?<l>shortly |slightly |sh\.)? ?" +
+            @"(?<m>later|lat\.|after|aft.|earlier|früher|später)\??",
+            RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+        private static readonly Regex _earlyModifierRegex = new(
+            ", early$", RegexOptions.Compiled);
+
+        private static readonly Regex _dateSuffixRegex = new
+            (@",\s*(?<d>[0-3]?[0-9])?\s*" +
+             @"(?<m>Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[^\s]*",
+            RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+        private static readonly Regex _wRegex = new
+            (@"\bw//?", RegexOptions.Compiled);
+
+        private static readonly string[] _dateSeps = new[]
+        {
+            " and ", " or ", " od.", " oder ", " & ", ","
+        };
+
+        // date preprocessing
+        private static readonly Regex _apSuffixRegex = new(@"([0-9])(a\.|p\.)",
+            RegexOptions.Compiled);
+
+        private static readonly Regex _caRegex = new(
+            @"^ca?\.", RegexOptions.Compiled);
+
+        private static readonly Regex _splitQmkRegex = new(
+            @"([0-9]\?)\s+([0-9])", RegexOptions.Compiled);
+
+        private static readonly Regex _splitSlashRegex = new(
+            "([^0-9IVX])/([^0-9IVX])", RegexOptions.Compiled);
+
+        // datation
+        private static readonly Regex _splitPtRegex = new(
+            "([0-9IVXtdh?])-([0-9IVX])", RegexOptions.Compiled);
+
+        private static readonly Regex _qmkPrefixRegex = new(
+            "(init.|beg.|Anf.|med.|mid|middle|" +
+            "fin.|end|Ende|Wende|" +
+            @"early|eher|early\s*/\s*mid|late|" +
+            @"1st half|2nd half|1.\s*Halfte|2.\s*Halfte|" +
+            @"mid\s*/\s*2nd half|middle\s*/\s*2nd half)\?",
+            RegexOptions.Compiled);
+
+        private static readonly Regex _midDashRegex = new(@"\bmid-[0-9]",
+            RegexOptions.Compiled);
+
+        private static readonly Dictionary<string, HistoricalDate>
+            _periods = new();
+        #endregion
 
         // state
-        private bool _globalCa;
-        private bool _globalDub;
         private readonly List<string> _hints;
 
         public PackhumDateParser()
         {
-            // preprocessing for split
-            _wsRegex = new Regex(@"\s+", RegexOptions.Compiled);
-
-            _orModifierRegex = new Regex(
-                @"(?:or |od\.|oder )" +
-                @"(?<l>shortly |slightly |sh\.)? ?" +
-                @"(?<m>later|lat\.|after|aft.|earlier|früher|später)\??",
-                RegexOptions.IgnoreCase | RegexOptions.Compiled);
-
-            _earlyModifierRegex = new Regex(", early$", RegexOptions.Compiled);
-
-            _dateSuffixRegex = new Regex(@",\s*(?<d>[0-3]?[0-9])?\s*" +
-                @"(?<m>Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[^\s]*",
-                RegexOptions.IgnoreCase | RegexOptions.Compiled);
-
-            _wRegex = new Regex(@"\bw//?", RegexOptions.Compiled);
-
-            _dateSeps = new[] { " and ", " or ", " od.", " oder ", " & ", "," };
-
-            // date preprocessing
-            _apSuffixRegex = new Regex(@"([0-9])(a\.|p\.)", RegexOptions.Compiled);
-            _caRegex = new Regex(@"^ca?\.", RegexOptions.Compiled);
-            _splitQmkRegex = new Regex(@"([0-9]\?)\s+([0-9])", RegexOptions.Compiled);
-            _splitSlashRegex = new Regex("([^0-9IVX])/([^0-9IVX])",
-                RegexOptions.Compiled);
-
-            // datation
-            _splitPtRegex = new Regex("([0-9IVXtdh?])-([0-9IVX])",
-                RegexOptions.Compiled);
-
             _hints = new List<string>();
         }
 
@@ -87,7 +102,8 @@ namespace Epicod.Scraper.Packhum
             };
         }
 
-        private string NormalizeWS(string s) => _wsRegex.Replace(s, " ").Trim();
+        private static string NormalizeWS(string s)
+            => _wsRegex.Replace(s, " ").Trim();
 
         private string ExtractHints(string text)
         {
@@ -185,7 +201,7 @@ namespace Epicod.Scraper.Packhum
         /// <param name="text">The text.</param>
         /// <returns>Date(s) text(s).</returns>
         /// <exception cref="ArgumentNullException">text</exception>
-        public IList<string> SplitDates(string text)
+        public static IList<string> SplitDates(string text)
         {
             if (text is null) throw new ArgumentNullException(nameof(text));
 
@@ -210,60 +226,128 @@ namespace Epicod.Scraper.Packhum
         /// <param name="text">The text.</param>
         /// <returns>Datation(s) text(s).</returns>
         /// <exception cref="ArgumentNullException">text</exception>
-        public IList<string> SplitDatations(string text)
+        public static IList<string> SplitDatations(string text)
         {
             if (text is null) throw new ArgumentNullException(nameof(text));
 
             return SplitAtRegexWithSep(text, _splitPtRegex);
         }
 
-        /// <summary>
-        /// Preprocesses the datation.
-        /// </summary>
-        /// <param name="text">The datation text.</param>
-        /// <returns>Preprocessed text.</returns>
-        /// <exception cref="ArgumentNullException">text</exception>
-        public string PreprocessDatation(string text)
+        private static void EnsurePeriodsLoaded()
         {
-            if (text is null) throw new ArgumentNullException(nameof(text));
+            if (_periods.Count != 0) return;
 
-            // detach a./p. when attached to N
-            string s = _apSuffixRegex.Replace(text, "$1 $2");
+            using StreamReader reader = new(Assembly.GetExecutingAssembly()
+                .GetManifestResourceStream(
+                "Epicod.Scraper.Packhum.Assets.Periods.csv")!,
+                Encoding.UTF8);
 
-            // remove initial ca. (this must be applied to any datations)
-            Match m = _caRegex.Match(s);
-            if (m.Success)
+            string? line;
+            while ((line = reader.ReadLine()) != null)
             {
-                _globalCa = true;
-                s = s.Remove(0, m.Length);
+                if (string.IsNullOrEmpty(line)) continue;
+                string[] cols = line.Split(',');
+                _periods[cols[0].ToLowerInvariant()] =
+                    HistoricalDate.Parse(cols[1])!;
             }
-
-            // remove final ?
-            if (s.Length > 0 && s[^1] == '?')
-            {
-                _globalDub = true;
-                s = s[..^1];
-            }
-
-            return s;
         }
 
-        private void Reset()
+        private static HistoricalDate? MatchPeriod(string text)
         {
-            _globalCa = false;
-            _globalDub = false;
-            _hints.Clear();
+            EnsurePeriodsLoaded();
+            string s = NormalizeWS(text).ToLowerInvariant();
+            return _periods!.ContainsKey(s) ? _periods[s] : null;
+        }
+
+        /// <summary>
+        /// Preprocesses the specified datations.
+        /// </summary>
+        /// <param name="texts">The datation texts.</param>
+        /// <returns>One tuple for each input text, with 1=preprocessed text,
+        /// 2=about, 3=dubious.</returns>
+        /// <exception cref="ArgumentNullException">text</exception>
+        public static IList<Tuple<string, bool, bool>> PreprocessDatations(
+            IList<string> texts)
+        {
+            if (texts is null) throw new ArgumentNullException(nameof(texts));
+
+            int n = 0;
+            bool globalCa = false,
+                 globalDub = texts[^1].EndsWith("?", StringComparison.Ordinal);
+            List<Tuple<string, bool, bool>> results = new();
+
+            foreach (string text in texts)
+            {
+                n++;
+
+                // detach a./p. when attached to N
+                string s = _apSuffixRegex.Replace(text, "$1 $2");
+
+                // remove initial ca. (this must be applied to any datations)
+                bool ca = globalCa;
+                Match m = _caRegex.Match(s);
+                if (m.Success)
+                {
+                    ca = true;
+                    if (n == 1) globalCa = true;
+                    s = s.Remove(0, m.Length);
+                }
+
+                // remove ? from prefix
+                s = _qmkPrefixRegex.Replace(s, "$1");
+
+                // remove ?
+                bool dub = globalDub;
+                if (s.Contains('?'))
+                {
+                    dub = true;
+                    s = s.Replace("?", "");
+                }
+
+                // corner cases:
+                // mid- > med.
+                s = _midDashRegex.Replace(s, "med. $1");
+
+                // later than the early: remove
+                s = s.Replace("later than the early", "");
+
+                // result complete
+                results.Add(Tuple.Create(NormalizeWS(s), ca, dub));
+            }
+
+            return results;
         }
 
         public IList<HistoricalDate> Parse(string? text)
         {
             if (string.IsNullOrEmpty(text)) return Array.Empty<HistoricalDate>();
 
-            Reset();
+            _hints.Clear();
+
+            // A1 preprocess for split
             string s = PreprocessForSplit(text);
+
+            // A2 split dates, and for each date:
             foreach (string singleDate in SplitDates(s))
             {
-                // TODO
+                // B split date's datations
+                IList<string> datations = SplitDatations(singleDate);
+
+                // C1 preprocess date's datations
+                foreach (var tad in PreprocessDatations(datations))
+                {
+                    // C2 check period first
+                    HistoricalDate? d = MatchPeriod(tad.Item1);
+                    if (d is not null)
+                    {
+                        // TODO
+                    }
+                    // else parse datation
+                    else
+                    {
+                        // TODO
+                    }
+                }
             }
             throw new NotImplementedException();
         }

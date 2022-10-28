@@ -1,5 +1,8 @@
-﻿using System.Linq;
+﻿using System;
+using System.Collections;
+using System.Linq;
 using Xunit;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace Epicod.Scraper.Packhum.Test
 {
@@ -90,7 +93,7 @@ namespace Epicod.Scraper.Packhum.Test
         {
             PackhumDateParser parser = new();
             text = parser.PreprocessForSplit(text);
-            string[] actual = parser.SplitDates(text).ToArray();
+            string[] actual = PackhumDateParser.SplitDates(text).ToArray();
             Assert.Equal(expected, actual);
         }
 
@@ -111,8 +114,39 @@ namespace Epicod.Scraper.Packhum.Test
         {
             PackhumDateParser parser = new();
             text = parser.PreprocessForSplit(text);
-            string[] actual = parser.SplitDatations(text).ToArray();
+            string[] actual = PackhumDateParser.SplitDatations(text).ToArray();
             Assert.Equal(expected, actual);
+        }
+
+        [Theory]
+        [InlineData("", "")]
+        [InlineData("139p.", "139 p.")]
+        [InlineData("222-235p.", "222-235 p.")]
+        public void PreprocessDatations_DetachAP_Ok(string text, string expected)
+        {
+            PackhumDateParser parser = new();
+            text = parser.PreprocessForSplit(text);
+            string actual =
+                PackhumDateParser.PreprocessDatations(new[] { text })[0].Item1;
+            Assert.Equal(expected, actual);
+        }
+
+        [Fact]
+        public void PreprocessDatations_Ca_Ok()
+        {
+            var tads = PackhumDateParser.PreprocessDatations(new[]
+            {
+                "c. 123 AD", "456 AD"
+            });
+
+            Assert.Equal(2, tads.Count);
+            Assert.Equal("123 AD", tads[0].Item1);
+            Assert.True(tads[0].Item2);
+            Assert.False(tads[1].Item2);
+
+            Assert.Equal("456 AD", tads[0].Item1);
+            Assert.True(tads[0].Item2);
+            Assert.False(tads[1].Item2);
         }
     }
 }

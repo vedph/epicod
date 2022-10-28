@@ -4,10 +4,7 @@ using Fusi.Tools;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.IO;
 using System.Linq;
-using System.Reflection;
-using System.Text;
 using System.Text.RegularExpressions;
 
 namespace Epicod.Scraper.Packhum
@@ -22,9 +19,6 @@ namespace Epicod.Scraper.Packhum
         private readonly Regex _writingRegex;
         private readonly Regex _dateRegex;
         private readonly Regex _refAbbrRegex;
-        private readonly Regex _wsRegex;
-        private readonly Regex _orModifierRegex;
-        private Dictionary<string, HistoricalDate>? _nanDates;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="PackhumParser"/> class.
@@ -60,13 +54,6 @@ namespace Epicod.Scraper.Packhum
 
             // 2 initial capitals are usually a hint for SEG, IG, etc.
             _refAbbrRegex = new Regex(@"^\s*[A-Z]{2,}", RegexOptions.Compiled);
-
-            _wsRegex = new Regex(@"\s+", RegexOptions.Compiled);
-            _orModifierRegex = new Regex(
-                @"(?:or |od\.|oder )" +
-                @"(?<l>shortly |slightly |sh\.)?" +
-                @"(?<m>later|lat\.|after|aft.|früher|später)\s*",
-                RegexOptions.IgnoreCase | RegexOptions.Compiled);
         }
 
         private bool ParseType(string text, int nodeId,
@@ -201,42 +188,14 @@ namespace Epicod.Scraper.Packhum
                 : text;
         }
 
-        private void EnsureNanLoaded()
-        {
-            if (_nanDates != null) return;
-
-            _nanDates = new();
-            using StreamReader reader = new(Assembly.GetExecutingAssembly()
-                .GetManifestResourceStream(
-                    "Epicod.Scraper.Packhum.Assets.NanDates.csv")!,
-                Encoding.UTF8);
-
-            string? line;
-            while ((line = reader.ReadLine()) != null)
-            {
-                if (string.IsNullOrEmpty(line)) continue;
-                string[] cols = line.Split(',');
-                _nanDates[cols[0].ToLowerInvariant()] =
-                    HistoricalDate.Parse(cols[1])!;
-            }
-        }
-
-        private HistoricalDate? MatchPeriod(string text)
-        {
-            EnsureNanLoaded();
-            string norm = _wsRegex.Replace(text.ToLowerInvariant(), " ").Trim();
-            return _nanDates!.ContainsKey(norm)? _nanDates[norm]: null;
-        }
-
         public IList<HistoricalDate> ParseDates(string text)
         {
             if (string.IsNullOrEmpty(text)) return Array.Empty<HistoricalDate>();
 
             // corner cases: non-numeric dates like "early empire"
             // the periods are modified from
+            // TODO
             // https://raw.githubusercontent.com/sommerschield/iphi/main/train/data/iphi_dates.py
-            HistoricalDate? p = MatchPeriod(text);
-            if (p is not null) return new[] { p };
 
             // first split at / for alternatives (e.g. "fin. s. VI/init. s. V a.")
             // unless / separates Roman or Arabic digits (e.g. "s. VI/V a.").

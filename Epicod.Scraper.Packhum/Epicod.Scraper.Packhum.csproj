@@ -16,11 +16,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="Assets\NanDates.csv" />
+    <None Remove="Assets\Periods.csv" />
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="Assets\NanDates.csv" />
+    <EmbeddedResource Include="Assets\Periods.csv" />
   </ItemGroup>
 
   <ItemGroup>

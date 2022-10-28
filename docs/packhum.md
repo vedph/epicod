@@ -378,11 +378,11 @@ C1. preprocessing:
   - attached to N: `1025-1028? AD`, `s. V? a.`, `5th? and 4th c. BC`.
   - attached to BC/AD or equivalent suffix: `125/124 BC? [Kram. 81,D1]`
 - remove suffixed `?`: any PREFIX + `?` without space: remove `?` (e.g. `early?` becomes `early`).
-- `mid-` > `med.` + space. This is because this prefix is not separated by space from the next N.
-- `later than the early`, `later [0-9][stndrdth]-1st half` => remove (e.g. `later 2nd-1st half 3rd c. AD`).
+- `mid-([0-9])` > `med. $1`. This is because this prefix is not separated by space from the next N. All the cases of `mid-` are followed by a digit.
+- `later than the early`: remove.
 - lookup periods and stop if match.
 
-C2. analysis:
+C2. parsing:
 
 - PREFIX: in this order:
   - optionally any of:
