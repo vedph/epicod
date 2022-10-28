@@ -25,6 +25,7 @@ namespace Epicod.Scraper.Packhum
         private readonly Regex _caRegex;
         private readonly Regex _splitQmkRegex;
         private readonly Regex _splitSlashRegex;
+        private readonly Regex _splitPtRegex;
 
         // state
         private bool _globalCa;
@@ -57,6 +58,10 @@ namespace Epicod.Scraper.Packhum
             _caRegex = new Regex(@"^ca?\.", RegexOptions.Compiled);
             _splitQmkRegex = new Regex(@"([0-9]\?)\s+([0-9])", RegexOptions.Compiled);
             _splitSlashRegex = new Regex("([^0-9IVX])/([^0-9IVX])",
+                RegexOptions.Compiled);
+
+            // datation
+            _splitPtRegex = new Regex("([0-9IVXtdh?])-([0-9IVX])",
                 RegexOptions.Compiled);
 
             _hints = new List<string>();
@@ -172,7 +177,7 @@ namespace Epicod.Scraper.Packhum
         }
 
         /// <summary>
-        /// Splits the dates in the specified date text (see A2 in docs).
+        /// Splits the dates in the specified date(s) text (see A2 in docs).
         /// </summary>
         /// <param name="text">The text.</param>
         /// <returns>Date(s) text(s).</returns>
@@ -194,6 +199,19 @@ namespace Epicod.Scraper.Packhum
                 text.Split(_dateSeps, StringSplitOptions.RemoveEmptyEntries)
                 select NormalizeWS(split))
                 .ToList();
+        }
+
+        /// <summary>
+        /// Splits the datations in the specified single date text (see B in docs).
+        /// </summary>
+        /// <param name="text">The text.</param>
+        /// <returns>Datation(s) text(s).</returns>
+        /// <exception cref="ArgumentNullException">text</exception>
+        public IList<string> SplitDatations(string text)
+        {
+            if (text is null) throw new ArgumentNullException(nameof(text));
+
+            return SplitAtRegexWithSep(text, _splitPtRegex);
         }
 
         private string PreprocessDatation(string text)

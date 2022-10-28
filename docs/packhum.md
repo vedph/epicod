@@ -357,7 +357,7 @@ A2. split at any of the following separators (_unless_ inside `()` or `[]`; thes
 - " & "
 - ","
 
-(B) split into datation points at `[0-9IVX?]-[0-9IVX]` (start from the last date to supply era and hints).
+(B) split into datation points at `[0-9IVXtdh?]-[0-9IVX]` (start from the last date to supply era and hints).
 
 (C) single datation point: `PREFIX? N SUFFIX?`:
 

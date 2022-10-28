@@ -86,11 +86,32 @@ namespace Epicod.Scraper.Packhum.Test
             "116",
             "156 AD"
         })]
-        public void SplitDates(string text, string[] expected)
+        public void SplitDates_Ok(string text, string[] expected)
         {
             PackhumDateParser parser = new();
             text = parser.PreprocessForSplit(text);
             string[] actual = parser.SplitDates(text).ToArray();
+            Assert.Equal(expected, actual);
+        }
+
+        [Theory]
+        [InlineData("", new string[0])]
+        [InlineData("100-200 AD", new [] { "100", "200 AD"})]
+        [InlineData("123/124-222/223 AD", new[]
+        {
+            "123/124",
+            "222/223 AD"
+        })]
+        [InlineData("10th-11th c. AD", new[]
+        {
+            "10th",
+            "11th c. AD"
+        })]
+        public void SplitDatations_Ok(string text, string[] expected)
+        {
+            PackhumDateParser parser = new();
+            text = parser.PreprocessForSplit(text);
+            string[] actual = parser.SplitDatations(text).ToArray();
             Assert.Equal(expected, actual);
         }
     }
