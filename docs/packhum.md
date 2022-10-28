@@ -319,22 +319,36 @@ Query template for inspection:
 
 ```sql
 select distinct tnp.value from text_node_property tnp
-where tnp.name='date-phi' and value ilike '%nach%'
+where tnp.name='date-phi' and value ~ '[^0-9IVX]/[^0-9IVX]'
 order by tnp.value
 ```
 
 General forms:
 
-(A) splitting:
+(A) splitting multiple dates (start from the last date to supply era and hints):
 
 A1. preprocess: this is required to avoid splitting in a wrong way:
 
-- `or`/`od.`/`oder` + ( `sh.`/`shortly`/`slightly`) + `lat.`/`later`/`aft.`/`after`/`früher`/`später` => wrap in `()` and normalize language.
-- `,\s+early` => wrap in `()`.
+- normalize whitespaces, just to ease later processing.
+- `or`/`od.`/`oder` + ( `sh.`/`shortly`/`slightly`) + `lat.`/`later`/`aft.`/`after`/`früher`/`später` + (`?`) => wrap in `()` and normalize language.
+- `,\s+early$` => wrap in `()`.
 - `,\s*([0-3]?[0-9])?\s*(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[^\s]*` => `{d=N,m=N}`.
+- `w/` and `w//` => `w`(these are wrong parsing cases: not a date).
+- `July/August` => `July-August`.
+- extract `[...]` or `(...)` into hints.
 
-A2. split at any of the following separators _unless_ inside `()` or `[]`:
+>Note: corner cases were defined by this query:
 
+```sql
+select distinct tnp.value from text_node_property tnp 
+where tnp.name='date-phi' and value ~ '[^0-9IVX]/[^0-9IVX]'
+order by tnp.value
+```
+
+A2. split at any of the following separators (_unless_ inside `()` or `[]`; these are already ruled out by preprocessing at A1):
+
+- corner case: `[0-9]\?\s+[0-9]`, e.g. `159-156? 157-156? BC (re-inscr. 1st c. AD)`.
+- corner case: `[^0-9IVX]/[^0-9IVX]`, e.g. `11th/beg. 12th c. AD`.
 - " and "
 - " or "
 - " od."
@@ -342,20 +356,33 @@ A2. split at any of the following separators _unless_ inside `()` or `[]`:
 - " & "
 - ","
 
-(B) single datation point: `PREFIX? N SUFFIX? ERA?`.
+(B) split into datation points at `[0-9IVX?]-[0-9IVX]` (start from the last date to supply era and hints).
 
-B1. preprocessing:
+(C) single datation point: `PREFIX? N SUFFIX? ERA?`:
+
+C1. preprocessing:
 
 - detach suffix: `([0-9])(a\.|p\.)` > `$1 $2`.
+- `c.`, `ca.` initial = about, applied to all the points.
+- `(?)` only in these cases (replace with `?`):
+  - `126/5(?) a.`
+  - `255/4 or 253/2(?)`
+  - `475/50 BC(?)`
+  - `5th (?) and 4th c. BC`
+  - `c. 318-307 bc(?)`
+  - `late (?) 2nd c. AD`
+  - `later (?) Rom. Imp. period`
+- `?` = dubious unless inside `()` or `[]` (e.g. `1542 AD (or later?)`, `196 AD [set up betw. 205 and 211?]`). This is found in any of these patterns:
+  - at the end: `100-125 AD?`.
+  - attached to N: `1025-1028? AD`, `s. V? a.`, `5th? and 4th c. BC`.
+  - attached to BC/AD or equivalent suffix: `125/124 BC? [Kram. 81,D1]`
 - remove suffixed `?`: any PREFIX + `?` without space: remove `?` (e.g. `early?` becomes `early`).
 - `later than the early`, `later [0-9][stndrdth]-1st half` => remove (e.g. `later 2nd-1st half 3rd c. AD`).
 - `mid-` > `med.` + space. This is because this prefix is not separated by space from the next N.
-- `c.`, `ca.` = about.
-- `?`, `(?)` = dubious.
 - `(...)`, `[...]` (`[]` can include `()`: e.g. `129/130 or 245/246 AD [229/230 AD (Tataki, Ed. Pr.)]`): hint. Stash and remove. Note that we might have multiple `()` because of A1 preprocessing.
 - lookup periods and stop if match.
 
-B2. analysis:
+C2. analysis:
 
 - PREFIX: in this order:
   - optionally any of:
@@ -368,7 +395,7 @@ B2. analysis:
     - `early`, `eher`
     - `early\s*/\s*mid`
     - `late`
-    - `1st\s+half`, `2nd\s+half`, `1.\s*Halfte`, `2.\s*Halfte`
+    - `1st half`, `2nd half`, `1.Halfte`, `2.Halfte`, `1. Halfte`, `2. Halfte`
     - `mid\s*/\s*2nd half`, `middle\s*/\s*2nd half`
   - `s.`
 - N (number: N=Arabic, R=Roman):
@@ -390,6 +417,7 @@ Examples:
 - 113-120 p.?
 - 139p.
 - 101/0 BC
+- 439/40? AD
 - 100/101 AD
 - 100/101 BC
 - 100-102 AD
@@ -425,6 +453,8 @@ Examples:
 - 13.2.139 n.Chr.
 - 146-108 BC (Per. V), early
 - 147-161 (or 139-141) AD
+- 132/1? 9/10?
+- 134? 130? 120? BC
 
 Errors: `117-138 n.Chr.Jh.n.Chr. (Chapot)`.
 

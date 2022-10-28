@@ -1,7 +1,6 @@
 ﻿using Epicod.Core;
 using Fusi.Antiquity.Chronology;
 using Fusi.Tools;
-using OpenQA.Selenium;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -21,9 +20,10 @@ namespace Epicod.Scraper.Packhum
         private readonly char[] _seps;
         private readonly Regex _typeRegex;
         private readonly Regex _writingRegex;
-        private readonly Regex _cornerDateRegex;
         private readonly Regex _dateRegex;
         private readonly Regex _refAbbrRegex;
+        private readonly Regex _wsRegex;
+        private readonly Regex _orModifierRegex;
         private Dictionary<string, HistoricalDate>? _nanDates;
 
         /// <summary>
@@ -34,13 +34,12 @@ namespace Epicod.Scraper.Packhum
             _seps = new[] { '\u2014' };
 
             // type like [pottery]
-            _typeRegex = new Regex(@"^\s*\[([^]]+)\]\s*$");
+            _typeRegex = new Regex(@"^\s*\[([^]]+)\]\s*$", RegexOptions.Compiled);
 
             // type as writing direction/layout
             _writingRegex = new Regex(
-                @"^\s*(?:stoich|non-stoich|boustr|retrogr)\.\s*\d*\s*$");
-
-            _cornerDateRegex = new Regex(@"^\s*(early|late|aet\.)");
+                @"^\s*(?:stoich|non-stoich|boustr|retrogr)\.\s*\d*\s*$",
+                RegexOptions.Compiled);
 
             // datation:
             // m: c., ante, post
@@ -56,10 +55,18 @@ namespace Epicod.Scraper.Packhum
                 @"(?<cm>init\.|med\.|fin\.)?\s*" +
                 @"(?:(?:(?<nv>\d+)(?<ord>st|nd|rd|th)?)|(?:s\.\s*(?<cv>[IVX]+)))\s*" +
                 @"(?<dubious>\?)?\s*" +
-                @"(?<era>a\.|p\.|ac|pc|bc|ad)?", RegexOptions.IgnoreCase);
+                @"(?<era>a\.|p\.|ac|pc|bc|ad)?", RegexOptions.IgnoreCase |
+                    RegexOptions.Compiled);
 
             // 2 initial capitals are usually a hint for SEG, IG, etc.
-            _refAbbrRegex = new Regex(@"^\s*[A-Z]{2,}");
+            _refAbbrRegex = new Regex(@"^\s*[A-Z]{2,}", RegexOptions.Compiled);
+
+            _wsRegex = new Regex(@"\s+", RegexOptions.Compiled);
+            _orModifierRegex = new Regex(
+                @"(?:or |od\.|oder )" +
+                @"(?<l>shortly |slightly |sh\.)?" +
+                @"(?<m>later|lat\.|after|aft.|früher|später)\s*",
+                RegexOptions.IgnoreCase | RegexOptions.Compiled);
         }
 
         private bool ParseType(string text, int nodeId,
@@ -214,20 +221,22 @@ namespace Epicod.Scraper.Packhum
             }
         }
 
+        private HistoricalDate? MatchPeriod(string text)
+        {
+            EnsureNanLoaded();
+            string norm = _wsRegex.Replace(text.ToLowerInvariant(), " ").Trim();
+            return _nanDates!.ContainsKey(norm)? _nanDates[norm]: null;
+        }
+
         public IList<HistoricalDate> ParseDates(string text)
         {
             if (string.IsNullOrEmpty(text)) return Array.Empty<HistoricalDate>();
 
             // corner cases: non-numeric dates like "early empire"
+            // the periods are modified from
             // https://raw.githubusercontent.com/sommerschield/iphi/main/train/data/iphi_dates.py
-            if (_cornerDateRegex.IsMatch(text))
-            {
-                string nan = text.Trim();
-                EnsureNanLoaded();
-                nan = nan.ToLowerInvariant();
-                if (_nanDates!.ContainsKey(nan)) return new[] { _nanDates[nan] };
-                else return Array.Empty<HistoricalDate>();
-            }
+            HistoricalDate? p = MatchPeriod(text);
+            if (p is not null) return new[] { p };
 
             // first split at / for alternatives (e.g. "fin. s. VI/init. s. V a.")
             // unless / separates Roman or Arabic digits (e.g. "s. VI/V a.").
@@ -268,18 +277,18 @@ namespace Epicod.Scraper.Packhum
                 }
                 else
                 {
-                    var p = ParseDatation(dt, defaultToBC);
-                    if (p == null) continue;
-                    switch (p.Item2)
+                    Tuple<Datation, char, bool>? t = ParseDatation(dt, defaultToBC);
+                    if (t == null) continue;
+                    switch (t.Item2)
                     {
                         case 'a':
-                            date.SetEndPoint(p.Item1);
+                            date.SetEndPoint(t.Item1);
                             break;
                         case 'p':
-                            date.SetStartPoint(p.Item1);
+                            date.SetStartPoint(t.Item1);
                             break;
                         default:
-                            date.SetSinglePoint(p.Item1);
+                            date.SetSinglePoint(t.Item1);
                             break;
                     }
                 }
