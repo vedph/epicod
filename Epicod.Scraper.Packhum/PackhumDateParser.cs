@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace Epicod.Scraper.Packhum
@@ -14,6 +15,7 @@ namespace Epicod.Scraper.Packhum
         private readonly Regex _orModifierRegex;
         private readonly Regex _earlyModifierRegex;
         private readonly Regex _dateSuffixRegex;
+        private readonly Regex _wRegex;
         private readonly string[] _dateSeps;
 
         private readonly Regex _apSuffixRegex;
@@ -41,6 +43,8 @@ namespace Epicod.Scraper.Packhum
             _dateSuffixRegex = new Regex(@",\s*(?<d>[0-3]?[0-9])?\s*" +
                 @"(?<m>Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[^\s]*",
                 RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+            _wRegex = new Regex(@"\bw//?", RegexOptions.Compiled);
 
             _dateSeps = new[] { " and ", " or ", " od.", " oder ", " & ", "," };
 
@@ -74,19 +78,47 @@ namespace Epicod.Scraper.Packhum
 
         private string NormalizeWS(string s) => _wsRegex.Replace(s, " ").Trim();
 
+        private string ExtractHints(string text)
+        {
+            char[] opChars = new[] { '[', '(' };
+
+            // find 1st [ or (
+            int i = text.IndexOfAny(opChars);
+            if (i == -1) return text;
+
+            StringBuilder sb = new(text);
+            while (i > -1)
+            {
+                // find next ] or )
+                int start = i;
+                char c = text[i] == '[' ? ']' : ')';
+                i = text.IndexOf(c, i + 1);
+                if (i == -1) i = text.Length - 1;
+
+                // extract and remove hint
+                _hints.Add(text[start..(i + 1)]);
+                sb.Remove(start, i + 1 - start);
+
+                // find next [ or (
+                i = text.IndexOfAny(opChars, i + 1);
+            }
+
+            return sb.ToString();
+        }
+
         private string PreprocessForSplit(string text)
         {
             // normalize WS
-            string t = NormalizeWS(text);
+            string s = NormalizeWS(text);
 
             // or...: wrap in ()
-            t = _orModifierRegex.Replace(t, (Match m) => "(" + m.Value + ")");
+            s = _orModifierRegex.Replace(s, (Match m) => "(" + m.Value + ")");
 
             // , early... : wrap in 
-            t = _earlyModifierRegex.Replace(t, (Match m) => "(" + m.Value + ")");
+            s = _earlyModifierRegex.Replace(s, (Match m) => "(" + m.Value + ")");
 
             // date suffix: wrap in {d=N,m=N} ({} are never used in PHI dates)
-            t = _dateSuffixRegex.Replace(t, (Match m) =>
+            s = _dateSuffixRegex.Replace(s, (Match m) =>
             {
                 int day = m.Groups["d"].Length > 0
                     ? int.Parse(m.Groups[1].Value, CultureInfo.InvariantCulture)
@@ -95,7 +127,12 @@ namespace Epicod.Scraper.Packhum
                 return "{" + (day > 0 ? $"d={day},m={month}" : $"m={month}") + "}";
             });
 
-            return t;
+            // corner cases
+            s = _wRegex.Replace(s, "w");
+            s = s.Replace("July/August", "July-August");
+
+            // extract [...] and (...)
+            return ExtractHints(s);
         }
 
         private IList<string> SplitDates(string text)
