@@ -55,8 +55,8 @@ namespace Epicod.Scraper.Packhum
             // date preprocessing
             _apSuffixRegex = new Regex(@"([0-9])(a\.|p\.)", RegexOptions.Compiled);
             _caRegex = new Regex(@"^ca?\.", RegexOptions.Compiled);
-            _splitQmkRegex = new Regex(@"[0-9]\?\s+[0-9]", RegexOptions.Compiled);
-            _splitSlashRegex = new Regex("[^0-9IVX]/[^0-9IVX]",
+            _splitQmkRegex = new Regex(@"([0-9]\?)\s+([0-9])", RegexOptions.Compiled);
+            _splitSlashRegex = new Regex("([^0-9IVX])/([^0-9IVX])",
                 RegexOptions.Compiled);
 
             _hints = new List<string>();
@@ -127,6 +127,10 @@ namespace Epicod.Scraper.Packhum
             // extract [...] and (...)
             s = ExtractHints(s);
 
+            // corner cases
+            s = _wRegex.Replace(s, "w");
+            s = s.Replace("July/August", "July");
+
             // or...earlier/later: wrap in () normalizing expression
             s = _orModifierRegex.Replace(s, (Match m) =>
             {
@@ -153,13 +157,18 @@ namespace Epicod.Scraper.Packhum
                 return "{" + (day > 0 ? $"d={day},m={month}" : $"m={month}") + "}";
             });
 
-            // corner cases
-            s = _wRegex.Replace(s, "w");
-            s = s.Replace("July/August", "July-August");
-
             // re-extract hints eventually injected by preprocessing,
             // and re-normalize whitespace
             return NormalizeWS(ExtractHints(s));
+        }
+
+        private static IList<string> SplitAtRegexWithSep(string text, Regex r)
+        {
+            if (!r.IsMatch(text)) return Array.Empty<string>();
+
+            string lines = r.Replace(text, (Match m) =>
+                $"{m.Groups[1].Value}\n{m.Groups[2].Value}");
+            return lines.Split('\n');
         }
 
         /// <summary>
@@ -174,17 +183,11 @@ namespace Epicod.Scraper.Packhum
 
             // corner case: split at question mark
             if (_splitQmkRegex.IsMatch(text))
-            {
-                int i = text.LastIndexOf('?');
-                Debug.Assert(i > -1);
-                string tail = text[(i + 1)..];
-                return (from split in _splitQmkRegex.Split(text)
-                        select split + tail).ToList();
-            }
+                return SplitAtRegexWithSep(text, _splitQmkRegex);
 
             // corner case: split at slash
             if (_splitSlashRegex.IsMatch(text))
-                return _splitSlashRegex.Split(text);
+                return SplitAtRegexWithSep(text, _splitSlashRegex);
 
             // normal split at conjunctions or comma
             return (from split in

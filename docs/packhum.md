@@ -334,9 +334,9 @@ A1. preprocess: this is required to avoid splitting in a wrong way:
 - `or`/`od.`/`oder` + ( `sh.`/`shortly`/`slightly`) + `lat.`/`later`/`aft.`/`after`/`earlier`/`früher`/`später` + (`?`) => wrap in `()` and normalize language.
 - `at the earliest` => wrap in `()` if not already inside brackets.
 - `,\s+early$` => wrap in `()`.
-- `,\s*([0-3]?[0-9])?\s*(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[^\s]*` => `{d=N,m=N}`.
 - `w/` and `w//` => `w`(these are wrong parsing cases: not a date).
-- `July/August` => `July-August`.
+- `July/August` => `July`.
+- `,\s*([0-3]?[0-9])?\s*(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[^\s]*` => `{d=N,m=N}`.
 
 >Note: corner cases were defined by this query:
 
