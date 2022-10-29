@@ -46,7 +46,7 @@ namespace Epicod.Scraper.Packhum
         private static readonly Regex _apSuffixRegex = new(@"([0-9])(a\.|p\.)",
             RegexOptions.Compiled);
 
-        private static readonly Regex _caRegex = new(
+        private static readonly Regex _caInitialRegex = new(
             @"^ca?\.", RegexOptions.Compiled);
 
         private static readonly Regex _splitQmkRegex = new(
@@ -67,7 +67,7 @@ namespace Epicod.Scraper.Packhum
             @"mid\s*/\s*2nd half|middle\s*/\s*2nd half)\?",
             RegexOptions.Compiled);
 
-        private static readonly Regex _midDashRegex = new(@"\bmid-[0-9]",
+        private static readonly Regex _midDashRegex = new(@"\bmid-([0-9])",
             RegexOptions.Compiled);
 
         private static readonly Dictionary<string, HistoricalDate>
@@ -285,7 +285,7 @@ namespace Epicod.Scraper.Packhum
 
                 // remove initial ca. (this must be applied to any datations)
                 bool ca = globalCa;
-                Match m = _caRegex.Match(s);
+                Match m = _caInitialRegex.Match(s);
                 if (m.Success)
                 {
                     ca = true;

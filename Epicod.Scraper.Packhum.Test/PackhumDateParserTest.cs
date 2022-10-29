@@ -132,7 +132,7 @@ namespace Epicod.Scraper.Packhum.Test
         }
 
         [Fact]
-        public void PreprocessDatations_Ca_Ok()
+        public void PreprocessDatations_CaInitial_Ok()
         {
             var tads = PackhumDateParser.PreprocessDatations(new[]
             {
@@ -142,11 +142,79 @@ namespace Epicod.Scraper.Packhum.Test
             Assert.Equal(2, tads.Count);
             Assert.Equal("123 AD", tads[0].Item1);
             Assert.True(tads[0].Item2);
-            Assert.False(tads[1].Item2);
+            Assert.False(tads[0].Item3);
 
-            Assert.Equal("456 AD", tads[0].Item1);
-            Assert.True(tads[0].Item2);
+            Assert.Equal("456 AD", tads[1].Item1);
+            Assert.True(tads[1].Item2);
+            Assert.False(tads[1].Item3);
+        }
+
+        [Fact]
+        public void PreprocessDatations_CaNonInitial_Ok()
+        {
+            var tads = PackhumDateParser.PreprocessDatations(new[]
+            {
+                "123 AD", "c. 456 AD"
+            });
+
+            Assert.Equal(2, tads.Count);
+            Assert.Equal("123 AD", tads[0].Item1);
+            Assert.False(tads[0].Item2);
+            Assert.False(tads[0].Item3);
+
+            Assert.Equal("456 AD", tads[1].Item1);
+            Assert.True(tads[1].Item2);
+            Assert.False(tads[1].Item3);
+        }
+
+        [Fact]
+        public void PreprocessDatations_QmkFinal_Ok()
+        {
+            var tads = PackhumDateParser.PreprocessDatations(new[]
+            {
+                "100", "125 AD?"
+            });
+
+            Assert.Equal(2, tads.Count);
+            Assert.Equal("100", tads[0].Item1);
+            Assert.False(tads[0].Item2);
+            Assert.True(tads[0].Item3);
+
+            Assert.Equal("125 AD", tads[1].Item1);
             Assert.False(tads[1].Item2);
+            Assert.True(tads[1].Item3);
+        }
+
+        [Fact]
+        public void PreprocessDatations_QmkNonFinal_Ok()
+        {
+            var tads = PackhumDateParser.PreprocessDatations(new[]
+            {
+                "100?", "125 AD"
+            });
+
+            Assert.Equal(2, tads.Count);
+            Assert.Equal("100", tads[0].Item1);
+            Assert.False(tads[0].Item2);
+            Assert.True(tads[0].Item3);
+
+            Assert.Equal("125 AD", tads[1].Item1);
+            Assert.False(tads[1].Item2);
+            Assert.False(tads[1].Item3);
+        }
+
+        [Fact]
+        public void PreprocessDatations_Mid_Ok()
+        {
+            var tads = PackhumDateParser.PreprocessDatations(new[]
+            {
+                "mid-1st c. BC"
+            });
+
+            Assert.Equal(1, tads.Count);
+            Assert.Equal("med. 1st c. BC", tads[0].Item1);
+            Assert.False(tads[0].Item2);
+            Assert.False(tads[0].Item3);
         }
     }
 }

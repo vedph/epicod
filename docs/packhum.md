@@ -402,7 +402,7 @@ C2. parsing:
   - `N` = year.
   - `R` = century.
   - `N.` = century.
-  - `N` + `st`|`nd`|`rd`|`th` = century.
+  - `N` + `st`|`nd`|`rd`|`th` + (`c.`) = century.
   - `N/N` = year span.
   - `R/R` = centuries range.
 - SUFFIX:
