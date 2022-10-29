@@ -216,5 +216,19 @@ namespace Epicod.Scraper.Packhum.Test
             Assert.False(tads[0].Item2);
             Assert.False(tads[0].Item3);
         }
+
+        [Fact]
+        public void PreprocessDatations_LaterThanTheEarly_Ok()
+        {
+            var tads = PackhumDateParser.PreprocessDatations(new[]
+            {
+                "later than the early 5th c. BC?"
+            });
+
+            Assert.Equal(1, tads.Count);
+            Assert.Equal("5th c. BC", tads[0].Item1);
+            Assert.False(tads[0].Item2);
+            Assert.True(tads[0].Item3);
+        }
     }
 }
