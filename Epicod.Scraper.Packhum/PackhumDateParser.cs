@@ -60,6 +60,8 @@ namespace Epicod.Scraper.Packhum
         // datation
         private static readonly Regex _splitPtRegex = new(
             "([0-9IVXtdh?])-([0-9IVX])", RegexOptions.Compiled);
+        private static readonly Regex _splitPtCenturyRegex = new(
+            "([IVXtdh?])/([0-9IVX])", RegexOptions.Compiled);
 
         private static readonly Regex _qmkPrefixRegex = new(
             "(init.|beg.|Anf.|med.|mid|middle|" +
@@ -74,6 +76,12 @@ namespace Epicod.Scraper.Packhum
 
         private static readonly Dictionary<string, HistoricalDate>
             _periods = new();
+
+        private static readonly Regex _macroRegex = new(
+            @"\{([^}]+)\}", RegexOptions.Compiled);
+
+        private static readonly Regex _macroArgRegex = new(
+            @"(?<n>[^=]+)=(?<v>[^,]*)", RegexOptions.Compiled);
 
         private static readonly Regex _dateRegex = new(
             "^(?<t>ante |post )?" +
@@ -247,7 +255,11 @@ namespace Epicod.Scraper.Packhum
             if (text is null) throw new ArgumentNullException(nameof(text));
 
             if (text.Length == 0) return Array.Empty<string>();
-            return SplitAtRegexWithSep(text, _splitPtRegex);
+
+            if (_splitPtRegex.IsMatch(text))
+                return SplitAtRegexWithSep(text, _splitPtRegex);
+
+            return SplitAtRegexWithSep(text, _splitPtCenturyRegex);
         }
 
         private static void EnsurePeriodsLoaded()
@@ -496,9 +508,58 @@ namespace Epicod.Scraper.Packhum
             d.IsCentury = false;
         }
 
+        private static Tuple<string, IDictionary<string,string>>? ExtractMacro(
+            string text)
+        {
+            Match m = _macroRegex.Match(text);
+            if (!m.Success) return null;
+
+            IDictionary<string, string> dct = new Dictionary<string, string>();
+            foreach (Match pair in _macroArgRegex.Matches(m.Groups[1].Value))
+                dct[pair.Groups["n"].Value] = pair.Groups["v"].Value;
+
+            return Tuple.Create(text[m.Index..(m.Index + m.Length)], dct);
+        }
+
+        private static void ApplyMonthDay(Datation d, short month, short day)
+        {
+            if (d.IsCentury)
+            {
+                StringBuilder sb = new();
+                if (d.Hint != null) sb.Append(d.Hint).Append("; ");
+                if (month > 0) sb.Append("month=").Append(month);
+                if (day > 0)
+                {
+                    if (month > 0) sb.Append(", ");
+                    sb.Append("day=").Append(day);
+                }
+                d.Hint = sb.ToString();
+            }
+            else
+            {
+                d.Month = month;
+                d.Day = day;
+            }
+        }
+
         private Datation? BuildDatation(Tuple<string, bool, bool> tad,
             bool prevBC, string? hint)
         {
+            short day = 0, month = 0;
+            string text = tad.Item1;
+            Tuple<string, IDictionary<string, string>>? td = ExtractMacro(text);
+
+            if (td != null)
+            {
+                text = td.Item1;
+                day = td.Item2.ContainsKey("day")
+                    ? short.Parse(td.Item2["day"], CultureInfo.InvariantCulture)
+                    : (short)0;
+                month = td.Item2.ContainsKey("month")
+                    ? short.Parse(td.Item2["month"], CultureInfo.InvariantCulture)
+                    : (short)0;
+            }
+
             // t = ante/post
             // m = modifier (init. etc)
             // c = century (s.)
@@ -507,10 +568,10 @@ namespace Epicod.Scraper.Packhum
             // o = suffix (st, nd, etc)
             // e = era (BC etc)
             // era: inherit if not explicitly defined
-            Match m = _dateRegex.Match(tad.Item1);
+            Match m = _dateRegex.Match(text);
             if (!m.Success)
             {
-                Logger?.LogError("Invalid datation: {Datation}", tad.Item1);
+                Logger?.LogError("Invalid datation: {Datation}", text);
                 return null;
             }
             bool bc = IsBC(m.Groups["e"].Value, prevBC);
@@ -546,11 +607,16 @@ namespace Epicod.Scraper.Packhum
                 IsSpan = m.Groups["ns"].Length > 0,
                 Hint = hint,
                 IsApproximate = tad.Item2,
-                IsDubious = tad.Item3
+                IsDubious = tad.Item3,
             };
+
             // apply modifiers if any
             if (m.Groups["m"].Length > 0)
                 ApplyDateModifier(d, m.Groups["m"].Value);
+
+            // apply day & month if any
+            if (day > 0 || month > 0) ApplyMonthDay(d, month, day);
+
             return d;
         }
 

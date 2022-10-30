@@ -92,6 +92,7 @@ namespace Epicod.Scraper.Packhum.Test
             "116",
             "156 AD"
         })]
+        [InlineData("s. III/V", new[] { "s. III/V" })]
         public void SplitDates_Ok(string text, string[] expected)
         {
             PackhumDateParser parser = new();
@@ -114,6 +115,12 @@ namespace Epicod.Scraper.Packhum.Test
         {
             "10th",
             "11th c. AD"
+        })]
+        [InlineData("21/22 AD", new[] { "21/22 AD" })]
+        [InlineData("s. III/V AD", new[]
+        {
+            "s. III",
+            "V AD"
         })]
         public void SplitDatations_Ok(string text, string[] expected)
         {
@@ -299,11 +306,16 @@ namespace Epicod.Scraper.Packhum.Test
         [InlineData("s. III? BC", "III BC ?")]
         [InlineData("s. III BC?", "III BC ?")]
         [InlineData("c. s. III BC?", "c. III BC ?")]
+        [InlineData("c. s. III BC? (hint)", "c. III BC ? {hint}")]
         // year span
         [InlineData("21/2", "21/22 AD")]
         [InlineData("21/22", "21/22 AD")]
         [InlineData("21/0 BC", "21/20 BC")]
         [InlineData("21/20 BC", "21/20 BC")]
+        [InlineData("c. 21/20 BC", "c. 21/20 BC")]
+        [InlineData("21/20? BC", "21/20 BC ?")]
+        [InlineData("c. 21/20? BC", "c. 21/20 BC ?")]
+        [InlineData("c. 21/20? BC (hint)", "c. 21/20 BC ? {hint}")]
         public void Parse_N_Ok(string text, string expected)
         {
             PackhumDateParser parser = new();
@@ -321,6 +333,30 @@ namespace Epicod.Scraper.Packhum.Test
         [InlineData("21 v.Chr.", "21 BC")]
         [InlineData("21 v. Chr.", "21 BC")]
         public void Parse_Eras_Ok(string text, string expected)
+        {
+            PackhumDateParser parser = new();
+
+            IList<HistoricalDate> dates = parser.Parse(text);
+
+            Assert.Single(dates);
+            Assert.Equal(expected, dates[0].ToString());
+        }
+
+        [Theory]
+        // year
+        [InlineData("21-50", "21 -- 50 AD")]
+        [InlineData("21-14 BC", "21 -- 14 BC")]
+        [InlineData("c. 21-50", "c. 21 -- c. 50 AD")]
+        [InlineData("21-50?", "21 ? -- 50 AD ?")]
+        [InlineData("c. 21?-50", "c. 21 ? -- c. 50 AD")]
+        [InlineData("c. 21-50?", "c. 21 ? -- c. 50 AD ?")]
+        // century
+        [InlineData("s. III-IV", "III -- IV AD")]
+        [InlineData("s. IV-III BC", "IV -- III BC")]
+        [InlineData("c. s. III-IV", "c. III -- c. IV AD")]
+        [InlineData("III?-IV", "III ? -- IV AD")]
+        [InlineData("s. III/V", "III -- V AD")]
+        public void Parse_Range_Ok(string text, string expected)
         {
             PackhumDateParser parser = new();
 
