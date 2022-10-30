@@ -522,7 +522,7 @@ namespace Epicod.Scraper.Packhum
 
             // value
             string a = m.Groups["n"].Value;
-            string b = m.Groups["ns"].Value;
+            string? b = century? m.Groups["ns"].Value : null;
             Tuple<int, int> ab = ParseDateValues(a, b, bc);
 
             // if ante/post, it's a range; in this case, century

@@ -298,7 +298,12 @@ namespace Epicod.Scraper.Packhum.Test
         [InlineData("c. s. III BC", "c. III BC")]
         [InlineData("s. III? BC", "III BC ?")]
         [InlineData("s. III BC?", "III BC ?")]
-        // TODO
+        [InlineData("c. s. III BC?", "c. III BC ?")]
+        // year span
+        [InlineData("21/2", "21/22 AD")]
+        [InlineData("21/22", "21/22 AD")]
+        [InlineData("21/0 BC", "21/20 BC")]
+        [InlineData("21/20 BC", "21/20 BC")]
         public void Parse_N_Ok(string text, string expected)
         {
             PackhumDateParser parser = new();
