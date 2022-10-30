@@ -81,7 +81,8 @@ namespace Epicod.Scraper.Packhum
             @"early|eher|early*\/ *mid|late|1st half|2nd half|1\. ?Halfte|2\. ?" +
             @"Halfte|mid\s*2nd\s*half)? ?(?<c>s\.)? ?(?<n>[0-9IVX]+)" +
             @"(?:\/(?<ns>[0-9IVX]+))?(?<o>st|nd|rd|th)? ?" +
-            @"(?<e>BC|ac|a\.|v\. ?Chr\.|AD|pc|p\.|n\. ?Chr\.)?");
+            @"(?<e>BC|ac|a\.|v\. ?Chr\.|AD|pc|p\.|n\. ?Chr\.)?",
+            RegexOptions.IgnoreCase | RegexOptions.Compiled);
         #endregion
 
         /// <summary>
@@ -138,7 +139,7 @@ namespace Epicod.Scraper.Packhum
                 if (i == -1) i = 0;
 
                 // extract and remove hint
-                _hints.Add(text[i..(end + 1)]);
+                _hints.Add(text[(i + 1)..end]);
                 sb.Remove(i, end + 1 - i);
 
                 // find next ] or )
@@ -203,7 +204,7 @@ namespace Epicod.Scraper.Packhum
 
         private static IList<string> SplitAtRegexWithSep(string text, Regex r)
         {
-            if (!r.IsMatch(text)) return Array.Empty<string>();
+            if (!r.IsMatch(text)) return new[] { text };
 
             string lines = r.Replace(text, (Match m) =>
                 $"{m.Groups[1].Value}\n{m.Groups[2].Value}");
@@ -529,6 +530,8 @@ namespace Epicod.Scraper.Packhum
             {
                 HistoricalDate date = BuildTerminusDate(m, ab.Item1, ab.Item2,
                     century, hint);
+                date.A.IsApproximate = tad.Item2;
+                date.A.IsDubious = tad.Item3;
                 // apply modifiers if any
                 if (m.Groups["m"].Length > 0)
                     ApplyDateModifier(date.A, m.Groups["m"].Value);
@@ -540,7 +543,9 @@ namespace Epicod.Scraper.Packhum
                 Value = ab.Item1,
                 IsCentury = century,
                 IsSpan = m.Groups["ns"].Length > 0,
-                Hint = hint
+                Hint = hint,
+                IsApproximate = tad.Item2,
+                IsDubious = tad.Item3
             };
             // apply modifiers if any
             if (m.Groups["m"].Length > 0)

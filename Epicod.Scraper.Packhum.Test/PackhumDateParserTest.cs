@@ -2,11 +2,13 @@
 using System.Collections.Generic;
 using System.Linq;
 using Xunit;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace Epicod.Scraper.Packhum.Test
 {
     public sealed class PackhumDateParserTest
     {
+        #region PreprocessForSplit
         [Theory]
         [InlineData("", "")]
         [InlineData("21 AD", "21 AD")]
@@ -38,7 +40,9 @@ namespace Epicod.Scraper.Packhum.Test
             string actual = parser.PreprocessForSplit(text);
             Assert.Equal(expected, actual);
         }
+        #endregion
 
+        #region SplitDates
         [Theory]
         [InlineData("", new string[0])]
         [InlineData("21 AD", new[] { "21 AD" })]
@@ -95,7 +99,9 @@ namespace Epicod.Scraper.Packhum.Test
             string[] actual = PackhumDateParser.SplitDates(text).ToArray();
             Assert.Equal(expected, actual);
         }
+        #endregion
 
+        #region SplitDatations
         [Theory]
         [InlineData("", new string[0])]
         [InlineData("100-200 AD", new [] { "100", "200 AD"})]
@@ -116,7 +122,9 @@ namespace Epicod.Scraper.Packhum.Test
             string[] actual = PackhumDateParser.SplitDatations(text).ToArray();
             Assert.Equal(expected, actual);
         }
+        #endregion
 
+        #region PreprocessDatations
         [Theory]
         [InlineData("", "")]
         [InlineData("139p.", "139 p.")]
@@ -229,6 +237,18 @@ namespace Epicod.Scraper.Packhum.Test
             Assert.False(tads[0].Item2);
             Assert.True(tads[0].Item3);
         }
+        #endregion
+
+        #region Parse
+        [Fact]
+        public void Parse_Empty_Empty()
+        {
+            PackhumDateParser parser = new();
+
+            IList<HistoricalDate> dates = parser.Parse("");
+
+            Assert.Empty(dates);
+        }
 
         [Theory]
         [InlineData("early Roman period")]
@@ -240,7 +260,7 @@ namespace Epicod.Scraper.Packhum.Test
             IList<HistoricalDate> dates = parser.Parse(text);
 
             Assert.Single(dates);
-            Assert.Equal("-200 -- 1 AD", dates[0].ToString());
+            Assert.Equal("200 -- 1 BC", dates[0].ToString());
         }
 
         [Theory]
@@ -254,7 +274,50 @@ namespace Epicod.Scraper.Packhum.Test
             IList<HistoricalDate> dates = parser.Parse(text);
 
             Assert.Single(dates);
-            Assert.Equal("-200? -- 1 AD?", dates[0].ToString());
+            Assert.Equal("200 ? -- 1 BC ?", dates[0].ToString());
         }
+
+        [Theory]
+        // year
+        [InlineData("21", "21 AD")]
+        [InlineData("c.21", "c. 21 AD")]
+        [InlineData("ca. 21", "c. 21 AD")]
+        [InlineData("21?", "21 AD ?")]
+        [InlineData("21 ?", "21 AD ?")]
+        [InlineData("c. 21?", "c. 21 AD ?")]
+        [InlineData("21 (hint)", "21 AD {hint}")]
+        [InlineData("c.21 (hint)", "c. 21 AD {hint}")]
+        [InlineData("21? (hint)", "21 AD ? {hint}")]
+        [InlineData("c. 21? (hint)", "c. 21 AD ? {hint}")]
+        // century
+        [InlineData("s. III", "III AD")]
+        [InlineData("3rd c.", "III AD")]
+        // TODO
+        public void Parse_N_Ok(string text, string expected)
+        {
+            PackhumDateParser parser = new();
+
+            IList<HistoricalDate> dates = parser.Parse(text);
+
+            Assert.Single(dates);
+            Assert.Equal(expected, dates[0].ToString());
+        }
+
+        [Theory]
+        [InlineData("21 BC", "21 BC")]
+        [InlineData("21 bc", "21 BC")]
+        [InlineData("21 a.", "21 BC")]
+        [InlineData("21 v.Chr.", "21 BC")]
+        [InlineData("21 v. Chr.", "21 BC")]
+        public void Parse_Eras_Ok(string text, string expected)
+        {
+            PackhumDateParser parser = new();
+
+            IList<HistoricalDate> dates = parser.Parse(text);
+
+            Assert.Single(dates);
+            Assert.Equal(expected, dates[0].ToString());
+        }
+        #endregion
     }
 }
