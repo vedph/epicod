@@ -1,8 +1,7 @@
-﻿using System;
-using System.Collections;
+﻿using Fusi.Antiquity.Chronology;
+using System.Collections.Generic;
 using System.Linq;
 using Xunit;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace Epicod.Scraper.Packhum.Test
 {
@@ -229,6 +228,33 @@ namespace Epicod.Scraper.Packhum.Test
             Assert.Equal("5th c. BC", tads[0].Item1);
             Assert.False(tads[0].Item2);
             Assert.True(tads[0].Item3);
+        }
+
+        [Theory]
+        [InlineData("early Roman period")]
+        [InlineData("EARLY roman period")]
+        public void Parse_PeriodNoQmk_Ok(string text)
+        {
+            PackhumDateParser parser = new();
+
+            IList<HistoricalDate> dates = parser.Parse(text);
+
+            Assert.Single(dates);
+            Assert.Equal("-200 -- 1 AD", dates[0].ToString());
+        }
+
+        [Theory]
+        [InlineData("early Roman period?")]
+        [InlineData("early? Roman period")]
+        [InlineData("EARLY roman period?")]
+        public void Parse_PeriodWithQmk_Ok(string text)
+        {
+            PackhumDateParser parser = new();
+
+            IList<HistoricalDate> dates = parser.Parse(text);
+
+            Assert.Single(dates);
+            Assert.Equal("-200? -- 1 AD?", dates[0].ToString());
         }
     }
 }

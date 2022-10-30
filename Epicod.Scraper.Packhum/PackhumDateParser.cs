@@ -1,4 +1,6 @@
 ﻿using Fusi.Antiquity.Chronology;
+using Fusi.Tools;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -72,7 +74,20 @@ namespace Epicod.Scraper.Packhum
 
         private static readonly Dictionary<string, HistoricalDate>
             _periods = new();
+
+        private static readonly Regex _dateRegex = new(
+            "^(?<t>ante |post )?" +
+            @"(?<m>init\.|beg\.|Anf\.|med\.|middle|mid|fin\.|end|Ende|Wende|" +
+            @"early|eher|early*\/ *mid|late|1st half|2nd half|1\. ?Halfte|2\. ?" +
+            @"Halfte|mid\s*2nd\s*half)? ?(?<c>s\.)? ?(?<n>[0-9IVX]+)" +
+            @"(?:\/(?<ns>[0-9IVX]+))?(?<o>st|nd|rd|th)? ?" +
+            @"(?<e>BC|ac|a\.|v\. ?Chr\.|AD|pc|p\.|n\. ?Chr\.)?");
         #endregion
+
+        /// <summary>
+        /// Gets or sets the optional logger.
+        /// </summary>
+        public ILogger? Logger { get; set; }
 
         // state
         private readonly List<string> _hints;
@@ -255,8 +270,13 @@ namespace Epicod.Scraper.Packhum
         private static HistoricalDate? MatchPeriod(string text)
         {
             EnsurePeriodsLoaded();
-            string s = NormalizeWS(text).ToLowerInvariant();
-            return _periods!.ContainsKey(s) ? _periods[s] : null;
+            string s = NormalizeWS(text).Replace("?", "").ToLowerInvariant();
+            if (!_periods.ContainsKey(s)) return null;
+
+            HistoricalDate date = _periods[s].Clone();
+            if (text.IndexOf('?') > -1)
+                date.A.IsDubious = date.B!.IsDubious = true;
+            return date;
         }
 
         /// <summary>
@@ -318,6 +338,221 @@ namespace Epicod.Scraper.Packhum
             return results;
         }
 
+        /// <summary>
+        /// Parses a single value of a date, in the form N or R, representing
+        /// a year or a century.
+        /// </summary>
+        /// <param name="text">The text.</param>
+        /// <returns>Value.</returns>
+        private static int ParseDateValue(string text)
+        {
+            return text[0] >= '0' && text[0] <= '9'
+                ? int.Parse(text, CultureInfo.InvariantCulture)
+                : RomanNumber.FromRoman(text.ToUpperInvariant());
+        }
+
+        private static Tuple<int, int> ParseDateValues(string a, string? b,
+            bool bc)
+        {
+            int na = ParseDateValue(a);
+            int nb = string.IsNullOrEmpty(b) ? 0 : ParseDateValue(b);
+            if (bc || (nb > 0 && na > nb))
+            {
+                na = -na;
+                if (nb > 0) nb = -nb;
+            }
+            return Tuple.Create(na, nb);
+        }
+
+        private static bool IsBC(string era, bool defaultValue)
+        {
+            return era.ToLowerInvariant() switch
+            {
+                "bc" => true,
+                "ac" => true,
+                "a." => true,
+                "v.Chr." => true,
+                "v. Chr." => true,
+                _ => defaultValue,
+            };
+        }
+
+        private static int CenturySpanToN(int a, int b)
+        {
+            if (a > b) (b, a) = (a, b);
+            return ((a - 1) * 100) + ((a - b) / 2);
+        }
+
+        private static HistoricalDate BuildTerminusDate(Match m, int a, int b,
+            bool century, string? hint)
+        {
+            HistoricalDate date = new();
+
+            // /R or /N being century is a range, so we must
+            // refactor this value into a point
+            if (m.Groups["ns"].Length > 0 && century)
+            {
+                if (string.Equals(m.Groups["t"].Value, "ante",
+                    StringComparison.InvariantCultureIgnoreCase))
+                {
+                    date.SetEndPoint(new Datation
+                    {
+                        Value = CenturySpanToN(a, b),
+                        Hint = hint
+                    });
+                }
+                else
+                {
+                    date.SetStartPoint(new Datation
+                    {
+                        Value = CenturySpanToN(a, b),
+                        Hint = hint
+                    });
+                }
+            }
+            // else we have a simple terminus ante/post
+            else if (string.Equals(m.Groups["t"].Value, "ante",
+                    StringComparison.InvariantCultureIgnoreCase))
+            {
+                date.SetEndPoint(new Datation
+                {
+                    Value = a,
+                    IsCentury = century,
+                    IsSpan = m.Groups["ns"].Length > 0,
+                    Hint = hint
+                });
+            }
+            else
+            {
+                date.SetStartPoint(new Datation
+                {
+                    Value = b,
+                    IsCentury = century,
+                    IsSpan = m.Groups["ns"].Length > 0,
+                    Hint = hint
+                });
+            }
+
+            return date;
+        }
+
+        private string? BuildHint() =>
+            _hints.Count == 0 ? null : string.Join("; ", _hints);
+
+        private static void ApplyDateModifier(Datation d, string m)
+        {
+            // modifiers can be applied only to centuries
+            if (!d.IsCentury) return;
+
+            // year value: e.g. IV BC=-300, IV AD=300
+            int n = (d.Value < 0 ? (d.Value + 1) : (d.Value - 1)) * 100;
+
+            int delta = 0;
+            switch (m.ToLowerInvariant().Replace(" ", ""))
+            {
+                case "init.":
+                case "beg.":
+                case "anf.":
+                    delta = 10;
+                    break;
+                case "med.":
+                case "mid":
+                case "middle":
+                    delta = 50;
+                    break;
+                case "fin.":
+                case "end":
+                case "ende":
+                case "wende":
+                    delta = 10;
+                    break;
+                case "early":
+                case "eher":
+                    delta = 15;
+                    break;
+                case "early/mid":
+                    delta = 20;
+                    break;
+                case "late":
+                    delta = 85;
+                    break;
+                case "1sthalf":
+                case "1.halfte":
+                    delta = 25;
+                    break;
+                case "2ndhalf":
+                case "2.halfte":
+                    delta = 75;
+                    break;
+                case "mid/2ndhalf":
+                case "middle/2ndhalf":
+                    delta = 40;
+                    break;
+            }
+
+            d.Value = n + delta;
+            d.IsCentury = false;
+        }
+
+        private Datation? BuildDatation(Tuple<string, bool, bool> tad,
+            bool prevBC, string? hint)
+        {
+            // t = ante/post
+            // m = modifier (init. etc)
+            // c = century (s.)
+            // n = number (N or R)
+            // ns = number suffix (/N or /R)
+            // o = suffix (st, nd, etc)
+            // e = era (BC etc)
+            // era: inherit if not explicitly defined
+            Match m = _dateRegex.Match(tad.Item1);
+            if (!m.Success)
+            {
+                Logger?.LogError("Invalid datation: {Datation}", tad.Item1);
+                return null;
+            }
+            bool bc = IsBC(m.Groups["e"].Value, prevBC);
+
+            // century if s. or ordinal suffix or Roman digits
+            bool century = m.Groups["c"].Length > 0
+                || m.Groups["o"].Length > 0
+                || !char.IsDigit(m.Groups["n"].Value[0]);
+
+            // value
+            string a = m.Groups["n"].Value;
+            string b = m.Groups["ns"].Value;
+            Tuple<int, int> ab = ParseDateValues(a, b, bc);
+
+            // if ante/post, it's a range; in this case, century
+            // is refactored as N (e.g. IV-III BC = -250) so we get a point
+            if (m.Groups["t"].Length > 0)
+            {
+                HistoricalDate date = BuildTerminusDate(m, ab.Item1, ab.Item2,
+                    century, hint);
+                // apply modifiers if any
+                if (m.Groups["m"].Length > 0)
+                    ApplyDateModifier(date.A, m.Groups["m"].Value);
+                return date.A;
+            }
+
+            Datation d = new()
+            {
+                Value = ab.Item1,
+                IsCentury = century,
+                IsSpan = m.Groups["ns"].Length > 0,
+                Hint = hint
+            };
+            // apply modifiers if any
+            if (m.Groups["m"].Length > 0)
+                ApplyDateModifier(d, m.Groups["m"].Value);
+            return d;
+        }
+
+        /// <summary>
+        /// Parses the specified text representing PHI date(s).
+        /// </summary>
+        /// <param name="text">The text.</param>
+        /// <returns>Date(s).</returns>
         public IList<HistoricalDate> Parse(string? text)
         {
             if (string.IsNullOrEmpty(text)) return Array.Empty<HistoricalDate>();
@@ -327,29 +562,62 @@ namespace Epicod.Scraper.Packhum
             // A1 preprocess for split
             string s = PreprocessForSplit(text);
 
-            // A2 split dates, and for each date:
-            foreach (string singleDate in SplitDates(s))
-            {
-                // B split date's datations
-                IList<string> datations = SplitDatations(singleDate);
+            // A2 split dates
+            List<HistoricalDate> dates = new();
+            bool prevBC = false;
+            string? hint = BuildHint();
 
-                // C1 preprocess date's datations
-                foreach (var tad in PreprocessDatations(datations))
+            // for each date (in reverse order so that we can supply metadata
+            // from the last to the previous ones)
+            foreach (string dateText in SplitDates(s).Reverse())
+            {
+                HistoricalDate? period = MatchPeriod(dateText);
+                if (period is not null)
                 {
-                    // C2 check period first
-                    HistoricalDate? d = MatchPeriod(tad.Item1);
-                    if (d is not null)
-                    {
-                        // TODO
-                    }
-                    // else parse datation
-                    else
-                    {
-                        // TODO
-                    }
+                    dates.Insert(0, period);
+                    continue;
                 }
+
+                // B split date into 0-2 datations
+                IList<string> datations = SplitDatations(dateText);
+                if (datations.Count < 1 || datations.Count > 2)
+                {
+                    Logger?.LogError("Unexpected number of datations: {Datations}",
+                        string.Join("; ", datations));
+                    continue;
+                }
+
+                // C1 preprocess datations
+                IList<Tuple<string, bool, bool>> tads =
+                    PreprocessDatations(datations);
+
+                // C2 parse datations
+                HistoricalDate date = new();
+                if (datations.Count == 2)
+                {
+                    Datation? b = BuildDatation(tads[1], prevBC, hint);
+                    Datation? a = BuildDatation(
+                        tads[0], b?.Value < 0 || prevBC, hint);
+
+                    if (a != null) date.SetStartPoint(a);
+                    if (b != null) date.SetEndPoint(b);
+                    prevBC = a?.Value < 0 || b?.Value < 0;
+                }
+                else
+                {
+                    Datation? a = BuildDatation(tads[0], prevBC, hint);
+                    if (a == null)
+                    {
+                        Logger?.LogError("Invalid datation: {Datation}",
+                            tads[0].Item1);
+                        continue;
+                    }
+                    date.SetSinglePoint(a);
+                    prevBC = a.Value < 0;
+                }
+                dates.Insert(0, date);
             }
-            throw new NotImplementedException();
+            return dates;
         }
     }
 }
