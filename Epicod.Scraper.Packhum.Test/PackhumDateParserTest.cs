@@ -290,8 +290,14 @@ namespace Epicod.Scraper.Packhum.Test
         [InlineData("21? (hint)", "21 AD ? {hint}")]
         [InlineData("c. 21? (hint)", "c. 21 AD ? {hint}")]
         // century
+        [InlineData("III", "III AD")]
         [InlineData("s. III", "III AD")]
         [InlineData("3rd c.", "III AD")]
+        [InlineData("3rd", "III AD")]
+        [InlineData("s. III BC", "III BC")]
+        [InlineData("c. s. III BC", "c. III BC")]
+        [InlineData("s. III? BC", "III BC ?")]
+        [InlineData("s. III BC?", "III BC ?")]
         // TODO
         public void Parse_N_Ok(string text, string expected)
         {

@@ -246,6 +246,7 @@ namespace Epicod.Scraper.Packhum
         {
             if (text is null) throw new ArgumentNullException(nameof(text));
 
+            if (text.Length == 0) return Array.Empty<string>();
             return SplitAtRegexWithSep(text, _splitPtRegex);
         }
 
@@ -372,8 +373,8 @@ namespace Epicod.Scraper.Packhum
                 "bc" => true,
                 "ac" => true,
                 "a." => true,
-                "v.Chr." => true,
-                "v. Chr." => true,
+                "v.chr." => true,
+                "v. chr." => true,
                 _ => defaultValue,
             };
         }
