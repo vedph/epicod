@@ -356,6 +356,15 @@ namespace Epicod.Scraper.Packhum.Test
         [InlineData("c. s. III-IV", "c. III -- c. IV AD")]
         [InlineData("III?-IV", "III ? -- IV AD")]
         [InlineData("s. III/V", "III -- V AD")]
+        [InlineData("s. IV/III BC", "IV -- III BC")]
+        [InlineData("c. s. III/IV", "c. III -- c. IV AD")]
+        [InlineData("III?/IV", "III ? -- IV AD")]
+        [InlineData("3rd-4th c.", "III -- IV AD")]
+        [InlineData("c. 3rd-4th", "c. III -- c. IV AD")]
+        [InlineData("3rd?-4th", "III ? -- IV AD")]
+        [InlineData("3rd/4th c.", "III -- IV AD")]
+        [InlineData("c. 3rd/4th", "c. III -- c. IV AD")]
+        [InlineData("3rd?/4th", "III ? -- IV AD")]
         public void Parse_Range_Ok(string text, string expected)
         {
             PackhumDateParser parser = new();
