@@ -59,38 +59,45 @@ namespace Epicod.Scraper.Packhum
 
         // datation
         private static readonly Regex _splitPtRegex = new(
-            "([0-9IVXtdh?])-([0-9IVX])", RegexOptions.Compiled);
-        private static readonly Regex _splitPtCenturyRegex = new(
-            "([IVXtdh?])/([0-9IVX])", RegexOptions.Compiled);
+            @"([0-9IVX](?:st|nd|rd|th)?\??)-([0-9IVX])", RegexOptions.Compiled);
+        private static readonly Regex _splitPtSlashRegex = new(
+            @"([IVX]\??)/([0-9IVX])", RegexOptions.Compiled);
+        private static readonly Regex _splitPtDashRegex = new(
+            @"([0-9](?:\.|st|nd|rd|th)\??)/([0-9])", RegexOptions.Compiled);
 
         private static readonly Regex _qmkPrefixRegex = new(
             "(init.|beg.|Anf.|med.|mid|middle|" +
             "fin.|end|Ende|Wende|" +
             @"early|eher|early\s*/\s*mid|late|" +
             @"1st half|2nd half|1.\s*Halfte|2.\s*Halfte|" +
+            "Drittel|third of the|third of|third|" +
             @"mid\s*/\s*2nd half|middle\s*/\s*2nd half)\?",
             RegexOptions.Compiled);
 
         private static readonly Regex _midDashRegex = new(@"\bmid-([0-9])",
             RegexOptions.Compiled);
 
-        private static readonly Dictionary<string, HistoricalDate>
-            _periods = new();
+        private static readonly Regex _dotCenturyRegex = new(
+            @"([0-9])\.(?: ?Jh\.)?", RegexOptions.Compiled);
 
         private static readonly Regex _macroRegex = new(
             @"\{([^}]+)\}", RegexOptions.Compiled);
 
         private static readonly Regex _macroArgRegex = new(
-            @"(?<n>[^=]+)=(?<v>[^,]*)", RegexOptions.Compiled);
+            "(?<n>[^=]+)=(?<v>[^,]*)", RegexOptions.Compiled);
 
         private static readonly Regex _dateRegex = new(
             "^(?<t>ante |post )?" +
             @"(?<m>init\.|beg\.|Anf\.|med\.|middle|mid|fin\.|end|Ende|Wende|" +
             @"early|eher|early*\/ *mid|late|1st half|2nd half|1\. ?Halfte|2\. ?" +
-            @"Halfte|mid\s*2nd\s*half)? ?(?<c>s\.)? ?(?<n>[0-9IVX]+)" +
+            @"Halfte|Drittel|third of the|third of|third|mid\s*2nd\s*half)? " +
+            @"?(?<c>s\.)? ?(?<n>[0-9IVX]+)" +
             @"(?:\/(?<ns>[0-9IVX]+))?(?<o>st|nd|rd|th)? ?" +
             @"(?<e>BC|ac|a\.|v\. ?Chr\.|AD|pc|p\.|n\. ?Chr\.)?",
             RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+        private static readonly Dictionary<string, HistoricalDate>
+            _periods = new();
         #endregion
 
         /// <summary>
@@ -259,7 +266,10 @@ namespace Epicod.Scraper.Packhum
             if (_splitPtRegex.IsMatch(text))
                 return SplitAtRegexWithSep(text, _splitPtRegex);
 
-            return SplitAtRegexWithSep(text, _splitPtCenturyRegex);
+            if (_splitPtDashRegex.IsMatch(text))
+                return SplitAtRegexWithSep(text, _splitPtDashRegex);
+
+            return SplitAtRegexWithSep(text, _splitPtSlashRegex);
         }
 
         private static void EnsurePeriodsLoaded()
@@ -337,6 +347,9 @@ namespace Epicod.Scraper.Packhum
                     dub = true;
                     s = s.Replace("?", "");
                 }
+
+                // N. or N.Jh. = Nth + space
+                s = _dotCenturyRegex.Replace(s, "$1th ").Replace("th /", "th/");
 
                 // corner cases:
                 // mid- > med.
@@ -497,6 +510,12 @@ namespace Epicod.Scraper.Packhum
                 case "2ndhalf":
                 case "2.halfte":
                     delta = 75;
+                    break;
+                case "drittel":
+                case "third":
+                case "thirdof":
+                case "thirdofthe":
+                    delta = 17;
                     break;
                 case "mid/2ndhalf":
                 case "middle/2ndhalf":

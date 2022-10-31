@@ -122,6 +122,11 @@ namespace Epicod.Scraper.Packhum.Test
             "s. III",
             "V AD"
         })]
+        [InlineData("10./11.n.Chr.", new[]
+        {
+            "10.",
+            "11.n.Chr."
+        })]
         public void SplitDatations_Ok(string text, string[] expected)
         {
             PackhumDateParser parser = new();
@@ -217,6 +222,20 @@ namespace Epicod.Scraper.Packhum.Test
             Assert.False(tads[1].Item3);
         }
 
+        [Theory]
+        [InlineData("2.n.Chr.", "2th n.Chr.")]
+        [InlineData("10.Jh.n.Chr.", "10th n.Chr.")]
+        [InlineData("10./11.n.Chr.", "10th/11th n.Chr.")]
+        public void PreprocessDatations_NDot_Ok(string text, string expected)
+        {
+            var tads = PackhumDateParser.PreprocessDatations(new[] { text });
+
+            Assert.Equal(1, tads.Count);
+            Assert.Equal(expected, tads[0].Item1);
+            Assert.False(tads[0].Item2);
+            Assert.False(tads[0].Item3);
+        }
+
         [Fact]
         public void PreprocessDatations_Mid_Ok()
         {
@@ -307,6 +326,8 @@ namespace Epicod.Scraper.Packhum.Test
         [InlineData("s. III BC?", "III BC ?")]
         [InlineData("c. s. III BC?", "c. III BC ?")]
         [InlineData("c. s. III BC? (hint)", "c. III BC ? {hint}")]
+        [InlineData("2.n.Chr.", "II AD")]
+        [InlineData("10.Jh.n.Chr.", "X AD")]
         // year span
         [InlineData("21/2", "21/22 AD")]
         [InlineData("21/22", "21/22 AD")]
@@ -365,6 +386,7 @@ namespace Epicod.Scraper.Packhum.Test
         [InlineData("3rd/4th c.", "III -- IV AD")]
         [InlineData("c. 3rd/4th", "c. III -- c. IV AD")]
         [InlineData("3rd?/4th", "III ? -- IV AD")]
+        [InlineData("10./11.n.Chr.", "X -- XI AD")]
         public void Parse_Range_Ok(string text, string expected)
         {
             PackhumDateParser parser = new();

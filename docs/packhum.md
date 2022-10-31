@@ -379,6 +379,7 @@ C1. preprocessing:
   - attached to BC/AD or equivalent suffix: `125/124 BC? [Kram. 81,D1]`
 - remove suffixed `?`: any PREFIX + `?` without space: remove `?` (e.g. `early?` becomes `early`).
 - `mid-([0-9])` > `med. $1`. This is because this prefix is not separated by space from the next N. All the cases of `mid-` are followed by a digit.
+- replace `([0-9])\.(?: ?Jh\.)?` with `$1th` + space (e.g. `10./11.n.Chr.` > `10th /11th n.Chr.`; `10.Jh.n.Chr.` > `10th n.Chr.`).
 - `later than the early`: remove.
 - lookup periods and stop if match.
 
@@ -397,11 +398,12 @@ C2. parsing:
     - `late`
     - `1st half`, `2nd half`, `1.Halfte`, `2.Halfte`, `1. Halfte`, `2. Halfte`
     - `mid\s*/\s*2nd half`, `middle\s*/\s*2nd half`
+    - `Drittel`, `third`, `third of`, `third of the`
   - `s.`
 - N (number: N=Arabic, R=Roman):
-  - `N` = year.
+  - `N` = year (`N.`, `N.Jh.` = century (e.g. `11.-12.Jh.n.Chr.`) has been removed by preprocessing).
+  - `(N.)N.N` = dmy.
   - `R` = century.
-  - `N.` = century.
   - `N` + `st`|`nd`|`rd`|`th` + (`c.`) = century.
   - `N/N` = year span.
   - `R/R` = centuries range.
