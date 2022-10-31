@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using Xunit;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace Epicod.Scraper.Packhum.Test
 {
@@ -304,6 +303,12 @@ namespace Epicod.Scraper.Packhum.Test
         }
 
         [Theory]
+        // eras
+        [InlineData("21 BC", "21 BC")]
+        [InlineData("21 bc", "21 BC")]
+        [InlineData("21 a.", "21 BC")]
+        [InlineData("21 v.Chr.", "21 BC")]
+        [InlineData("21 v. Chr.", "21 BC")]
         // year
         [InlineData("21", "21 AD")]
         [InlineData("c.21", "c. 21 AD")]
@@ -328,6 +333,32 @@ namespace Epicod.Scraper.Packhum.Test
         [InlineData("c. s. III BC? (hint)", "c. III BC ? {hint}")]
         [InlineData("2.n.Chr.", "II AD")]
         [InlineData("10.Jh.n.Chr.", "X AD")]
+        // modifiers
+        [InlineData("init.s.II", "c. 110 AD")]
+        [InlineData("beg.s.II", "c. 110 AD")]
+        [InlineData("Anf.s.II", "c. 110 AD")]
+        [InlineData("med.s.II", "c. 150 AD")]
+        [InlineData("mid s.II", "c. 150 AD")]
+        [InlineData("middle s.II", "c. 150 AD")]
+        [InlineData("fin.s.II", "c. 190 AD")]
+        [InlineData("end s.II", "c. 190 AD")]
+        [InlineData("Ende s.II", "c. 190 AD")]
+        [InlineData("Wende s.II", "c. 190 AD")]
+        [InlineData("early s.II", "c. 115 AD")]
+        [InlineData("eher s.II", "c. 115 AD")]
+        [InlineData("early/mid s.II", "c. 120 AD")]
+        [InlineData("late s.II", "c. 185 AD")]
+        [InlineData("1st half s.II", "c. 125 AD")]
+        [InlineData("1.Halfte s.II", "c. 125 AD")]
+        [InlineData("1. Halfte s.II", "c. 125 AD")]
+        [InlineData("2nd half s.II", "c. 175 AD")]
+        [InlineData("2.Halfte s.II", "c. 175 AD")]
+        [InlineData("2. Halfte s.II", "c. 175 AD")]
+        [InlineData("1.Drittel s.II", "c. 117 AD")]
+        [InlineData("1st third s.II", "c. 117 AD")]
+        [InlineData("1st third of s.II", "c. 117 AD")]
+        [InlineData("1st third of the s.II", "c. 117 AD")]
+        // TODO
         // year span
         [InlineData("21/2", "21/22 AD")]
         [InlineData("21/22", "21/22 AD")]
@@ -337,41 +368,14 @@ namespace Epicod.Scraper.Packhum.Test
         [InlineData("21/20? BC", "21/20 BC ?")]
         [InlineData("c. 21/20? BC", "c. 21/20 BC ?")]
         [InlineData("c. 21/20? BC (hint)", "c. 21/20 BC ? {hint}")]
-        public void Parse_N_Ok(string text, string expected)
-        {
-            PackhumDateParser parser = new();
-
-            IList<HistoricalDate> dates = parser.Parse(text);
-
-            Assert.Single(dates);
-            Assert.Equal(expected, dates[0].ToString());
-        }
-
-        [Theory]
-        [InlineData("21 BC", "21 BC")]
-        [InlineData("21 bc", "21 BC")]
-        [InlineData("21 a.", "21 BC")]
-        [InlineData("21 v.Chr.", "21 BC")]
-        [InlineData("21 v. Chr.", "21 BC")]
-        public void Parse_Eras_Ok(string text, string expected)
-        {
-            PackhumDateParser parser = new();
-
-            IList<HistoricalDate> dates = parser.Parse(text);
-
-            Assert.Single(dates);
-            Assert.Equal(expected, dates[0].ToString());
-        }
-
-        [Theory]
-        // year
+        // ranges: year
         [InlineData("21-50", "21 -- 50 AD")]
         [InlineData("21-14 BC", "21 -- 14 BC")]
         [InlineData("c. 21-50", "c. 21 -- c. 50 AD")]
         [InlineData("21-50?", "21 ? -- 50 AD ?")]
         [InlineData("c. 21?-50", "c. 21 ? -- c. 50 AD")]
         [InlineData("c. 21-50?", "c. 21 ? -- c. 50 AD ?")]
-        // century
+        // ranges: century
         [InlineData("s. III-IV", "III -- IV AD")]
         [InlineData("s. IV-III BC", "IV -- III BC")]
         [InlineData("c. s. III-IV", "c. III -- c. IV AD")]
@@ -387,7 +391,7 @@ namespace Epicod.Scraper.Packhum.Test
         [InlineData("c. 3rd/4th", "c. III -- c. IV AD")]
         [InlineData("3rd?/4th", "III ? -- IV AD")]
         [InlineData("10./11.n.Chr.", "X -- XI AD")]
-        public void Parse_Range_Ok(string text, string expected)
+        public void Parse_N_Ok(string text, string expected)
         {
             PackhumDateParser parser = new();
 

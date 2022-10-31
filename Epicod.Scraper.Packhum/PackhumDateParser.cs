@@ -69,8 +69,8 @@ namespace Epicod.Scraper.Packhum
             "(init.|beg.|Anf.|med.|mid|middle|" +
             "fin.|end|Ende|Wende|" +
             @"early|eher|early\s*/\s*mid|late|" +
-            @"1st half|2nd half|1.\s*Halfte|2.\s*Halfte|" +
-            "Drittel|third of the|third of|third|" +
+            @"1st half|2nd half|1\.\s*Halfte|2\.\s*Halfte|" +
+            "1th Drittel|1st third of the|1st third of|1st third|" +
             @"mid\s*/\s*2nd half|middle\s*/\s*2nd half)\?",
             RegexOptions.Compiled);
 
@@ -90,7 +90,8 @@ namespace Epicod.Scraper.Packhum
             "^(?<t>ante |post )?" +
             @"(?<m>init\.|beg\.|Anf\.|med\.|middle|mid|fin\.|end|Ende|Wende|" +
             @"early|eher|early*\/ *mid|late|1st half|2nd half|1\. ?Halfte|2\. ?" +
-            @"Halfte|Drittel|third of the|third of|third|mid\s*2nd\s*half)? " +
+            "Halfte|1th Drittel|1st third of the|1st third of|1st third|" +
+            @"mid\s*/\s*2nd half)? " +
             @"?(?<c>s\.)? ?(?<n>[0-9IVX]+)" +
             @"(?:\/(?<ns>[0-9IVX]+))?(?<o>st|nd|rd|th)? ?" +
             @"(?<e>BC|ac|a\.|v\. ?Chr\.|AD|pc|p\.|n\. ?Chr\.)?",
@@ -491,7 +492,7 @@ namespace Epicod.Scraper.Packhum
                 case "end":
                 case "ende":
                 case "wende":
-                    delta = 10;
+                    delta = 90;
                     break;
                 case "early":
                 case "eher":
@@ -511,10 +512,10 @@ namespace Epicod.Scraper.Packhum
                 case "2.halfte":
                     delta = 75;
                     break;
-                case "drittel":
-                case "third":
-                case "thirdof":
-                case "thirdofthe":
+                case "1thdrittel":
+                case "1stthird":
+                case "1stthirdof":
+                case "1stthirdofthe":
                     delta = 17;
                     break;
                 case "mid/2ndhalf":
@@ -525,6 +526,7 @@ namespace Epicod.Scraper.Packhum
 
             d.Value = n + delta;
             d.IsCentury = false;
+            d.IsApproximate = true;
         }
 
         private static Tuple<string, IDictionary<string,string>>? ExtractMacro(
