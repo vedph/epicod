@@ -83,7 +83,7 @@ namespace Epicod.Scraper.Packhum
             "(?<n>[^=]+)=(?<v>[^,]*)", RegexOptions.Compiled);
 
         private static readonly Regex _dateRegex = new(
-            "^(?<t>ante |post )?" +
+            "^(?:(?<t>ante|post) )?" +
             @"(?<m>init\.|beg\.|Anf\.|med\.|middle|mid|fin\.|end|Ende|Wende|" +
             "early|eher|late|1st half|2nd half|1th ?Halfte|2th ?Halfte|" +
             "1th Drittel|1st third of the|1st third of|1st third)? " +
@@ -181,8 +181,8 @@ namespace Epicod.Scraper.Packhum
 
             // corner cases
             StringBuilder sb = new(s);
-            sb.Replace("w/", "w");
             sb.Replace("w//", "w");
+            sb.Replace("w/", "w");
             sb.Replace("July/August", "July");
             sb.Replace("early/mid", "early");
             sb.Replace("half/mid", "1st half");
@@ -408,65 +408,6 @@ namespace Epicod.Scraper.Packhum
             };
         }
 
-        private static int CenturySpanToN(int a, int b)
-        {
-            if (a > b) (b, a) = (a, b);
-            return ((a - 1) * 100) + ((a - b) / 2);
-        }
-
-        private static HistoricalDate BuildTerminusDate(Match m, int a, int b,
-            bool century, string? hint)
-        {
-            HistoricalDate date = new();
-
-            // /R or /N being century is a range, so we must
-            // refactor this value into a point
-            if (m.Groups["ns"].Length > 0 && century)
-            {
-                if (string.Equals(m.Groups["t"].Value, "ante",
-                    StringComparison.InvariantCultureIgnoreCase))
-                {
-                    date.SetEndPoint(new Datation
-                    {
-                        Value = CenturySpanToN(a, b),
-                        Hint = hint
-                    });
-                }
-                else
-                {
-                    date.SetStartPoint(new Datation
-                    {
-                        Value = CenturySpanToN(a, b),
-                        Hint = hint
-                    });
-                }
-            }
-            // else we have a simple terminus ante/post
-            else if (string.Equals(m.Groups["t"].Value, "ante",
-                    StringComparison.InvariantCultureIgnoreCase))
-            {
-                date.SetEndPoint(new Datation
-                {
-                    Value = a,
-                    IsCentury = century,
-                    IsSpan = m.Groups["ns"].Length > 0,
-                    Hint = hint
-                });
-            }
-            else
-            {
-                date.SetStartPoint(new Datation
-                {
-                    Value = b,
-                    IsCentury = century,
-                    IsSpan = m.Groups["ns"].Length > 0,
-                    Hint = hint
-                });
-            }
-
-            return date;
-        }
-
         private string? BuildHint() =>
             _hints.Count == 0 ? null : string.Join("; ", _hints);
 
@@ -560,9 +501,10 @@ namespace Epicod.Scraper.Packhum
             }
         }
 
-        private Datation? BuildDatation(Tuple<string, bool, bool> tad,
-            bool prevBC, string? hint)
+        private Datation? BuildDatation(
+            Tuple<string, bool, bool> tad, bool prevBC, string? hint)
         {
+            // preprocess {m=N,d=N}
             short day = 0, month = 0;
             string text = tad.Item1;
             Tuple<string, IDictionary<string, string>>? td = ExtractMacro(text);
@@ -604,20 +546,6 @@ namespace Epicod.Scraper.Packhum
             string? b = century? m.Groups["ns"].Value : null;
             Tuple<int, int> ab = ParseDateValues(a, b, bc);
 
-            // if ante/post, it's a range; in this case, century
-            // is refactored as N (e.g. IV-III BC = -250) so we get a point
-            if (m.Groups["t"].Length > 0)
-            {
-                HistoricalDate date = BuildTerminusDate(m, ab.Item1, ab.Item2,
-                    century, hint);
-                date.A.IsApproximate = tad.Item2;
-                date.A.IsDubious = tad.Item3;
-                // apply modifiers if any
-                if (m.Groups["m"].Length > 0)
-                    ApplyDateModifier(date.A, m.Groups["m"].Value);
-                return date.A;
-            }
-
             Datation d = new()
             {
                 Value = ab.Item1,
@@ -636,6 +564,13 @@ namespace Epicod.Scraper.Packhum
             if (day > 0 || month > 0) ApplyMonthDay(d, month, day);
 
             return d;
+        }
+
+        private static int GetTerminusType(string text)
+        {
+            if (text.StartsWith("ante", StringComparison.Ordinal)) return -1;
+            if (text.StartsWith("post", StringComparison.Ordinal)) return 1;
+            return 0;
         }
 
         /// <summary>
@@ -681,29 +616,76 @@ namespace Epicod.Scraper.Packhum
                 IList<Tuple<string, bool, bool>> tads =
                     PreprocessDatations(datations);
 
-                // C2 parse datations
+                // C2 parse datations (either 2 or 1)
                 HistoricalDate date = new();
+                int t;
                 if (datations.Count == 2)
                 {
+                    // build 2 datations points
+                    // B
                     Datation? b = BuildDatation(tads[1], prevBC, hint);
-                    Datation? a = BuildDatation(
-                        tads[0], b?.Value < 0 || prevBC, hint);
-
-                    if (a != null) date.SetStartPoint(a);
-                    if (b != null) date.SetEndPoint(b);
+                    // (no test for ante/post required in B, as ante/post
+                    // only occur at the beginning of a date)
+                    // A
+                    Datation? a = BuildDatation(tads[0],
+                        b?.Value < 0 || prevBC, hint);
+                    // should A be a terminus ante/post, refactor AB into
+                    // a point and make it B or A
+                    t = GetTerminusType(tads[0].Item1);
+                    if (t != 0)
+                    {
+                        if (a != null) date.SetStartPoint(a);
+                        if (b != null) date.SetEndPoint(b);
+                        int n = (int)date.GetSortValue();
+                        if (t < 0)
+                        {
+                            date.Reset();
+                            date.SetEndPoint(new Datation
+                            {
+                                Value = n,
+                                IsApproximate = true,
+                                IsDubious = tads[0].Item3,
+                                Hint = hint
+                            });
+                        }
+                        else
+                        {
+                            date.Reset();
+                            date.SetStartPoint(new Datation
+                            {
+                                Value = n,
+                                IsApproximate = true,
+                                IsDubious = tads[0].Item3,
+                                Hint = hint
+                            });
+                        }
+                    }
+                    else
+                    {
+                        if (a != null) date.SetStartPoint(a);
+                        if (b != null) date.SetEndPoint(b);
+                    }
                     prevBC = a?.Value < 0 || b?.Value < 0;
                 }
                 else
                 {
-                    Datation? a = BuildDatation(tads[0], prevBC, hint);
-                    if (a == null)
+                    // build single datation point
+                    Datation? d = BuildDatation(tads[0], prevBC, hint);
+                    if (d == null)
                     {
                         Logger?.LogError("Invalid datation: {Datation}",
                             tads[0].Item1);
                         continue;
                     }
-                    date.SetSinglePoint(a);
-                    prevBC = a.Value < 0;
+                    // it's a range if ante/post, else it's a point
+                    t = GetTerminusType(tads[0].Item1);
+                    if (t != 0)
+                    {
+                        if (t == -1) date.SetEndPoint(d);
+                        else date.SetStartPoint(d);
+                    }
+                    else date.SetSinglePoint(d);
+                    prevBC = d.Value < 0;
                 }
                 dates.Insert(0, date);
             }

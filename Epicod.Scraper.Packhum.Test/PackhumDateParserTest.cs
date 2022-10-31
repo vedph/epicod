@@ -401,6 +401,20 @@ namespace Epicod.Scraper.Packhum.Test
         [InlineData("c. 3rd/4th", "c. III -- c. IV AD")]
         [InlineData("3rd?/4th", "III ? -- IV AD")]
         [InlineData("10./11.n.Chr.", "X -- XI AD")]
+        // ante/post point
+        [InlineData("ante 21 BC", "-- 21 BC")]
+        [InlineData("ante 21/0 BC", "-- 21/20 BC")]
+        [InlineData("c. ante 21 BC", "-- c. 21 BC")]
+        [InlineData("ante 21 BC ?", "-- 21 BC ?")]
+        [InlineData("ante III BC", "-- III BC")]
+        [InlineData("post 21 BC", "21 BC --")]
+        [InlineData("post III BC", "III BC --")]
+        // ante/post range
+        [InlineData("ante II/IV AD", "-- c. 250 AD")]
+        [InlineData("post II/IV AD", "c. 250 AD --")]
+        // month/day
+        [InlineData("120 AD, Nov.", "120 AD (month=11)")]
+        [InlineData("136 AD, 19 Nov.", "136 AD (month=11,day=19)")]
         public void Parse_N_Ok(string text, string expected)
         {
             PackhumDateParser parser = new();
