@@ -413,8 +413,8 @@ namespace Epicod.Scraper.Packhum.Test
         [InlineData("ante II/IV AD", "-- c. 250 AD")]
         [InlineData("post II/IV AD", "c. 250 AD --")]
         // month/day
-        [InlineData("120 AD, Nov.", "120 AD (month=11)")]
-        [InlineData("136 AD, 19 Nov.", "136 AD (month=11,day=19)")]
+        [InlineData("120 AD, Nov.", "nov 120 AD")]
+        [InlineData("136 AD, 19 Nov.", "19 nov 136 AD")]
         public void Parse_N_Ok(string text, string expected)
         {
             PackhumDateParser parser = new();

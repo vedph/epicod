@@ -104,13 +104,15 @@ namespace Epicod.Scraper.Packhum
 
         // state
         private readonly List<string> _hints;
+        private short _month;
+        private short _day;
 
         public PackhumDateParser()
         {
             _hints = new List<string>();
         }
 
-        private static int GetMonthNumber(string month)
+        private static short GetMonthNumber(string month)
         {
             return month[..3].ToLowerInvariant() switch
             {
@@ -206,14 +208,14 @@ namespace Epicod.Scraper.Packhum
             // , early... : wrap in ()
             s = _earlyModifierRegex.Replace(s, " (early)");
 
-            // date suffix: wrap in {d=N,m=N} ({} are never used in PHI dates)
+            // date suffix
             s = _dateSuffixRegex.Replace(s, (Match m) =>
             {
-                int day = m.Groups["d"].Length > 0
-                    ? int.Parse(m.Groups[1].Value, CultureInfo.InvariantCulture)
-                    : 0;
-                int month = GetMonthNumber(m.Groups[2].Value);
-                return "{" + (day > 0 ? $"d={day},m={month}" : $"m={month}") + "}";
+                _day = m.Groups["d"].Length > 0
+                    ? short.Parse(m.Groups[1].Value, CultureInfo.InvariantCulture)
+                    : (short)0;
+                _month = GetMonthNumber(m.Groups[2].Value);
+                return "";
             });
 
             // re-extract hints eventually injected by preprocessing,
@@ -477,49 +479,33 @@ namespace Epicod.Scraper.Packhum
             foreach (Match pair in _macroArgRegex.Matches(m.Groups[1].Value))
                 dct[pair.Groups["n"].Value] = pair.Groups["v"].Value;
 
-            return Tuple.Create(text[m.Index..(m.Index + m.Length)], dct);
+            return Tuple.Create(text.Remove(m.Index, m.Length), dct);
         }
 
-        private static void ApplyMonthDay(Datation d, short month, short day)
+        private void ApplyMonthDay(Datation d)
         {
             if (d.IsCentury)
             {
                 StringBuilder sb = new();
                 if (d.Hint != null) sb.Append(d.Hint).Append("; ");
-                if (month > 0) sb.Append("month=").Append(month);
-                if (day > 0)
+                if (_month > 0) sb.Append("month=").Append(_month);
+                if (_day > 0)
                 {
-                    if (month > 0) sb.Append(", ");
-                    sb.Append("day=").Append(day);
+                    if (_month > 0) sb.Append(", ");
+                    sb.Append("day=").Append(_day);
                 }
                 d.Hint = sb.ToString();
             }
             else
             {
-                d.Month = month;
-                d.Day = day;
+                d.Month = _month;
+                d.Day = _day;
             }
         }
 
         private Datation? BuildDatation(
             Tuple<string, bool, bool> tad, bool prevBC, string? hint)
         {
-            // preprocess {m=N,d=N}
-            short day = 0, month = 0;
-            string text = tad.Item1;
-            Tuple<string, IDictionary<string, string>>? td = ExtractMacro(text);
-
-            if (td != null)
-            {
-                text = td.Item1;
-                day = td.Item2.ContainsKey("day")
-                    ? short.Parse(td.Item2["day"], CultureInfo.InvariantCulture)
-                    : (short)0;
-                month = td.Item2.ContainsKey("month")
-                    ? short.Parse(td.Item2["month"], CultureInfo.InvariantCulture)
-                    : (short)0;
-            }
-
             // t = ante/post
             // m = modifier (init. etc)
             // c = century (s.)
@@ -528,10 +514,10 @@ namespace Epicod.Scraper.Packhum
             // o = suffix (st, nd, etc)
             // e = era (BC etc)
             // era: inherit if not explicitly defined
-            Match m = _dateRegex.Match(text);
+            Match m = _dateRegex.Match(tad.Item1);
             if (!m.Success)
             {
-                Logger?.LogError("Invalid datation: {Datation}", text);
+                Logger?.LogError("Invalid datation: {Datation}", tad.Item1);
                 return null;
             }
             bool bc = IsBC(m.Groups["e"].Value, prevBC);
@@ -561,7 +547,7 @@ namespace Epicod.Scraper.Packhum
                 ApplyDateModifier(d, m.Groups["m"].Value);
 
             // apply day & month if any
-            if (day > 0 || month > 0) ApplyMonthDay(d, month, day);
+            if (_day > 0 || _month > 0) ApplyMonthDay(d);
 
             return d;
         }
@@ -583,6 +569,7 @@ namespace Epicod.Scraper.Packhum
             if (string.IsNullOrEmpty(text)) return Array.Empty<HistoricalDate>();
 
             _hints.Clear();
+            _month = _day = 0;
 
             // A1 preprocess for split
             string s = PreprocessForSplit(text);
