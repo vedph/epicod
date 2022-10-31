@@ -501,9 +501,6 @@ namespace Epicod.Scraper.Packhum
                 case "eher":
                     delta = 15;
                     break;
-                case "earlymid":
-                    delta = 20;
-                    break;
                 case "late":
                     delta = 85;
                     break;
@@ -521,13 +518,9 @@ namespace Epicod.Scraper.Packhum
                 case "1stthirdofthe":
                     delta = 17;
                     break;
-                case "mid/2ndhalf":
-                case "middle/2ndhalf":
-                    delta = 40;
-                    break;
             }
 
-            if (d.Value < 0) delta = -delta;
+            if (d.Value < 0) delta = -(100 - delta);
             d.Value = n + delta;
             d.IsCentury = false;
             d.IsApproximate = true;
