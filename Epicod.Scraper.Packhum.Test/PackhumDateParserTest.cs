@@ -144,15 +144,15 @@ namespace Epicod.Scraper.Packhum.Test
         {
             PackhumDateParser parser = new();
             text = parser.PreprocessForSplit(text);
-            string actual =
-                PackhumDateParser.PreprocessDatations(new[] { text })[0].Item1;
+            string actual = parser.PreprocessDatations(new[] { text })[0].Item1;
             Assert.Equal(expected, actual);
         }
 
         [Fact]
         public void PreprocessDatations_CaInitial_Ok()
         {
-            var tads = PackhumDateParser.PreprocessDatations(new[]
+            PackhumDateParser parser = new();
+            var tads = parser.PreprocessDatations(new[]
             {
                 "c. 123 AD", "456 AD"
             });
@@ -170,7 +170,8 @@ namespace Epicod.Scraper.Packhum.Test
         [Fact]
         public void PreprocessDatations_CaNonInitial_Ok()
         {
-            var tads = PackhumDateParser.PreprocessDatations(new[]
+            PackhumDateParser parser = new();
+            var tads = parser.PreprocessDatations(new[]
             {
                 "123 AD", "c. 456 AD"
             });
@@ -188,7 +189,8 @@ namespace Epicod.Scraper.Packhum.Test
         [Fact]
         public void PreprocessDatations_QmkFinal_Ok()
         {
-            var tads = PackhumDateParser.PreprocessDatations(new[]
+            PackhumDateParser parser = new();
+            var tads = parser.PreprocessDatations(new[]
             {
                 "100", "125 AD?"
             });
@@ -206,7 +208,8 @@ namespace Epicod.Scraper.Packhum.Test
         [Fact]
         public void PreprocessDatations_QmkNonFinal_Ok()
         {
-            var tads = PackhumDateParser.PreprocessDatations(new[]
+            PackhumDateParser parser = new();
+            var tads = parser.PreprocessDatations(new[]
             {
                 "100?", "125 AD"
             });
@@ -221,13 +224,29 @@ namespace Epicod.Scraper.Packhum.Test
             Assert.False(tads[1].Item3);
         }
 
+        [Fact]
+        public void PreprocessDatations_DMY_Ok()
+        {
+            PackhumDateParser parser = new();
+            var tads = parser.PreprocessDatations(new[]
+            {
+                "13.2.139 n.Chr."
+            });
+
+            Assert.Equal(1, tads.Count);
+            Assert.Equal("139 n.Chr.", tads[0].Item1);
+            Assert.False(tads[0].Item2);
+            Assert.False(tads[0].Item3);
+        }
+
         [Theory]
         [InlineData("2.n.Chr.", "2th n.Chr.")]
         [InlineData("10.Jh.n.Chr.", "10th n.Chr.")]
         [InlineData("10./11.n.Chr.", "10th/11th n.Chr.")]
         public void PreprocessDatations_NDot_Ok(string text, string expected)
         {
-            var tads = PackhumDateParser.PreprocessDatations(new[] { text });
+            PackhumDateParser parser = new();
+            var tads = parser.PreprocessDatations(new[] { text });
 
             Assert.Equal(1, tads.Count);
             Assert.Equal(expected, tads[0].Item1);
@@ -238,7 +257,8 @@ namespace Epicod.Scraper.Packhum.Test
         [Fact]
         public void PreprocessDatations_Mid_Ok()
         {
-            var tads = PackhumDateParser.PreprocessDatations(new[]
+            PackhumDateParser parser = new();
+            var tads = parser.PreprocessDatations(new[]
             {
                 "mid-1st c. BC"
             });
@@ -252,7 +272,8 @@ namespace Epicod.Scraper.Packhum.Test
         [Fact]
         public void PreprocessDatations_LaterThanTheEarly_Ok()
         {
-            var tads = PackhumDateParser.PreprocessDatations(new[]
+            PackhumDateParser parser = new();
+            var tads = parser.PreprocessDatations(new[]
             {
                 "later than the early 5th c. BC?"
             });
@@ -415,6 +436,8 @@ namespace Epicod.Scraper.Packhum.Test
         // month/day
         [InlineData("120 AD, Nov.", "nov 120 AD")]
         [InlineData("136 AD, 19 Nov.", "19 nov 136 AD")]
+        // dmy
+        [InlineData("13.2.139 n.Chr.", "13 feb 139 AD")]
         public void Parse_N_Ok(string text, string expected)
         {
             PackhumDateParser parser = new();

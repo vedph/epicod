@@ -54,6 +54,10 @@ namespace Epicod.Scraper.Packhum
         private static readonly Regex _splitSlashRegex = new(
             "([^0-9IVX])/([^0-9IVX])", RegexOptions.Compiled);
 
+        private static readonly Regex _dmyRegex = new(
+            @"(?<d>[1-3]?[0-9])\.(?<m>1?[0-9])\.(?<y>[0-9]+)",
+            RegexOptions.Compiled);
+
         // datation
         private static readonly Regex _splitPtRegex = new(
             @"([0-9IVX](?:st|nd|rd|th)?\??)-([0-9IVX])", RegexOptions.Compiled);
@@ -75,12 +79,6 @@ namespace Epicod.Scraper.Packhum
 
         private static readonly Regex _dotCenturyRegex = new(
             @"([0-9])\.(?: ?Jh\.)?", RegexOptions.Compiled);
-
-        private static readonly Regex _macroRegex = new(
-            @"\{([^}]+)\}", RegexOptions.Compiled);
-
-        private static readonly Regex _macroArgRegex = new(
-            "(?<n>[^=]+)=(?<v>[^,]*)", RegexOptions.Compiled);
 
         private static readonly Regex _dateRegex = new(
             "^(?:(?<t>ante|post) )?" +
@@ -316,7 +314,7 @@ namespace Epicod.Scraper.Packhum
         /// <returns>One tuple for each input text, with 1=preprocessed text,
         /// 2=about, 3=dubious.</returns>
         /// <exception cref="ArgumentNullException">text</exception>
-        public static IList<Tuple<string, bool, bool>> PreprocessDatations(
+        public IList<Tuple<string, bool, bool>> PreprocessDatations(
             IList<string> texts)
         {
             if (texts is null) throw new ArgumentNullException(nameof(texts));
@@ -352,6 +350,24 @@ namespace Epicod.Scraper.Packhum
                 {
                     dub = true;
                     s = s.Replace("?", "");
+                }
+
+                // date DMY (hapax: 13.2.139 n.Chr.)
+                m = _dmyRegex.Match(s);
+                if (m.Success)
+                {
+                    if (m.Groups["m"].Length > 0)
+                    {
+                        _month = short.Parse(m.Groups["m"].Value,
+                            CultureInfo.InvariantCulture);
+                    }
+                    if (m.Groups["d"].Length > 0)
+                    {
+                        _day = short.Parse(m.Groups["d"].Value,
+                            CultureInfo.InvariantCulture);
+                    }
+                    s = s.Remove(m.Index, m.Length)
+                         .Insert(m.Index, m.Groups["y"].Value);
                 }
 
                 // N. or N.Jh. = Nth + space
@@ -467,19 +483,6 @@ namespace Epicod.Scraper.Packhum
             d.Value = n + delta;
             d.IsCentury = false;
             d.IsApproximate = true;
-        }
-
-        private static Tuple<string, IDictionary<string,string>>? ExtractMacro(
-            string text)
-        {
-            Match m = _macroRegex.Match(text);
-            if (!m.Success) return null;
-
-            IDictionary<string, string> dct = new Dictionary<string, string>();
-            foreach (Match pair in _macroArgRegex.Matches(m.Groups[1].Value))
-                dct[pair.Groups["n"].Value] = pair.Groups["v"].Value;
-
-            return Tuple.Create(text.Remove(m.Index, m.Length), dct);
         }
 
         private void ApplyMonthDay(Datation d)

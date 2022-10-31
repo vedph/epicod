@@ -344,7 +344,7 @@ A1. preprocess: this is required to avoid splitting in a wrong way:
 - `,\s+early$` => wrap in `()`.
 - `w/` and `w//` => `w`(these are wrong parsing cases: not a date).
 - `July/August` => `July`.
-- `,\s*([0-3]?[0-9])?\s*(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[^\s]*` => `{d=N,m=N}`.
+- `,\s*([0-3]?[0-9])?\s*(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[^\s]*` => month, day.
 
 >Note: corner cases were defined by this query:
 
