@@ -346,7 +346,8 @@ namespace Epicod.Scraper.Packhum.Test
         [InlineData("Wende s.II", "c. 190 AD")]
         [InlineData("early s.II", "c. 115 AD")]
         [InlineData("eher s.II", "c. 115 AD")]
-        [InlineData("early/mid s.II", "c. 120 AD")]
+        [InlineData("early/mid s.II", "c. 115 AD")]
+        [InlineData("half/mid s.II", "c. 125 AD")]
         [InlineData("late s.II", "c. 185 AD")]
         [InlineData("1st half s.II", "c. 125 AD")]
         [InlineData("1.Halfte s.II", "c. 125 AD")]
@@ -358,7 +359,8 @@ namespace Epicod.Scraper.Packhum.Test
         [InlineData("1st third s.II", "c. 117 AD")]
         [InlineData("1st third of s.II", "c. 117 AD")]
         [InlineData("1st third of the s.II", "c. 117 AD")]
-        // TODO
+        [InlineData("mid/2nd half of the 4th c. BC", "c. 350 BC")]
+        [InlineData("middle / 2nd half 2nd c. AD", "c. 150 AD")]
         // year span
         [InlineData("21/2", "21/22 AD")]
         [InlineData("21/22", "21/22 AD")]

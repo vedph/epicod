@@ -36,9 +36,6 @@ namespace Epicod.Scraper.Packhum
              @"(?<m>Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[^\s]*",
             RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
-        private static readonly Regex _wRegex = new
-            (@"\bw//?", RegexOptions.Compiled);
-
         private static readonly string[] _dateSeps = new[]
         {
             " and ", " or ", " od.", " oder ", " & ", ","
@@ -68,10 +65,9 @@ namespace Epicod.Scraper.Packhum
         private static readonly Regex _qmkPrefixRegex = new(
             "(init.|beg.|Anf.|med.|mid|middle|" +
             "fin.|end|Ende|Wende|" +
-            @"early|eher|early\s*/\s*mid|late|" +
-            @"1st half|2nd half|1\.\s*Halfte|2\.\s*Halfte|" +
-            "1th Drittel|1st third of the|1st third of|1st third|" +
-            @"mid\s*/\s*2nd half|middle\s*/\s*2nd half)\?",
+            "early|eher|late|" +
+            "1st half|2nd half|1th ?Halfte|2th ?Halfte|" +
+            @"1th Drittel|1st third of the|1st third of|1st third)\?",
             RegexOptions.Compiled);
 
         private static readonly Regex _midDashRegex = new(@"\bmid-([0-9])",
@@ -89,11 +85,11 @@ namespace Epicod.Scraper.Packhum
         private static readonly Regex _dateRegex = new(
             "^(?<t>ante |post )?" +
             @"(?<m>init\.|beg\.|Anf\.|med\.|middle|mid|fin\.|end|Ende|Wende|" +
-            @"early|eher|early*\/ *mid|late|1st half|2nd half|1\. ?Halfte|2\. ?" +
-            "Halfte|1th Drittel|1st third of the|1st third of|1st third|" +
-            @"mid\s*/\s*2nd half)? " +
+            "early|eher|late|1st half|2nd half|1th ?Halfte|2th ?Halfte|" +
+            "1th Drittel|1st third of the|1st third of|1st third)? " +
             @"?(?<c>s\.)? ?(?<n>[0-9IVX]+)" +
             @"(?:\/(?<ns>[0-9IVX]+))?(?<o>st|nd|rd|th)? ?" +
+            @"(?<c>c\. )?" +
             @"(?<e>BC|ac|a\.|v\. ?Chr\.|AD|pc|p\.|n\. ?Chr\.)?",
             RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
@@ -184,8 +180,15 @@ namespace Epicod.Scraper.Packhum
             s = ExtractHints(s);
 
             // corner cases
-            s = _wRegex.Replace(s, "w");
-            s = s.Replace("July/August", "July");
+            StringBuilder sb = new(s);
+            sb.Replace("w/", "w");
+            sb.Replace("w//", "w");
+            sb.Replace("July/August", "July");
+            sb.Replace("early/mid", "early");
+            sb.Replace("half/mid", "1st half");
+            sb.Replace("mid/2nd half of the", "mid");
+            sb.Replace("middle / 2nd half", "mid");
+            s = sb.ToString();
 
             // or...earlier/later: wrap in () normalizing expression
             s = _orModifierRegex.Replace(s, (Match m) =>
@@ -498,18 +501,18 @@ namespace Epicod.Scraper.Packhum
                 case "eher":
                     delta = 15;
                     break;
-                case "early/mid":
+                case "earlymid":
                     delta = 20;
                     break;
                 case "late":
                     delta = 85;
                     break;
                 case "1sthalf":
-                case "1.halfte":
+                case "1thhalfte":
                     delta = 25;
                     break;
                 case "2ndhalf":
-                case "2.halfte":
+                case "2thhalfte":
                     delta = 75;
                     break;
                 case "1thdrittel":
@@ -524,6 +527,7 @@ namespace Epicod.Scraper.Packhum
                     break;
             }
 
+            if (d.Value < 0) delta = -delta;
             d.Value = n + delta;
             d.IsCentury = false;
             d.IsApproximate = true;
