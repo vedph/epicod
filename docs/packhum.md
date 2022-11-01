@@ -313,6 +313,22 @@ Going deeper, we can observe that:
 - type usually is a word in `[]` (e.g. `[pottery]`), or is related to the writing direction or layout (e.g. `stoich.` with an optional letters count, `non-stoich.`, `boustr.`, `retrogr.`).
 - date has a number of forms.
 
+Sample queries to lookup references in tokens:
+
+```sql
+-- token 1, letter A
+select distinct regexp_replace(tnp.value,'^([^—]+).*$','\1') as n
+from text_node_property tnp 
+where tnp.name='note' and tnp.value ilike 'a%'
+order by n;
+
+-- token 2
+select distinct regexp_replace(tnp.value,'^[^—]+—([^—]+).*$','\1') as n
+from text_node_property tnp 
+where tnp.name='note'
+order by n;
+```
+
 ### Date
 
 Query template for inspection:

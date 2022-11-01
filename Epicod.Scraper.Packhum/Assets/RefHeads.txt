@@ -1,197 +1,226 @@
-﻿2. Mil-Ber.
+﻿Jour. Roy. Geo. Soc. 
+Kubitschek & Reichel 
+Freyer-Schauenburg,
+Hell.Phil.Syl.Ist. 
+İnan & Alföldi-R. 
+Pappakonstantinou,
+Bolu & Dörtdivan,
+Tölle-Kastenbein,
+Türk Ark. Derg. 
+İnan&Rosenbaum 
+Mon. Berl. Ak. 
+Pfuhl & Möbius 
+Staatsverträge 
+Wiss. Z. Halle 
+Ann. d. Inst. 
+Bel.T.Tar.Kur.
+Benndorf&Niem.
+Fraser & Bean,
+Hula & Szanto 
+J.-A. Lebèque,
+Pickard-Camb.,
+Haussoullier,
+B. ec. fran.
+Friedländer,
+Malandrakis,
+2. Mil-Ber.
 3. Mil-Ber.
 4. Mil-Ber.
 6. Mil-Ber.
-AA 
-AAA 
-AArch 
-AAWW 
-ABSA 
-AC 
-AD 
-ADAW 
-AE 
-AJA 
-AJP 
-AnAr 
-Ann. d. Inst. 
-APF 
-AS 
-ASAA 
-Athena 
-BCH 
-BJ 
-Boardman,
-Boehlau,
-ByzZ 
+cf. IGBulg 
 Chiake Ep. 
-Chiron 
-CIG 
-Conze,
-Cook,
-Cook&Pl.,
-CR 
-CRAI 
-CSCA 
-Curtius,
+Hornblower,
+Kretikidis,
+Mous. Smy. 
+Philologus 
+Stamatiades
+van Gelder,
+von Gerkan,
+Arch. Ztg.
+Audollent 
+Centaurus 
 Deissmann,
-Déléage,
-Denmark 
-Dunst
-EA 
-Erim,
-Fellows,
-FiE 
-Forrest,
-Foucart,
-Fraser & Bean,
-Fraser,
-Freyer-Schauenburg,
-Friedländer,
-GE 
-Geffken 
 Giacchero,
-GIBM 
-Gnomon 
-Graf,
-GRBS 
-Grégoire,
-Guérin,
-Günther,
-GVAK 
-GVI 
-Hamilton,
-Harper,
-Hauben,
-Haussoullier,
 Heisserer,
 Hellenica 
-Hell.Phil.Syl.Ist. 
 Hellström,
-Hermes 
-Hesperia 
-Hicks 
-Hommel,
-Hornblower,
-Horn,
-Horos 
-HSCP 
-Hula & Szanto 
-IDid 
-IEph 
-IEry 
-IGBulg 
-IG 
-IGRR 
-Ilasos 
-IIsolMil 
-IK 
-IKeramos 
-ILabr 
-ILouvre 
-IMagn 
-IMyl 
-İnan & Alföldi-R. 
-İnan&Rosenbaum 
-IPri 
-IScM 
-ISmyrn 
-IStr 
-ITral 
-Jacopi,
-Jardé,
-JDAI 
-JHS 
-JÖAI 
-Jour. Roy. Geo. Soc. 
-JRS 
-JS 
-Kadmos 
-Kaibel 
-Kienast,
-Klio 
-Kretikidis,
-Kubitschek & Reichel 
-Lane,
-Laum,
-LSAM 
-LS 
-LW 
 MacDonald,
-MAMA 
+Michaelis,
+Mnemosyne 
+NBeiträge 
+Stephanou,
+Anadolu  
+Belleten 
+Benndorf,
+Boardman,
+Cook&Pl.,
+Grégoire,
+Hamilton,
+Herrmann,
+Hesperia 
+IIsolMil 
+IKeramos 
+Mon.Ant. 
+Mouseion 
+Paspatis,
+Reynolds,
+SGLIBulg 
+Sterrett,
+StudClas 
+TCalymna 
+ArchEph 
+Boehlau,
+Cormack,
+Curtius,
+Déléage,
+Denmark 
+Fellows,
+Forrest,
+Foucart,
+Geffken 
+Günther,
+ILouvre 
+Kienast,
+Lebides,
 Marcadé 
 Martini,
+Milet II
+Moretti 
+Roueché,
+Säflund,
+Tuchelt,
+Wilhelm,
+Zolotas,
+Accame,
+Athena 
+cf. IG 
+Chiron 
+Fraser,
+Gnomon 
+Guérin,
+Harper,
+Hauben,
+Hermes 
+Hommel,
+IGBulg 
+Ilasos 
+ISmyrn 
+Jacopi,
+Jacopi,
+Kadmos 
+Kaibel 
 MDAI(A)
 MDAI(I)
 Mendel,
-Michaelis,
 Milet I
-Milet II
-ML 
-Mnemosyne 
-MonAL 
-Mon.Ant. 
-Mon. Berl. Ak. 
-Moretti 
-Mouseion 
-Mous. Smy. 
-NBeiträge 
 Newton,
+Pennas,
+Robert,
+Sinuri 
+Vidman,
+Welles 
+AArch 
+Conze,
+Epet. 
+Hicks 
+Horos 
+ILabr 
+IMagn 
+ITral 
+Jardé,
+MonAL 
 Nollé,
+PICCA 
+Sherk 
+Syll³ 
+Tölle,
+Tyche 
+AAWW 
+ABSA 
+ADAW 
+ASAA 
+BPhW 
+ByzZ 
+CCET 
+Cook,
+CRAI 
+CSCA 
+Dunst
+Erim,
+GIBM 
+Graf,
+GRBS 
+GVAK 
+Hesp.
+Horn,
+HSCP 
+IDid 
+IEph 
+IEry 
+IGRR 
+IMyl 
+IPri 
+IScM 
+IStr 
+JDAI 
+JÖAI 
+Klio 
+Lane,
+Laum,
+LSAM 
+MAMA 
+NSER 
 OAth 
 OGIS 
 PAAH 
-Pappakonstantinou,
-Paspatis,
 PBSR 
 PCPS 
 Peek,
-Pennas,
-Pfuhl & Möbius 
-Philologus 
-PICCA 
-Pickard-Camb.,
-RA 
-RAL 
-REG 
-Reynolds,
 RFIC 
-RhM 
-RN 
-Robert,
 Rob.,
 Röhl,
 Roos,
-Roueché,
-RPh 
-Säflund,
 SBAW 
 SDAW 
-SEG 
 SGDI 
-SGLIBulg 
-Sherk 
-Sinuri 
-Staatsverträge 
-Stamatiades
-Stephanou,
-Sterrett,
-StudClas 
-Syll³ 
-TAM 
-TCalymna 
-Tölle,
 TRSL 
-Tuchelt,
-Türk Ark. Derg. 
-Tyche 
-van Gelder,
-Vidman,
-von Gerkan,
-WS 
-Welles 
-Wilhelm,
-Wiss. Z. Halle 
-WS 
-Zolotas,
+AAA 
+AEM 
+AJA 
+AJP 
+AnAr
+APF 
+BCH 
+CIG 
+CIL 
+FiE 
+GVI 
+JHS 
+JRS 
+RAL 
+REG 
+RhM 
+RPh 
+SEG 
+TAM 
 ZPE 
+AA 
+AC 
+AD 
+AE 
+AS 
+BE 
+BJ 
+BJ 
+CR 
+EA 
+GE 
+IG 
+IK 
+JS 
+LS 
+LW 
+ML 
+RA 
+RN 
+WS 

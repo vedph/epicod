@@ -25,7 +25,7 @@ namespace Epicod.Scraper.Packhum
         private static readonly Regex _orModifierRegex = new(
             @"(?:or |od\.|oder )" +
             @"(?<l>shortly |slightly |sh\.)? ?" +
-            @"(?<m>later|lat\.|after|aft.|earlier|früher|später)\??",
+            @"(?<m>later|lat\.|earlier|früher|später|aft\.|after)\??",
             RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
         private static readonly Regex _earlyModifierRegex = new(
@@ -84,7 +84,7 @@ namespace Epicod.Scraper.Packhum
             @"([0-9])\.(?: ?Jh\.)?", RegexOptions.Compiled);
 
         private static readonly Regex _dateRegex = new(
-            "^(?:(?<t>ante|post) )?" +
+            @"^(?:(?<t>ante|post|bef\.|before|aft\.|after) )?" +
             @"(?<m>init\.|beg\.|Anf\.|med\.|middle|mid|fin\.|end|Ende|Wende|" +
             "early|eher|late|1st half|2nd half|1th ?Halfte|2th ?Halfte|" +
             "1th Drittel|1st third of the|1st third of|1st third)? " +
@@ -562,8 +562,18 @@ namespace Epicod.Scraper.Packhum
 
         private static int GetTerminusType(string text)
         {
-            if (text.StartsWith("ante", StringComparison.Ordinal)) return -1;
-            if (text.StartsWith("post", StringComparison.Ordinal)) return 1;
+            if (text.StartsWith("ante ", StringComparison.Ordinal) ||
+                text.StartsWith("bef.", StringComparison.Ordinal) ||
+                text.StartsWith("before ", StringComparison.Ordinal))
+            {
+                return -1;
+            }
+            if (text.StartsWith("post ", StringComparison.Ordinal) ||
+                text.StartsWith("aft.", StringComparison.Ordinal) ||
+                text.StartsWith("after", StringComparison.Ordinal))
+            {
+                return 1;
+            }
             return 0;
         }
 

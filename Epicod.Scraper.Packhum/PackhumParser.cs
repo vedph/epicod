@@ -3,7 +3,10 @@ using Fusi.Antiquity.Chronology;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using System.Linq;
+using System.Reflection;
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace Epicod.Scraper.Packhum
@@ -18,6 +21,7 @@ namespace Epicod.Scraper.Packhum
         private readonly Regex _writingRegex;
         private readonly Regex _refAbbrRegex;
         private readonly PackhumDateParser _dateParser;
+        private readonly List<string> _refHeads;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="PackhumParser"/> class.
@@ -37,6 +41,33 @@ namespace Epicod.Scraper.Packhum
 
             // 2 initial capitals are usually a hint for SEG, IG, etc.
             _refAbbrRegex = new Regex(@"^\s*[A-Z]{2,}", RegexOptions.Compiled);
+            _refHeads = new();
+            LoadRefHeads();
+        }
+
+        private void LoadRefHeads()
+        {
+            _refHeads.Clear();
+            using StreamReader reader = new(Assembly.GetExecutingAssembly()
+                .GetManifestResourceStream(
+                "Epicod.Scraper.Packhum.Assets.RefHeads.txt")!, Encoding.UTF8);
+            string? line;
+            while ((line = reader.ReadLine()) != null)
+            {
+                if (!string.IsNullOrEmpty(line)) _refHeads.Add(line);
+            }
+        }
+
+        private bool StartsWithRef(string? text)
+        {
+            if (string.IsNullOrEmpty(text)) return false;
+            for (int i = 0; i < _refHeads.Count; i++)
+            {
+                if (text.Length > _refHeads[i].Length) break;
+                if (text.StartsWith(_refHeads[i], StringComparison.Ordinal))
+                    return true;
+            }
+            return false;
         }
 
         private bool ParseType(string text, int nodeId,
@@ -107,6 +138,12 @@ namespace Epicod.Scraper.Packhum
 
             for (int i = 1; i < tokens.Count; i++)
             {
+                // reference
+                if (StartsWithRef(tokens[i]))
+                {
+                    // TODO
+                }
+
                 // type
                 if (!hasType && ParseType(tokens[i], nodeId, props))
                 {

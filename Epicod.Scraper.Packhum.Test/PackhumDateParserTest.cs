@@ -323,6 +323,16 @@ namespace Epicod.Scraper.Packhum.Test
             Assert.Equal("200 ? -- 1 BC ?", dates[0].ToString());
         }
 
+        [Fact]
+        public void Parse_Undated_Empty()
+        {
+            PackhumDateParser parser = new();
+
+            IList<HistoricalDate> dates = parser.Parse("undated");
+
+            Assert.Empty(dates);
+        }
+
         [Theory]
         // eras
         [InlineData("21 BC", "21 BC")]
@@ -424,11 +434,15 @@ namespace Epicod.Scraper.Packhum.Test
         [InlineData("10./11.n.Chr.", "X -- XI AD")]
         // ante/post point
         [InlineData("ante 21 BC", "-- 21 BC")]
+        [InlineData("before 21 BC", "-- 21 BC")]
+        [InlineData("bef. 21 BC", "-- 21 BC")]
         [InlineData("ante 21/0 BC", "-- 21/20 BC")]
         [InlineData("c. ante 21 BC", "-- c. 21 BC")]
         [InlineData("ante 21 BC ?", "-- 21 BC ?")]
         [InlineData("ante III BC", "-- III BC")]
         [InlineData("post 21 BC", "21 BC --")]
+        [InlineData("after 21 BC", "21 BC --")]
+        [InlineData("aft. 21 BC", "21 BC --")]
         [InlineData("post III BC", "III BC --")]
         // ante/post range
         [InlineData("ante II/IV AD", "-- c. 250 AD")]
