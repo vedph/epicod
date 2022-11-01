@@ -58,6 +58,9 @@ namespace Epicod.Scraper.Packhum
             @"(?<d>[1-3]?[0-9])\.(?<m>1?[0-9])\.(?<y>[0-9]+)",
             RegexOptions.Compiled);
 
+        private static readonly Regex _bracketRegex = new(@"\([^)]*\)",
+            RegexOptions.Compiled);
+
         // datation
         private static readonly Regex _splitPtRegex = new(
             @"([0-9IVX](?:st|nd|rd|th)?\??)-([0-9IVX])", RegexOptions.Compiled);
@@ -91,7 +94,7 @@ namespace Epicod.Scraper.Packhum
             @"(?<e>BC|ac|a\.|v\. ?Chr\.|AD|pc|p\.|n\. ?Chr\.)?",
             RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
-        private static readonly Dictionary<string, HistoricalDate>
+        private static readonly Dictionary<string, HistoricalDate?>
             _periods = new();
         #endregion
 
@@ -298,10 +301,12 @@ namespace Epicod.Scraper.Packhum
         private static HistoricalDate? MatchPeriod(string text)
         {
             EnsurePeriodsLoaded();
-            string s = NormalizeWS(text).Replace("?", "").ToLowerInvariant();
-            if (!_periods.ContainsKey(s)) return null;
 
-            HistoricalDate date = _periods[s].Clone();
+            string s = text.Replace("?", "").ToLowerInvariant();
+            s = NormalizeWS(_bracketRegex.Replace(s, "")).Trim();
+            if (!_periods.ContainsKey(s) || _periods[s] is null) return null;
+
+            HistoricalDate date = _periods[s]!.Clone();
             if (text.IndexOf('?') > -1)
                 date.A.IsDubious = date.B!.IsDubious = true;
             return date;

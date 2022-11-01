@@ -27,12 +27,12 @@ namespace Epicod.Scraper.Packhum.Test
         [InlineData("21 AD or sh. früher", "21 AD")]
         [InlineData("21 AD or sh. später", "21 AD")]
         [InlineData("s. II AD, early", "s. II AD")]
-        [InlineData("21 AD, 3 Jan.", "21 AD{d=3,m=1}")]
-        [InlineData("21 AD, 3 January", "21 AD{d=3,m=1}")]
-        [InlineData("21 AD, Aug.", "21 AD{m=8}")]
+        [InlineData("21 AD, 3 Jan.", "21 AD")]
+        [InlineData("21 AD, 3 January", "21 AD")]
+        [InlineData("21 AD, Aug.", "21 AD")]
         [InlineData("21 AD w/ 214", "21 AD w 214")]
         [InlineData("21 AD w// 214", "21 AD w 214")]
-        [InlineData("21 AD, July/August", "21 AD{m=7}")]
+        [InlineData("21 AD, July/August", "21 AD")]
         public void PreprocessForSplit_Ok(string text, string expected)
         {
             PackhumDateParser parser = new();

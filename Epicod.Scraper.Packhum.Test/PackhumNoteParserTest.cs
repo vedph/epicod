@@ -384,26 +384,6 @@ namespace Epicod.Scraper.Packhum.Test
         }
 
         [Fact]
-        public void Parse_RegionDate_Nan_Ok()
-        {
-            PackhumParser parser = new();
-            IList<TextNodeProperty> props = parser.ParseNote("Att. — early imp.", 1);
-
-            Assert.Equal(3, props.Count);
-
-            Assert.NotNull(props.FirstOrDefault(
-                p => p.Name == TextNodeProps.REGION && p.Value == "Att."));
-
-            // date-phi
-            Assert.NotNull(props.FirstOrDefault(
-                p => p.Name == TextNodeProps.DATE_PHI && p.Value == "early imp."));
-
-            // date-nan
-            Assert.NotNull(props.FirstOrDefault(
-                p => p.Name == TextNodeProps.DATE_NAN && p.Value == "early imp."));
-        }
-
-        [Fact]
         public void Parse_RegionDate_SlashAsRange_Ok()
         {
             PackhumParser parser = new();

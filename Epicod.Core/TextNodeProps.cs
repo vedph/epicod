@@ -41,11 +41,6 @@
         public const string DATE_PHI = "date-phi";
 
         /// <summary>
-        /// A non-numeric date (e.g. "aet. Hadriani").
-        /// </summary>
-        public const string DATE_NAN = "date-nan";
-
-        /// <summary>
         /// The date's text in a conventional normal form (Cadmus).
         /// </summary>
         public const string DATE_TXT = "date-txt";
