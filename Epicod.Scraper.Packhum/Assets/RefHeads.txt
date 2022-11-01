@@ -154,3 +154,44 @@ Pickard-Camb.,
 RA 
 RAL 
 REG 
+Reynolds,
+RFIC 
+RhM 
+RN 
+Robert,
+Rob.,
+Röhl,
+Roos,
+Roueché,
+RPh 
+Säflund,
+SBAW 
+SDAW 
+SEG 
+SGDI 
+SGLIBulg 
+Sherk 
+Sinuri 
+Staatsverträge 
+Stamatiades
+Stephanou,
+Sterrett,
+StudClas 
+Syll³ 
+TAM 
+TCalymna 
+Tölle,
+TRSL 
+Tuchelt,
+Türk Ark. Derg. 
+Tyche 
+van Gelder,
+Vidman,
+von Gerkan,
+WS 
+Welles 
+Wilhelm,
+Wiss. Z. Halle 
+WS 
+Zolotas,
+ZPE 
