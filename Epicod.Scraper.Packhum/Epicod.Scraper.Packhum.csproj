@@ -17,10 +17,12 @@
 
   <ItemGroup>
     <None Remove="Assets\Periods.csv" />
+    <None Remove="Assets\RefHeads.txt" />
   </ItemGroup>
 
   <ItemGroup>
     <EmbeddedResource Include="Assets\Periods.csv" />
+    <EmbeddedResource Include="Assets\RefHeads.txt" />
   </ItemGroup>
 
   <ItemGroup>
