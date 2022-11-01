@@ -287,7 +287,7 @@ In the end, each text will be found in its own page, having a line for each tabl
 - `span[@class="ti"]` with text information.
 - a final `div[@class="docref"]` contains `a` with href whose value is the PHI ID like `PHI1754`.
 
-The note at the top of each text page is a line with U+2014 as separator, including these data (the asterisk marks those data which seem to be always present):
+The note at the top of each text page is a line with U+2014 as separator, including these data (the asterisk marks those data which are mostly present):
 
 1. region\*
 2. location\*
@@ -301,7 +301,7 @@ For instance:
 Att. — Athens: Akropolis — stoich. 28 — 440-410 a. — IG I² 87,f + 141,a, + 174 — IG I³, Add.p.950
 ```
 
-Unfortunately, the only constant field seems to be the region; so it's difficult to detect which field is what. For instance:
+Unfortunately, it's difficult to detect which field is what, as no field is required. For instance:
 
 ```txt
 Att. — 440-430 a.
@@ -311,7 +311,9 @@ Att. — Lamptrai: Thiti — s. V a. — Elliot(1962) 56-58 (+) — SEG 32.19
 Going deeper, we can observe that:
 
 - type usually is a word in `[]` (e.g. `[pottery]`), or is related to the writing direction or layout (e.g. `stoich.` with an optional letters count, `non-stoich.`, `boustr.`, `retrogr.`).
-- date has a number of forms.
+- reference start with any of the `RefHeads.txt` prefixes.
+- toponyms cannot have digits in their text once text in `()` or `[]` has been removed.
+- date has a number of forms (see below).
 
 Sample queries to lookup references in tokens:
 
@@ -324,6 +326,12 @@ order by n;
 
 -- token 2
 select distinct regexp_replace(tnp.value,'^[^—]+—([^—]+).*$','\1') as n
+from text_node_property tnp 
+where tnp.name='note'
+order by n;
+
+-- token 3
+select distinct regexp_replace(tnp.value,'^[^—]+[^—]+—([^—]+).*$','\1') as n
 from text_node_property tnp 
 where tnp.name='note'
 order by n;

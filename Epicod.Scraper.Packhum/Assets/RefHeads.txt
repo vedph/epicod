@@ -93,6 +93,7 @@ Wilhelm,
 Zolotas,
 Accame,
 Athena 
+Brinck,
 cf. IG 
 Chiron 
 Fraser,
@@ -139,7 +140,9 @@ AAWW
 ABSA 
 ADAW 
 ASAA 
+BICA 
 BPhW 
+BSAF 
 ByzZ 
 CCET 
 Cook,
@@ -210,7 +213,6 @@ AD
 AE 
 AS 
 BE 
-BJ 
 BJ 
 CR 
 EA 
