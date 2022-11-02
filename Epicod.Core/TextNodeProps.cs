@@ -21,6 +21,11 @@
         public const string REGION = "region";
 
         /// <summary>
+        /// The site in a region.
+        /// </summary>
+        public const string SITE = "site";
+
+        /// <summary>
         /// The location in a region.
         /// </summary>
         public const string LOCATION = "location";

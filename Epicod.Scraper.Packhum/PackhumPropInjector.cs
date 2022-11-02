@@ -40,8 +40,10 @@ namespace Epicod.Scraper.Packhum
                 {
                   TextNodeProps.DATE_PHI,
                   TextNodeProps.REGION,
+                  TextNodeProps.SITE,
                   TextNodeProps.LOCATION,
-                  TextNodeProps.REFERENCE
+                  TextNodeProps.REFERENCE,
+                  TextNodeProps.FORGERY
               })
               .Select("tp.id");
             qf.Query(EpicodSchema.T_PROP).WhereIn("id", query).Delete();

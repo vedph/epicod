@@ -18,17 +18,23 @@ namespace Epicod.Scraper.Packhum
     public sealed class PackhumParser
     {
         private const int FLD_REGION = 1;
-        private const int FLD_LOCATION = 2;
-        private const int FLD_TYPE = 3;
-        private const int FLD_DATE = 4;
-        private const int FLD_REFERENCE = 5;
-        private const int FLD_TAIL = 6;
+        private const int FLD_SITE = 2;
+        private const int FLD_LOCATION = 3;
+        private const int FLD_TYPE = 4;
+        private const int FLD_DATE = 5;
+        private const int FLD_REFERENCE = 6;
+        private const int FLD_TAIL = 7;
 
         private readonly char[] _seps;
         private readonly Regex _layoutRegex;
         private readonly Regex _forgeryRegex;
         private readonly PackhumDateParser _dateParser;
         private readonly List<string> _refHeads;
+
+        private static readonly string[] RSL = new[]
+            {
+                TextNodeProps.REGION, TextNodeProps.SITE, TextNodeProps.LOCATION
+            };
 
         /// <summary>
         /// Gets or sets the optional logger.
@@ -179,7 +185,8 @@ namespace Epicod.Scraper.Packhum
             List<string> tokens = note.Split(_seps).Select(s => s.Trim()).ToList();
             IList<TextNodeProperty> props = new List<TextNodeProperty>();
             int field = 0;
-            bool hasRegion = false, hasRef = false;
+            int place = 0;
+            bool hasRef = false;
 
             // forgery may be found in many fields like e.g.
             // "ca. 800 BC? (forgery?)", "cf. SEG 24.1252 (forgery)", etc.
@@ -219,15 +226,28 @@ namespace Epicod.Scraper.Packhum
                     continue;
                 }
 
-                // location
+                // region/site/location
                 if (field <= FLD_LOCATION)
                 {
+                    // 1=region, 2=site, 3=location
+                    place++;
                     props.Add(new TextNodeProperty(
                         nodeId,
-                        hasRegion? TextNodeProps.LOCATION : TextNodeProps.REGION,
+                        RSL[place - 1],
                         tokens[i]));
-                    field = (hasRegion ? FLD_LOCATION : FLD_REGION) + 1;
-                    hasRegion = true;
+                    switch (place)
+                    {
+                        case 1:
+                            field = FLD_REGION;
+                            break;
+                        case 2:
+                            field = FLD_SITE;
+                            break;
+                        case 3:
+                            field = FLD_LOCATION;
+                            break;
+                    }
+                    field++;
                     continue;
                 }
 

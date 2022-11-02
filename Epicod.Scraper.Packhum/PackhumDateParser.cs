@@ -703,6 +703,14 @@ namespace Epicod.Scraper.Packhum
                     else date.SetSinglePoint(d);
                     prevBC = d.Value < 0;
                 }
+
+                // remove the first of two equal hints in a range
+                if (date.GetDateType() == HistoricalDateType.Range &&
+                    date.A.Hint != null && date.B!.Hint == date.A.Hint)
+                {
+                    date.A.Hint = null;
+                }
+
                 dates.Insert(0, date);
             }
             return dates;

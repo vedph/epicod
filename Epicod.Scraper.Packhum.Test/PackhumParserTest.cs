@@ -8,7 +8,7 @@ namespace Epicod.Scraper.Packhum.Test
     public sealed class PackhumParserTest
     {
         [Fact]
-        public void Parse_RegionLocation_Ok()
+        public void Parse_RegionSite_Ok()
         {
             PackhumParser parser = new();
             IList<TextNodeProperty> props = parser.ParseNote("Att. — Lamptrai: Thiti", 1);
@@ -19,11 +19,11 @@ namespace Epicod.Scraper.Packhum.Test
                 p => p.Name == TextNodeProps.REGION && p.Value == "Att."));
 
             Assert.NotNull(props.FirstOrDefault(
-                p => p.Name == TextNodeProps.LOCATION && p.Value == "Lamptrai: Thiti"));
+                p => p.Name == TextNodeProps.SITE && p.Value == "Lamptrai: Thiti"));
         }
 
         [Fact]
-        public void Parse_RegionLocationType_Ok()
+        public void Parse_RegionSiteType_Ok()
         {
             PackhumParser parser = new();
             IList<TextNodeProperty> props =
@@ -35,14 +35,14 @@ namespace Epicod.Scraper.Packhum.Test
                 p => p.Name == TextNodeProps.REGION && p.Value == "Att."));
 
             Assert.NotNull(props.FirstOrDefault(
-                p => p.Name == TextNodeProps.LOCATION && p.Value == "Athens: Akropolis"));
+                p => p.Name == TextNodeProps.SITE && p.Value == "Athens: Akropolis"));
 
             Assert.NotNull(props.FirstOrDefault(
                 p => p.Name == TextNodeProps.LAYOUT && p.Value == "stoich. 28"));
         }
 
         [Fact]
-        public void Parse_RegionLocationTypeDate_Ok()
+        public void Parse_RegionSiteTypeDate_Ok()
         {
             PackhumParser parser = new();
             IList<TextNodeProperty> props =
@@ -54,7 +54,7 @@ namespace Epicod.Scraper.Packhum.Test
                 p => p.Name == TextNodeProps.REGION && p.Value == "Att."));
 
             Assert.NotNull(props.FirstOrDefault(
-                p => p.Name == TextNodeProps.LOCATION && p.Value == "Athens: Akropolis"));
+                p => p.Name == TextNodeProps.SITE && p.Value == "Athens: Akropolis"));
 
             Assert.NotNull(props.FirstOrDefault(
                 p => p.Name == TextNodeProps.LAYOUT && p.Value == "stoich. 28"));
@@ -70,7 +70,7 @@ namespace Epicod.Scraper.Packhum.Test
         }
 
         [Fact]
-        public void Parse_RegionLocationTypeDateWithForgery_Ok()
+        public void Parse_RegionSiteTypeDateWithForgery_Ok()
         {
             PackhumParser parser = new();
             IList<TextNodeProperty> props =
@@ -83,7 +83,7 @@ namespace Epicod.Scraper.Packhum.Test
                 p => p.Name == TextNodeProps.REGION && p.Value == "Att."));
 
             Assert.NotNull(props.FirstOrDefault(
-                p => p.Name == TextNodeProps.LOCATION && p.Value == "Athens: Akropolis"));
+                p => p.Name == TextNodeProps.SITE && p.Value == "Athens: Akropolis"));
 
             Assert.NotNull(props.FirstOrDefault(
                 p => p.Name == TextNodeProps.LAYOUT && p.Value == "stoich. 28"));
@@ -94,7 +94,7 @@ namespace Epicod.Scraper.Packhum.Test
 
             Assert.NotNull(props.FirstOrDefault(
                 p => p.Name == TextNodeProps.DATE_TXT &&
-                     p.Value == "440 {forgery?} -- 410 BC {forgery?}"));
+                     p.Value == "440 -- 410 BC {forgery?}"));
 
             Assert.NotNull(props.FirstOrDefault(
                 p => p.Name == TextNodeProps.DATE_VAL && p.Value == "-425"));
@@ -104,7 +104,7 @@ namespace Epicod.Scraper.Packhum.Test
         }
 
         [Fact]
-        public void Parse_RegionLocationTypeRefs_Ok()
+        public void Parse_RegionSiteTypeRefs_Ok()
         {
             PackhumParser parser = new();
             IList<TextNodeProperty> props =
@@ -116,7 +116,7 @@ namespace Epicod.Scraper.Packhum.Test
                 p => p.Name == TextNodeProps.REGION && p.Value == "Att."));
 
             Assert.NotNull(props.FirstOrDefault(
-                p => p.Name == TextNodeProps.LOCATION && p.Value == "prov.?"));
+                p => p.Name == TextNodeProps.SITE && p.Value == "prov.?"));
 
             Assert.NotNull(props.FirstOrDefault(
                 p => p.Name == TextNodeProps.FORGERY && p.Value == "3"));
@@ -126,7 +126,7 @@ namespace Epicod.Scraper.Packhum.Test
         }
 
         [Fact]
-        public void Parse_RegionLocationTypeDateRefs_Ok()
+        public void Parse_RegionSiteTypeDateRefs_Ok()
         {
             PackhumParser parser = new();
             IList<TextNodeProperty> props =
@@ -139,7 +139,7 @@ namespace Epicod.Scraper.Packhum.Test
                 p => p.Name == TextNodeProps.REGION && p.Value == "Att."));
 
             Assert.NotNull(props.FirstOrDefault(
-                p => p.Name == TextNodeProps.LOCATION && p.Value == "Athens: Akropolis"));
+                p => p.Name == TextNodeProps.SITE && p.Value == "Athens: Akropolis"));
 
             Assert.NotNull(props.FirstOrDefault(
                 p => p.Name == TextNodeProps.LAYOUT && p.Value == "stoich. 28"));
