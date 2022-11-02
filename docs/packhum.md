@@ -318,20 +318,26 @@ Going deeper, we can observe that:
 Sample queries to lookup references in tokens:
 
 ```sql
--- token 1, letter A
+-- token 2, letter A
 select distinct regexp_replace(tnp.value,'^([^—]+).*$','\1') as n
 from text_node_property tnp 
 where tnp.name='note' and tnp.value ilike 'a%'
 order by n;
 
--- token 2
+-- token 3
 select distinct regexp_replace(tnp.value,'^[^—]+—([^—]+).*$','\1') as n
 from text_node_property tnp 
 where tnp.name='note'
 order by n;
 
--- token 3
+-- token 4
 select distinct regexp_replace(tnp.value,'^[^—]+[^—]+—([^—]+).*$','\1') as n
+from text_node_property tnp 
+where tnp.name='note'
+order by n;
+
+-- token 5
+select distinct regexp_replace(tnp.value,'^[^—]+[^—]+[^—]+—([^—]+).*$','\1') as n
 from text_node_property tnp 
 where tnp.name='note'
 order by n;

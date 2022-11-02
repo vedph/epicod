@@ -5,7 +5,7 @@ using Xunit;
 
 namespace Epicod.Scraper.Packhum.Test
 {
-    public sealed class PackhumNoteParserTest
+    public sealed class PackhumParserTest
     {
         [Fact]
         public void Parse_RegionLocation_Ok()

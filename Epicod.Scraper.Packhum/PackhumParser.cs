@@ -36,7 +36,7 @@ namespace Epicod.Scraper.Packhum
 
             // type as writing direction/layout
             _writingRegex = new Regex(
-                @"^\s*(?:stoich|non-stoich|boustr|retrogr)\.\s*\d*\s*$",
+                @"^\s*(?:stoich|non-stoich|boustr|retr|retrogr)\.\s*\d*\s*$",
                 RegexOptions.Compiled);
 
             // 2 initial capitals are usually a hint for SEG, IG, etc.
@@ -83,8 +83,9 @@ namespace Epicod.Scraper.Packhum
             m = _writingRegex.Match(text);
             if (m.Success)
             {
-                props.Add(new TextNodeProperty(nodeId, TextNodeProps.LAYOUT,
-                    text.Trim()));
+                string v = text.Trim();
+                if (v == "retr") v = "retrogr";
+                props.Add(new TextNodeProperty(nodeId, TextNodeProps.LAYOUT, v));
                 return true;
             }
             return false;
