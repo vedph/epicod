@@ -94,7 +94,7 @@ namespace Epicod.Scraper.Packhum
             @"(?<e>BC|ac|a\.|v\. ?Chr\.|AD|pc|p\.|n\. ?Chr\.)?",
             RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
-        private static readonly Dictionary<string, HistoricalDate?>
+        private readonly Dictionary<string, HistoricalDate?>
             _periods = new();
         #endregion
 
@@ -280,7 +280,7 @@ namespace Epicod.Scraper.Packhum
             return SplitAtRegexWithSep(text, _splitPtSlashRegex);
         }
 
-        private static void EnsurePeriodsLoaded()
+        private void EnsurePeriodsLoaded()
         {
             if (_periods.Count != 0) return;
 
@@ -290,6 +290,7 @@ namespace Epicod.Scraper.Packhum
                 Encoding.UTF8);
 
             string? line;
+            HistoricalDate undefDate = new();
             while ((line = reader.ReadLine()) != null)
             {
                 if (string.IsNullOrEmpty(line)) continue;
@@ -299,10 +300,11 @@ namespace Epicod.Scraper.Packhum
                     _periods[cols[0].ToLowerInvariant()] =
                         HistoricalDate.Parse(cols[1])!;
                 }
+                else _periods[cols[0].ToLowerInvariant()] = undefDate;
             }
         }
 
-        private static HistoricalDate? MatchPeriod(string text)
+        private HistoricalDate? MatchPeriod(string text)
         {
             EnsurePeriodsLoaded();
 
@@ -311,8 +313,12 @@ namespace Epicod.Scraper.Packhum
             if (!_periods.ContainsKey(s) || _periods[s] is null) return null;
 
             HistoricalDate date = _periods[s]!.Clone();
-            if (text.IndexOf('?') > -1)
+            if (date.GetDateType() != HistoricalDateType.Undefined &&
+                text.IndexOf('?') > -1)
+            {
                 date.A.IsDubious = date.B!.IsDubious = true;
+            }
+
             return date;
         }
 
@@ -608,7 +614,8 @@ namespace Epicod.Scraper.Packhum
                 HistoricalDate? period = MatchPeriod(dateText);
                 if (period is not null)
                 {
-                    dates.Insert(0, period);
+                    if (period.GetDateType() != HistoricalDateType.Undefined)
+                        dates.Insert(0, period);
                     continue;
                 }
 

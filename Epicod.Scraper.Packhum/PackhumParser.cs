@@ -27,7 +27,6 @@ namespace Epicod.Scraper.Packhum
         private readonly char[] _seps;
         private readonly Regex _layoutRegex;
         private readonly Regex _forgeryRegex;
-        private readonly Regex _refAbbrRegex;
         private readonly PackhumDateParser _dateParser;
         private readonly List<string> _refHeads;
 
@@ -46,14 +45,12 @@ namespace Epicod.Scraper.Packhum
 
             // type as writing direction/layout
             _layoutRegex = new Regex(
-                @"^\s*(?:stoich|non-stoich|boustr|retr|retrogr)\.\s*\d*\s*$",
+                @"^\s*(?:stoich|non-stoich|boustr|retr|retrogr|sinistr)\b",
                 RegexOptions.Compiled);
 
             _forgeryRegex = new(@"(?<r2>probable )?(modern )?forgery(?<r3>\?)?",
                 RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
-            // 2 initial capitals are usually a hint for SEG, IG, etc.
-            _refAbbrRegex = new Regex(@"^\s*[A-Z]{2,}", RegexOptions.Compiled);
             _refHeads = new();
             LoadRefHeads();
         }
@@ -191,16 +188,19 @@ namespace Epicod.Scraper.Packhum
             for (int i = 0; i < tokens.Count; i++)
             {
                 // reference
-                if (StartsWithRef(tokens[i]))
+                if (field == FLD_TAIL || StartsWithRef(tokens[i]))
                 {
                     props.Add(new TextNodeProperty(
                         nodeId, TextNodeProps.REFERENCE, tokens[i]));
-                    if (!hasRef)
+                    if (field != FLD_TAIL)
                     {
-                        hasRef = true;
-                        field = FLD_REFERENCE + 1;
+                        if (!hasRef)
+                        {
+                            hasRef = true;
+                            field = FLD_REFERENCE + 1;
+                        }
+                        else field = FLD_TAIL;
                     }
-                    else field = FLD_TAIL;
                     continue;
                 }
 
@@ -220,7 +220,7 @@ namespace Epicod.Scraper.Packhum
                 }
 
                 // location
-                if (field <= FLD_LOCATION && !_refAbbrRegex.IsMatch(tokens[i]))
+                if (field <= FLD_LOCATION)
                 {
                     props.Add(new TextNodeProperty(
                         nodeId,
@@ -231,8 +231,8 @@ namespace Epicod.Scraper.Packhum
                     continue;
                 }
 
-                Logger?.LogError("Unknown field in {Note} at {Index}",
-                    note, i + 1);
+                Logger?.LogError("Unknown field {Number} ({Field}) in {Note}",
+                    i + 1, tokens[i], note);
             }
 
             return props;

@@ -25,34 +25,37 @@ B. ec. fran.
 Friedländer,
 G. Lüderitz,
 Malandrakis,
-Arch. Inv. 
 2. Mil-Ber.
 3. Mil-Ber.
 4. Mil-Ber.
 6. Mil-Ber.
-cf. IGBulg 
+Arch. Inv. 
 Chiake Ep. 
 Hornblower,
 Kretikidis,
 Mous. Smy. 
 Philologus 
+Sokolowski,
 Stamatiades
 van Gelder,
+Vasen.Akr. 
 von Gerkan,
+[Plutarch]
 Arch. Ztg.
 Audollent 
 Centaurus 
+de Ridder,
 Deissmann,
 Giacchero,
 Heisserer,
 Hellenica 
 Hellström,
+Loll.--Wo.
 MacDonald,
 Michaelis,
 Mnemosyne 
 NBeiträge 
 Stephanou,
-[Plutarch]
 Anadolu  
 Belleten 
 Benndorf,
@@ -74,7 +77,6 @@ StudClas
 TCalymna 
 ArchEph 
 Boehlau,
-cf. SEG 
 Cormack,
 Curtius,
 Déléage,
@@ -94,12 +96,13 @@ Moretti
 Roueché,
 Säflund,
 Tuchelt,
+Walbank,
 Wilhelm,
 Zolotas,
+unpubl.
 Accame,
 Athena 
 Brinck,
-cf. IG 
 Chiron 
 Fraser,
 Gnomon 
@@ -128,6 +131,7 @@ Welles
 AArch 
 Conze,
 Epet. 
+Ergon 
 Hicks 
 Horos 
 ILabr 
@@ -136,12 +140,12 @@ ITral
 Jardé,
 MonAL 
 Nollé,
+Paton,
 PICCA 
 Sherk 
 Syll³ 
 Tölle,
 Tyche 
-Frel,
 AAWW 
 ABSA 
 ADAW 
@@ -156,6 +160,7 @@ CRAI
 CSCA 
 Dunst
 Erim,
+Frel,
 GIBM 
 Graf,
 GRBS 
@@ -185,11 +190,11 @@ PAAH
 PBSR 
 PCPS 
 Peek,
+RDAC 
 RFIC 
 Rob.,
 Röhl,
 Roos,
-RDAC 
 SBAW 
 SDAW 
 SGDI 
@@ -201,12 +206,16 @@ AJP
 AnAr
 APF 
 BCH 
+CEG 
+cf. 
 CIG 
 CIL 
+DAA 
 FiE 
 GVI 
 JHS 
 JRS 
+PAE 
 RAL 
 REG 
 RhM 
@@ -216,6 +225,7 @@ SEG
 TAM 
 WJA 
 ZPE 
+Ag.
 AA 
 AC 
 AD 
