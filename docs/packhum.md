@@ -318,6 +318,12 @@ Going deeper, we can observe that:
 Sample queries to lookup references in tokens:
 
 ```sql
+-- single token
+select distinct value
+from text_node_property tnp 
+where tnp.name='note' and tnp.value not like '%—%'
+order by value;
+
 -- token 2, letter A
 select distinct regexp_replace(tnp.value,'^([^—]+).*$','\1') as n
 from text_node_property tnp 
