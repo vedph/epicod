@@ -1,4 +1,5 @@
-﻿Jour. Roy. Geo. Soc. 
+﻿Schefold--Berger--Schmidt 
+Jour. Roy. Geo. Soc. 
 Kubitschek & Reichel 
 Freyer-Schauenburg,
 Hell.Phil.Syl.Ist. 
@@ -20,11 +21,18 @@ Fraser & Bean,
 Hula & Szanto 
 J.-A. Lebèque,
 Pickard-Camb.,
+Thorikos VIII 
 Haussoullier,
+Thorikos III 
+Thorikos VII 
 B. ec. fran.
 Friedländer,
 G. Lüderitz,
 Malandrakis,
+Thorikos II 
+Thorikos IV 
+Thorikos IX 
+Thorikos VI 
 2. Mil-Ber.
 3. Mil-Ber.
 4. Mil-Ber.
@@ -37,11 +45,15 @@ Mous. Smy.
 Philologus 
 Sokolowski,
 Stamatiades
+Thorikos I 
+Thorikos V 
 van Gelder,
+Vasen.Akr. 
 Vasen.Akr. 
 von Gerkan,
 [Plutarch]
 Arch. Ztg.
+Arch.Eph. 
 Audollent 
 Centaurus 
 de Ridder,
@@ -99,7 +111,6 @@ Tuchelt,
 Walbank,
 Wilhelm,
 Zolotas,
-unpubl.
 Accame,
 Athena 
 Brinck,
@@ -124,8 +135,10 @@ Mendel,
 Milet I
 Newton,
 Pennas,
+Phoros,
 Robert,
 Sinuri 
+unpubl.
 Vidman,
 Welles 
 AArch 
@@ -168,6 +181,7 @@ GVAK
 Hesp.
 Horn,
 HSCP 
+Hsp. 
 IDid 
 IEph 
 IEry 
@@ -216,6 +230,7 @@ GVI
 JHS 
 JRS 
 PAE 
+PAE 
 RAL 
 REG 
 RhM 
@@ -225,11 +240,12 @@ SEG
 TAM 
 WJA 
 ZPE 
-Ag.
 AA 
 AC 
 AD 
 AE 
+Ag.
+Ag.
 AS 
 BE 
 BJ 

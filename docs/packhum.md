@@ -349,6 +349,16 @@ where tnp.name='note'
 order by n;
 ```
 
+Date parsing lookup:
+
+```sql
+select node_id,tnp.name,value from text_node_property tnp 
+inner join text_node tn on tnp.node_id = tn.id 
+where tnp.name in ('note','date-phi', 'date-txt')
+and tn.corpus = 'packhum'
+order by node_id,tnp.name;
+```
+
 ### Date
 
 Query template for inspection:
