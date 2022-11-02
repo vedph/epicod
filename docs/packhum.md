@@ -310,7 +310,7 @@ Att. — Lamptrai: Thiti — s. V a. — Elliot(1962) 56-58 (+) — SEG 32.19
 
 Going deeper, we can observe that:
 
-- type usually is a word in `[]` (e.g. `[pottery]`), or is related to the writing direction or layout (e.g. `stoich.` with an optional letters count, `non-stoich.`, `boustr.`, `retrogr.`).
+- type usually is a word in `[]` (e.g. `[pottery]`), or is related to the writing direction or layout (e.g. `stoich.` with an optional letters count, `non-stoich.`, `boustr.`, `retrogr.`, `retr`).
 - reference start with any of the `RefHeads.txt` prefixes.
 - toponyms cannot have digits in their text once text in `()` or `[]` has been removed.
 - date has a number of forms (see below).

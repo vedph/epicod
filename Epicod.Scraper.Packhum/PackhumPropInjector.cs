@@ -64,7 +64,10 @@ namespace Epicod.Scraper.Packhum
             // clear
             if (!IsDry) Clear(qf);
 
-            PackhumParser parser = new();
+            PackhumParser parser = new()
+            {
+                Logger = Logger
+            };
             string[] cols = new[] { "node_id", "name", "value" };
 
             // get total

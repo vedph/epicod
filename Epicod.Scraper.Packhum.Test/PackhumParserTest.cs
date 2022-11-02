@@ -384,64 +384,6 @@ namespace Epicod.Scraper.Packhum.Test
         }
 
         [Fact]
-        public void Parse_RegionDate_SlashAsRange_Ok()
-        {
-            PackhumParser parser = new();
-            IList<TextNodeProperty> props = parser.ParseNote("Att. — 430/410 a.", 1);
-
-            Assert.Equal(4, props.Count);
-
-            Assert.NotNull(props.FirstOrDefault(
-                p => p.Name == TextNodeProps.REGION && p.Value == "Att."));
-
-            // date-phi
-            Assert.NotNull(props.FirstOrDefault(
-                p => p.Name == TextNodeProps.DATE_PHI && p.Value == "430/410 a."));
-
-            // date-txt
-            Assert.NotNull(props.FirstOrDefault(
-                p => p.Name == TextNodeProps.DATE_TXT && p.Value == "430 -- 410 BC"));
-
-            // date-val
-            Assert.NotNull(props.FirstOrDefault(
-                p => p.Name == TextNodeProps.DATE_VAL && p.Value == "-420"));
-        }
-
-        [Fact]
-        public void Parse_RegionDate_SlashAsTwoDates_Ok()
-        {
-            PackhumParser parser = new();
-            IList<TextNodeProperty> props =
-                parser.ParseNote("Att. — fin. s. VI/init. s. V a.", 1);
-
-            Assert.Equal(6, props.Count);
-
-            Assert.NotNull(props.FirstOrDefault(
-                p => p.Name == TextNodeProps.REGION && p.Value == "Att."));
-
-            // date-phi
-            Assert.NotNull(props.FirstOrDefault(
-                p => p.Name == TextNodeProps.DATE_PHI &&
-                p.Value == "fin. s. VI/init. s. V a."));
-
-            // date-txt (fin. s. VI)
-            Assert.NotNull(props.FirstOrDefault(
-                p => p.Name == TextNodeProps.DATE_TXT && p.Value == "c. 510 BC"));
-
-            // date-val (fin. s. VI)
-            Assert.NotNull(props.FirstOrDefault(
-                p => p.Name == TextNodeProps.DATE_VAL && p.Value == "-510"));
-
-            // date-txt#2 (init. s. V a.)
-            Assert.NotNull(props.FirstOrDefault(
-                p => p.Name == TextNodeProps.DATE_TXT + "#2" && p.Value == "c. 490 BC"));
-
-            // date-val#2 (init. s. V a.)
-            Assert.NotNull(props.FirstOrDefault(
-                p => p.Name == TextNodeProps.DATE_VAL + "#2" && p.Value == "-490"));
-        }
-
-        [Fact]
         public void Parse_RegionRef_Ok()
         {
             PackhumParser parser = new();

@@ -1,5 +1,6 @@
 ﻿using Epicod.Core;
 using Fusi.Antiquity.Chronology;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -16,12 +17,24 @@ namespace Epicod.Scraper.Packhum
     /// </summary>
     public sealed class PackhumParser
     {
+        private const int FLD_REGION = 1;
+        private const int FLD_LOCATION = 2;
+        private const int FLD_TYPE = 3;
+        private const int FLD_DATE = 4;
+        private const int FLD_REFERENCE = 5;
+        private const int FLD_TAIL = 6;
+
         private readonly char[] _seps;
         private readonly Regex _typeRegex;
         private readonly Regex _writingRegex;
         private readonly Regex _refAbbrRegex;
         private readonly PackhumDateParser _dateParser;
         private readonly List<string> _refHeads;
+
+        /// <summary>
+        /// Gets or sets the optional logger.
+        /// </summary>
+        public ILogger? Logger { get; set; }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="PackhumParser"/> class.
@@ -63,15 +76,17 @@ namespace Epicod.Scraper.Packhum
             if (string.IsNullOrEmpty(text)) return false;
             for (int i = 0; i < _refHeads.Count; i++)
             {
-                if (text.Length > _refHeads[i].Length) break;
-                if (text.StartsWith(_refHeads[i], StringComparison.Ordinal))
+                if (_refHeads[i].Length <= text.Length &&
+                    text.StartsWith(_refHeads[i], StringComparison.Ordinal))
+                {
                     return true;
+                }
             }
             return false;
         }
 
         private bool ParseType(string text, int nodeId,
-            List<TextNodeProperty> props)
+            IList<TextNodeProperty> props)
         {
             Match m = _typeRegex.Match(text);
             if (m.Success)
@@ -92,7 +107,7 @@ namespace Epicod.Scraper.Packhum
         }
 
         private bool ParseDate(string text, int nodeId,
-            List<TextNodeProperty> props)
+            IList<TextNodeProperty> props)
         {
             IList<HistoricalDate> dates = _dateParser.Parse(text);
             int n = 0;
@@ -124,59 +139,58 @@ namespace Epicod.Scraper.Packhum
         /// <returns>Properties parsed from note.</returns>
         public IList<TextNodeProperty> ParseNote(string note, int nodeId)
         {
-            if (string.IsNullOrEmpty(note))
-                return Array.Empty<TextNodeProperty>();
+            if (string.IsNullOrEmpty(note)) return Array.Empty<TextNodeProperty>();
 
             List<string> tokens = note.Split(_seps).Select(s => s.Trim()).ToList();
+            IList<TextNodeProperty> props = new List<TextNodeProperty>();
+            int field = 0;
+            bool hasRegion = false, hasRef = false;
 
-            List<TextNodeProperty> props = new()
-            {
-                // region is always the 1st token
-                new TextNodeProperty(nodeId, TextNodeProps.REGION,
-                    tokens[0].Trim())
-            };
-            bool hasLoc = false, hasType = false, hasDate = false;
-
-            for (int i = 1; i < tokens.Count; i++)
+            for (int i = 0; i < tokens.Count; i++)
             {
                 // reference
                 if (StartsWithRef(tokens[i]))
                 {
-                    // TODO
+                    props.Add(new TextNodeProperty(
+                        nodeId, TextNodeProps.REFERENCE, tokens[i]));
+                    if (!hasRef)
+                    {
+                        hasRef = true;
+                        field = FLD_REFERENCE + 1;
+                    }
+                    else field = FLD_TAIL;
+                    continue;
                 }
 
                 // type
-                if (!hasType && ParseType(tokens[i], nodeId, props))
+                if (field <= FLD_TYPE && ParseType(tokens[i], nodeId, props))
                 {
-                    // there cannot be a location after a type
-                    hasLoc = true;
-                    hasType = true;
+                    field = FLD_TYPE + 1;
                     continue;
                 }
 
                 // date
-                if (!hasDate && ParseDate(tokens[i], nodeId, props))
+                if (field <= FLD_DATE && ParseDate(tokens[i], nodeId, props))
                 {
                     props.Add(new TextNodeProperty(nodeId,
-                        TextNodeProps.DATE_PHI, tokens[i].Trim()));
-                    hasDate = true;
-                    // there cannot be a location after a date
-                    hasLoc = true;
+                        TextNodeProps.DATE_PHI, tokens[i]));
                     continue;
                 }
 
-                // location/reference
-                if (!hasLoc && !_refAbbrRegex.IsMatch(tokens[i]))
+                // location
+                if (field <= FLD_LOCATION && !_refAbbrRegex.IsMatch(tokens[i]))
                 {
                     props.Add(new TextNodeProperty(
-                        nodeId, TextNodeProps.LOCATION, tokens[i].Trim()));
-                    hasLoc = true;
+                        nodeId,
+                        hasRegion? TextNodeProps.LOCATION : TextNodeProps.REGION,
+                        tokens[i]));
+                    field = (hasRegion ? FLD_LOCATION : FLD_REGION) + 1;
+                    hasRegion = true;
+                    continue;
                 }
-                else
-                {
-                    props.Add(new TextNodeProperty(
-                        nodeId, TextNodeProps.REFERENCE, tokens[i].Trim()));
-                }
+
+                Logger?.LogError("Unknown field in {Note} at {Index}",
+                    note, i + 1);
             }
 
             return props;
