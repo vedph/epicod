@@ -1,7 +1,6 @@
 ﻿using Epicod.Core;
 using Fusi.Antiquity.Chronology;
 using Microsoft.Extensions.Logging;
-using OpenQA.Selenium;
 using System;
 using System.Collections.Generic;
 using System.Globalization;

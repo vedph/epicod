@@ -7,6 +7,7 @@ Pappakonstantinou,
 Bolu & Dörtdivan,
 Tölle-Kastenbein,
 Türk Ark. Derg. 
+Dumont-Homolle 
 İnan&Rosenbaum 
 Mon. Berl. Ak. 
 Pfuhl & Möbius 
@@ -22,7 +23,9 @@ Pickard-Camb.,
 Haussoullier,
 B. ec. fran.
 Friedländer,
+G. Lüderitz,
 Malandrakis,
+Arch. Inv. 
 2. Mil-Ber.
 3. Mil-Ber.
 4. Mil-Ber.
@@ -49,6 +52,7 @@ Michaelis,
 Mnemosyne 
 NBeiträge 
 Stephanou,
+[Plutarch]
 Anadolu  
 Belleten 
 Benndorf,
@@ -137,6 +141,7 @@ Sherk
 Syll³ 
 Tölle,
 Tyche 
+Frel,
 AAWW 
 ABSA 
 ADAW 
@@ -184,6 +189,7 @@ RFIC
 Rob.,
 Röhl,
 Roos,
+RDAC 
 SBAW 
 SDAW 
 SGDI 

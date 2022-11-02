@@ -92,15 +92,25 @@ namespace Epicod.Scraper.Packhum
                 .Where($"{EpicodSchema.T_PROP}.name", "note")
                 .OrderBy($"{EpicodSchema.T_NODE}.id").Get())
             {
-                IList<TextNodeProperty> props =
-                    parser.ParseNote(item.Note, item.NodeId);
-                if (props.Count == 0) continue;
+                try
+                {
+                    IList<TextNodeProperty> props = parser.ParseNote(
+                        item.Note, item.NodeId);
+                    if (props.Count == 0) continue;
 
-                injected += props.Count;
-                var data = props.Select(
-                    p => new object[] { item.NodeId, p.Name ?? "", p.Value ?? "" })
-                    .ToArray();
-                if (!IsDry) qf.Query(EpicodSchema.T_PROP).Insert(cols, data);
+                    injected += props.Count;
+                    var data = props.Select(
+                        p => new object[] { item.NodeId, p.Name ?? "", p.Value ?? "" })
+                        .ToArray();
+                    if (!IsDry) qf.Query(EpicodSchema.T_PROP).Insert(cols, data);
+                }
+                catch (Exception ex)
+                {
+                    Logger?.LogCritical(ex,
+                        "Error parsing PHI note \"{Note}\"",
+                        (object)item.Note);
+                    throw;
+                }
 
                 if (progress != null && ++count % 10 == 0)
                 {

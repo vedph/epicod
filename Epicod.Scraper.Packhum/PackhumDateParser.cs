@@ -158,6 +158,7 @@ namespace Epicod.Scraper.Packhum
                 sb.Remove(i, end + 1 - i);
 
                 // find next ] or )
+                if (i == 0) break;
                 i = text.LastIndexOfAny(clChars, i - 1);
             }
 
@@ -293,8 +294,11 @@ namespace Epicod.Scraper.Packhum
             {
                 if (string.IsNullOrEmpty(line)) continue;
                 string[] cols = line.Split(',');
-                _periods[cols[0].ToLowerInvariant()] =
-                    HistoricalDate.Parse(cols[1])!;
+                if (cols[1].Length > 0)
+                {
+                    _periods[cols[0].ToLowerInvariant()] =
+                        HistoricalDate.Parse(cols[1])!;
+                }
             }
         }
 
