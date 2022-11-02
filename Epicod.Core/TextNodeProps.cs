@@ -31,6 +31,11 @@
         public const string TYPE = "type";
 
         /// <summary>
+        /// Forgery rank value: 1=forgery, 2=probable forgery, 3=perhaps forgery.
+        /// </summary>
+        public const string FORGERY = "forgery";
+
+        /// <summary>
         /// The writing direction / layout.
         /// </summary>
         public const string LAYOUT = "layout";

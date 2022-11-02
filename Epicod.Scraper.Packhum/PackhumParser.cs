@@ -1,6 +1,7 @@
 ﻿using Epicod.Core;
 using Fusi.Antiquity.Chronology;
 using Microsoft.Extensions.Logging;
+using OpenQA.Selenium;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -25,8 +26,8 @@ namespace Epicod.Scraper.Packhum
         private const int FLD_TAIL = 6;
 
         private readonly char[] _seps;
-        private readonly Regex _typeRegex;
-        private readonly Regex _writingRegex;
+        private readonly Regex _layoutRegex;
+        private readonly Regex _forgeryRegex;
         private readonly Regex _refAbbrRegex;
         private readonly PackhumDateParser _dateParser;
         private readonly List<string> _refHeads;
@@ -44,13 +45,13 @@ namespace Epicod.Scraper.Packhum
             _seps = new[] { '\u2014' };
             _dateParser = new PackhumDateParser();
 
-            // type like [pottery]
-            _typeRegex = new Regex(@"^\s*\[([^]]+)\]\s*$", RegexOptions.Compiled);
-
             // type as writing direction/layout
-            _writingRegex = new Regex(
+            _layoutRegex = new Regex(
                 @"^\s*(?:stoich|non-stoich|boustr|retr|retrogr)\.\s*\d*\s*$",
                 RegexOptions.Compiled);
+
+            _forgeryRegex = new(@"(?<r2>probable )?(modern )?forgery(?<r3>\?)?",
+                RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
             // 2 initial capitals are usually a hint for SEG, IG, etc.
             _refAbbrRegex = new Regex(@"^\s*[A-Z]{2,}", RegexOptions.Compiled);
@@ -85,17 +86,51 @@ namespace Epicod.Scraper.Packhum
             return false;
         }
 
+        public int ParseForgery(string? text)
+        {
+            if (string.IsNullOrEmpty(text)) return 0;
+
+            Match m = _forgeryRegex.Match(text);
+            if (m.Success)
+            {
+                return m.Groups["r3"].Length > 0
+                    ? 3
+                    : (m.Groups["r2"].Length > 0 ? 2 : 1);
+            }
+            return 0;
+        }
+
+        private bool AddForgeryProp(string text, int nodeId,
+            IList<TextNodeProperty> props)
+        {
+            int n = ParseForgery(text);
+            if (n > 0)
+            {
+                string v = n.ToString(CultureInfo.InvariantCulture);
+                if (props.All(p => p.Name != TextNodeProps.FORGERY &&
+                    p.Value != v))
+                {
+                    props.Add(new TextNodeProperty(nodeId,
+                        TextNodeProps.FORGERY,
+                        v));
+                }
+                return true;
+            }
+            return false;
+        }
+
         private bool ParseType(string text, int nodeId,
             IList<TextNodeProperty> props)
         {
-            Match m = _typeRegex.Match(text);
-            if (m.Success)
+            if (text.Length > 2 && text[0] == '[' && text[^1] == ']')
             {
                 props.Add(new TextNodeProperty(nodeId, TextNodeProps.TYPE,
-                    m.Groups[1].Value));
+                    text[1..^1]));
                 return true;
             }
-            m = _writingRegex.Match(text);
+
+            // layout
+            Match m = _layoutRegex.Match(text);
             if (m.Success)
             {
                 string v = text.Trim();
@@ -103,6 +138,10 @@ namespace Epicod.Scraper.Packhum
                 props.Add(new TextNodeProperty(nodeId, TextNodeProps.LAYOUT, v));
                 return true;
             }
+
+            // forgery
+            if (AddForgeryProp(text, nodeId, props)) return true;
+
             return false;
         }
 
@@ -145,6 +184,10 @@ namespace Epicod.Scraper.Packhum
             IList<TextNodeProperty> props = new List<TextNodeProperty>();
             int field = 0;
             bool hasRegion = false, hasRef = false;
+
+            // forgery may be found in many fields like e.g.
+            // "ca. 800 BC? (forgery?)", "cf. SEG 24.1252 (forgery)", etc.
+            AddForgeryProp(note, nodeId, props);
 
             for (int i = 0; i < tokens.Count; i++)
             {

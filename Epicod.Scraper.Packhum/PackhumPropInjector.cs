@@ -72,11 +72,12 @@ namespace Epicod.Scraper.Packhum
 
             // get total
             dynamic row = qf.Query(EpicodSchema.T_PROP)
-                .Select($"{EpicodSchema.T_NODE}.id as NodeId",
-                    $"{EpicodSchema.T_PROP}.Note")
+                .Select($"{EpicodSchema.T_NODE}.id")
                 .Join(EpicodSchema.T_NODE, $"{EpicodSchema.T_NODE}.id",
                     $"{EpicodSchema.T_PROP}.node_id")
-                .Where("corpus", PackhumWebScraper.CORPUS).AsCount().First();
+                .Where("corpus", PackhumWebScraper.CORPUS)
+                .Where($"{EpicodSchema.T_PROP}.name", "note")
+                .AsCount().First();
             int total = (int)row.count;
             int count = 0, injected = 0;
             ProgressReport? report = progress != null ? new ProgressReport() : null;
@@ -84,14 +85,15 @@ namespace Epicod.Scraper.Packhum
             // process each note
             foreach (var item in qf.Query(EpicodSchema.T_PROP)
                 .Select($"{EpicodSchema.T_NODE}.id as NodeId",
-                    $"{EpicodSchema.T_PROP}.Note")
+                    $"{EpicodSchema.T_PROP}.value as Note")
                 .Join(EpicodSchema.T_NODE,
                     $"{EpicodSchema.T_NODE}.id", $"{EpicodSchema.T_PROP}.node_id")
                 .Where("corpus", PackhumWebScraper.CORPUS)
+                .Where($"{EpicodSchema.T_PROP}.name", "note")
                 .OrderBy($"{EpicodSchema.T_NODE}.id").Get())
             {
-                IList<TextNodeProperty> props = parser.ParseNote
-                    (item.Note, item.NodeId);
+                IList<TextNodeProperty> props =
+                    parser.ParseNote(item.Note, item.NodeId);
                 if (props.Count == 0) continue;
 
                 injected += props.Count;

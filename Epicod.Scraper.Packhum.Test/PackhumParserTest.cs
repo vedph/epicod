@@ -70,6 +70,62 @@ namespace Epicod.Scraper.Packhum.Test
         }
 
         [Fact]
+        public void Parse_RegionLocationTypeDateWithForgery_Ok()
+        {
+            PackhumParser parser = new();
+            IList<TextNodeProperty> props =
+                parser.ParseNote(
+                    "Att. — Athens: Akropolis — stoich. 28 — 440-410 a. (forgery?)", 1);
+
+            Assert.Equal(7, props.Count);
+
+            Assert.NotNull(props.FirstOrDefault(
+                p => p.Name == TextNodeProps.REGION && p.Value == "Att."));
+
+            Assert.NotNull(props.FirstOrDefault(
+                p => p.Name == TextNodeProps.LOCATION && p.Value == "Athens: Akropolis"));
+
+            Assert.NotNull(props.FirstOrDefault(
+                p => p.Name == TextNodeProps.LAYOUT && p.Value == "stoich. 28"));
+
+            Assert.NotNull(props.FirstOrDefault(
+                p => p.Name == TextNodeProps.DATE_PHI &&
+                     p.Value == "440-410 a. (forgery?)"));
+
+            Assert.NotNull(props.FirstOrDefault(
+                p => p.Name == TextNodeProps.DATE_TXT &&
+                     p.Value == "440 {forgery?} -- 410 BC {forgery?}"));
+
+            Assert.NotNull(props.FirstOrDefault(
+                p => p.Name == TextNodeProps.DATE_VAL && p.Value == "-425"));
+
+            Assert.NotNull(props.FirstOrDefault(
+                p => p.Name == TextNodeProps.FORGERY && p.Value == "3"));
+        }
+
+        [Fact]
+        public void Parse_RegionLocationTypeRefs_Ok()
+        {
+            PackhumParser parser = new();
+            IList<TextNodeProperty> props =
+                parser.ParseNote("Att. — prov.? — forgery? — IG I³, p.972", 1);
+
+            Assert.Equal(4, props.Count);
+
+            Assert.NotNull(props.FirstOrDefault(
+                p => p.Name == TextNodeProps.REGION && p.Value == "Att."));
+
+            Assert.NotNull(props.FirstOrDefault(
+                p => p.Name == TextNodeProps.LOCATION && p.Value == "prov.?"));
+
+            Assert.NotNull(props.FirstOrDefault(
+                p => p.Name == TextNodeProps.FORGERY && p.Value == "3"));
+
+            Assert.NotNull(props.FirstOrDefault(
+                p => p.Name == TextNodeProps.REFERENCE && p.Value == "IG I³, p.972"));
+        }
+
+        [Fact]
         public void Parse_RegionLocationTypeDateRefs_Ok()
         {
             PackhumParser parser = new();
