@@ -388,9 +388,9 @@ order by tnp.value
 
 General forms:
 
-(A) splitting multiple dates (start from the last date to supply era and hints):
+(A) **splitting multiple dates** (start from the last date to supply era and hints). There can be multiple dates, separated by strings like " and ", " or ", `&`, comma, e.g. `100 or 101 AD`, `10/11 AD and 65/66 or 119/120 AD`, `111, 75 or 46 BC`, `114, 116, & 156 AD`. The comma is also used to add month or day and month (`120 AD, Nov.`, `115 AD, 7 Feb.`, `147 AD, March`).
 
-A1. preprocess: this is required to avoid splitting in a wrong way:
+A1. _preprocess_: this is required to avoid splitting in a wrong way:
 
 - normalize whitespaces, just to ease later processing.
 - replace `(?)` with `?`. This appears only in these cases:
@@ -422,60 +422,69 @@ where tnp.name='date-phi' and value ~ '[^0-9IVX]/[^0-9IVX]'
 order by tnp.value
 ```
 
-A2. split at any of the following separators (_unless_ inside `()` or `[]`; these are already ruled out by preprocessing at A1):
+A2. _split_ at any of the following separators (_unless_ inside `()` or `[]`; these are already ruled out by preprocessing at A1):
 
-- corner case: `[0-9]\?\s+[0-9]`, e.g. `159-156? 157-156? BC (re-inscr. 1st c. AD)`.
-- corner case: `[^0-9IVX]/[^0-9IVX]`, e.g. `11th/beg. 12th c. AD`.
-- " and "
-- " or "
-- " od."
-- " oder "
-- " & "
-- ","
+- corner cases, in this order:
+  1. with question mark: `([0-9IVX](?:st|nd|rd|th)?\??)-([0-9IVX])` e.g. `159-156? 157-156? BC (re-inscr. 1st c. AD)`.
+  2. with slash: `([^0-9IVX])/([^0-9IVX])`
+- separators:
+  - " and "
+  - " or "
+  - " od."
+  - " oder "
+  - " vel "
+  - " & "
+  - ","
 
-(B) split into datation points at `[0-9IVXtdh?]-[0-9IVX]` (start from the last date to supply era and hints).
+ TODO e.g. `11th/beg. 12th c. AD`.
 
-(C) single datation point: `PREFIX? N SUFFIX?`:
+(B) **splitting** each date into datation points at:
 
-C1. preprocessing:
+1. `([0-9IVX](?:st|nd|rd|th)?\??)-([0-9IVX])`
+2. `([0-9](?:\.|st|nd|rd|th)\??)/([0-9])` (dash)
+3. `([IVX]\??)/([0-9IVX])` (slash)
+
+(C) **single datation** point: the general pattern is `PREFIX? N SUFFIX?`.
+
+C1. datation _preprocessing_:
 
 - detach suffix: `([0-9])(a\.|p\.)` > `$1 $2`.
 - `c.`, `ca.` initial = about, applied to all the points.
-- `?` = dubious unless inside `()` or `[]` (e.g. `1542 AD (or later?)`, `196 AD [set up betw. 205 and 211?]`). This is found in any of these patterns:
+- remove `?` from prefixes like `init.`, `beg.`, `early`, `1st half`, etc. as these marks refer only to the prefix itself.
+- `?` = dubious (set and remove) unless inside `()` or `[]` (e.g. `1542 AD (or later?)`, `196 AD [set up betw. 205 and 211?]`). This is found in any of these patterns:
   - at the end: `100-125 AD?`.
   - attached to N: `1025-1028? AD`, `s. V? a.`, `5th? and 4th c. BC`.
   - attached to BC/AD or equivalent suffix: `125/124 BC? [Kram. 81,D1]`
-- remove suffixed `?`: any PREFIX + `?` without space: remove `?` (e.g. `early?` becomes `early`).
-- `mid-([0-9])` > `med. $1`. This is because this prefix is not separated by space from the next N. All the cases of `mid-` are followed by a digit.
-- replace `([0-9])\.(?: ?Jh\.)?` with `$1th` + space (e.g. `10./11.n.Chr.` > `10th /11th n.Chr.`; `10.Jh.n.Chr.` > `10th n.Chr.`).
-- `later than the early`: remove.
-- lookup periods and stop if match.
+- full date DMY (hapax: `13.2.139 n.Chr.`): extract day and/or month so that only year remains.
+- replace `N.` or `N.Jh.` = `Nth` + space, e.g. `10./11.n.Chr.` > `10th /11th n.Chr.`; `10.Jh.n.Chr.` > `10th n.Chr.`.
+- corner cases:
+  - `p. ante` or `p. post` => `ante` or `post` (the attenuation `paulo` is removed).
+  - `mid-([0-9])` > `med. $1`. This is because this prefix is not separated by space from the next N. All the cases of `mid-` are followed by a digit.
+  - `later than the early`: remove.
 
-C2. parsing:
+C2. datation _parsing_: at this stage we have either 1 or 2 datations to parse. Each datation is parsed in the same way. If we have 2 datations but the first one is intrinsically a range (as it's a terminus ante/post), refactor this range into a point.
 
 - PREFIX: in this order:
   - optionally any of:
-    - `ante`
-    - `post`
+    - `ante`, `bef.`, `before`
+    - `post`, `aft.`, `after`
   - optionally any of:
     - `init.`, `beg.`, `Anf.`
     - `med.`, `middle`, `mid`
     - `fin.`, `end`, `Ende`, `Wende`
     - `early`, `eher`
-    - `early\s*/\s*mid`
     - `late`
     - `1st half`, `2nd half`, `1.Halfte`, `2.Halfte`, `1. Halfte`, `2. Halfte`
-    - `mid\s*/\s*2nd half`, `middle\s*/\s*2nd half`
-    - `Drittel`, `third`, `third of`, `third of the`
-  - `s.`
+    - `1th Drittel` (`th` is from preprocessing, which normalizes the string, without caring about language), `1st third`, `1st third of the`, `1st third of`
+  - `s.` = _saeculum_.
 - N (number: N=Arabic, R=Roman):
-  - `N` = year (`N.`, `N.Jh.` = century (e.g. `11.-12.Jh.n.Chr.`) has been removed by preprocessing).
-  - `(N.)N.N` = dmy.
+  - `N` = year, but century if suffixed with an ordinal marker (`N.`, `N.Jh.` = century (e.g. `11.-12.Jh.n.Chr.`) has been removed by preprocessing).
   - `R` = century.
-  - `N` + `st`|`nd`|`rd`|`th` + (`c.`) = century.
   - `N/N` = year span.
   - `R/R` = centuries range.
+  - optional ordinal suffix: `st`, `nd`, `rd`, `th`.
 - SUFFIX:
+  - `c.` = about.
   - `BC`, `bc`, `ac`, `a.`, `v.Chr.`
   - `AD`, `ad`, `pc`, `p.`, `n.Chr.`
 
@@ -528,9 +537,7 @@ Examples:
 - 132/1? 9/10?
 - 134? 130? 120? BC
 
-Errors: `117-138 n.Chr.Jh.n.Chr. (Chapot)`.
-
-There can be multiple dates, separated by " and ", " or ", `&`, comma, e.g. `100 or 101 AD`, `10/11 AD and 65/66 or 119/120 AD`, `111, 75 or 46 BC`, `114, 116, & 156 AD`. The comma is also used to add month or day and month (`120 AD, Nov.`, `115 AD, 7 Feb.`, `147 AD, March`).
+Sometimes there are errors, like `117-138 n.Chr.Jh.n.Chr. (Chapot)`.
 
 ## Metadata
 
