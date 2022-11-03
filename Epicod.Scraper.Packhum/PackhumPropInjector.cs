@@ -43,7 +43,11 @@ namespace Epicod.Scraper.Packhum
                   TextNodeProps.SITE,
                   TextNodeProps.LOCATION,
                   TextNodeProps.REFERENCE,
-                  TextNodeProps.FORGERY
+                  TextNodeProps.FORGERY,
+                  TextNodeProps.STOICH_MIN,
+                  TextNodeProps.STOICH_MAX,
+                  TextNodeProps.NON_STOICH_MIN,
+                  TextNodeProps.NON_STOICH_MAX,
               })
               .Select("tp.id");
             qf.Query(EpicodSchema.T_PROP).WhereIn("id", query).Delete();

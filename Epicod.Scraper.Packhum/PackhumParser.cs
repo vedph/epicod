@@ -37,8 +37,8 @@ namespace Epicod.Scraper.Packhum
 
         private static readonly Regex _stoichRegex = new(
             @"(?<t>stoich|non-stoich)\.\s*(?<c>c\.\s*)?" +
-            @"(?:(?:(?<n>[0-9]+)(?:[-/](?<n2>[0-9]+))?" +
-            @"(?<q>\?|\(\?\))?)?|(?:\([^)]+\)))", RegexOptions.Compiled);
+            "(?:(?<n1>[0-9]+)(?:[-/](?<n2>[0-9]+))?)?",
+            RegexOptions.Compiled);
 
         // state
         private readonly PackhumDateParser _dateParser;
@@ -93,7 +93,7 @@ namespace Epicod.Scraper.Packhum
             return false;
         }
 
-        public int ParseForgery(string? text)
+        public static int ParseForgery(string? text)
         {
             if (string.IsNullOrEmpty(text)) return 0;
 
@@ -107,7 +107,7 @@ namespace Epicod.Scraper.Packhum
             return 0;
         }
 
-        private bool AddForgeryProp(string text, int nodeId,
+        private static bool AddForgeryProp(string text, int nodeId,
             IList<TextNodeProperty> props)
         {
             int n = ParseForgery(text);
@@ -126,13 +126,56 @@ namespace Epicod.Scraper.Packhum
             return false;
         }
 
-        private void ParseStoich(string text, int nodeId,
+        private static void ParseStoich(string text, int nodeId,
             IList<TextNodeProperty> props)
         {
-            // TODO
+            Match m = _stoichRegex.Match(text);
+            if (!m.Success) return;
+
+            // t = stoich/non-stoich
+            bool non =
+                m.Groups["t"].Value.StartsWith("non", StringComparison.Ordinal);
+
+            // n1: if missing stoich=0,0; if non-stoich, just ignore
+            int n1;
+            if (m.Groups["n1"].Length == 0)
+            {
+                if (non) return;
+                n1 = 0;
+            }
+            else
+            {
+                n1 = int.Parse(m.Groups["n1"].Value, CultureInfo.InvariantCulture);
+            }
+
+            // n2: equal to n1 if missing
+            int n2 = n1 == 0
+                ? 0
+                : m.Groups["n2"].Length > 0
+                    ? int.Parse(m.Groups["n2"].Value, CultureInfo.InvariantCulture)
+                    : n1;
+
+            // ensure that n1 is min and n2 is max
+            if (n1 > n2) (n1, n2) = (n2, n1);
+
+            // add min/max
+            if (non)
+            {
+                props.Add(new TextNodeProperty(nodeId, TextNodeProps.NON_STOICH_MIN,
+                    $"{n1}"));
+                props.Add(new TextNodeProperty(nodeId, TextNodeProps.NON_STOICH_MAX,
+                    $"{n2}"));
+            }
+            else
+            {
+                props.Add(new TextNodeProperty(nodeId, TextNodeProps.STOICH_MIN,
+                    $"{n1}"));
+                props.Add(new TextNodeProperty(nodeId, TextNodeProps.STOICH_MAX,
+                    $"{n2}"));
+            }
         }
 
-        private bool ParseType(string text, int nodeId,
+        private static bool ParseType(string text, int nodeId,
             IList<TextNodeProperty> props)
         {
             if (text.Length > 2 && text[0] == '[' && text[^1] == ']')
@@ -149,6 +192,10 @@ namespace Epicod.Scraper.Packhum
                 string v = text.Trim();
                 if (v == "retr") v = "retrogr";
                 props.Add(new TextNodeProperty(nodeId, TextNodeProps.LAYOUT, v));
+
+                // stoich.
+                ParseStoich(text, nodeId, props);
+
                 return true;
             }
 

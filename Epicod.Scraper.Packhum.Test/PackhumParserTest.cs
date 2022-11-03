@@ -29,7 +29,7 @@ namespace Epicod.Scraper.Packhum.Test
             IList<TextNodeProperty> props =
                 parser.ParseNote("Att. — Athens: Akropolis — stoich. 28", 1);
 
-            Assert.Equal(3, props.Count);
+            Assert.Equal(5, props.Count);
 
             Assert.NotNull(props.FirstOrDefault(
                 p => p.Name == TextNodeProps.REGION && p.Value == "Att."));
@@ -39,6 +39,59 @@ namespace Epicod.Scraper.Packhum.Test
 
             Assert.NotNull(props.FirstOrDefault(
                 p => p.Name == TextNodeProps.LAYOUT && p.Value == "stoich. 28"));
+
+            Assert.NotNull(props.FirstOrDefault(
+                p => p.Name == TextNodeProps.STOICH_MIN && p.Value == "28"));
+
+            Assert.NotNull(props.FirstOrDefault(
+                p => p.Name == TextNodeProps.STOICH_MAX && p.Value == "28"));
+        }
+
+        [Theory]
+        [InlineData("Att. — Athens — stoich.", true, 0, 0)]
+        [InlineData("Att. — Athens — non-stoich.", true, -1, -1)]
+        [InlineData("Att. — Athens — stoich. 28", true, 28, 28)]
+        [InlineData("Att. — Athens — stoich. 28?", true, 28, 28)]
+        [InlineData("Att. — Athens — stoich. 28(?)", true, 28, 28)]
+        [InlineData("Att. — Athens — stoich. c.28", true, 28, 28)]
+        [InlineData("Att. — Athens — stoich. c. 28", true, 28, 28)]
+        [InlineData("Att. — Athens — stoich. c.28?", true, 28, 28)]
+        [InlineData("Att. — Athens — stoich. c.28(?)", true, 28, 28)]
+        [InlineData("Att. — Athens — stoich. 28-30", true, 28, 30)]
+        [InlineData("Att. — Athens — stoich. 28-30?", true, 28, 30)]
+        [InlineData("Att. — Athens — stoich. 30/28", true, 28, 30)]
+        [InlineData("Att. — Athens — stoich. 30/28?", true, 28, 30)]
+        [InlineData("Att. — Athens — stoich. c.28/30", true, 28, 30)]
+        [InlineData("Att. — Athens — stoich. c.28/30?", true, 28, 30)]
+        [InlineData("Att. — Athens — stoich. c.30/28", true, 28, 30)]
+        [InlineData("Att. — Athens — stoich. c.30/28?", true, 28, 30)]
+        [InlineData("Att. — Athens — stoich. 24 (25)", true, 24, 24)]
+        [InlineData("Att. — Athens — stoich. (v.1-4)", true, 0, 0)]
+        public void Parse_Stoich_Ok(string text, bool stoich, int min, int max)
+        {
+            PackhumParser parser = new();
+            IList<TextNodeProperty> props = parser.ParseNote(text, 1);
+
+            Assert.NotNull(props.FirstOrDefault(
+                p => p.Name == TextNodeProps.REGION && p.Value == "Att."));
+
+            Assert.NotNull(props.FirstOrDefault(
+                p => p.Name == TextNodeProps.SITE && p.Value == "Athens"));
+
+            Assert.NotNull(props.FirstOrDefault(p => p.Name == TextNodeProps.LAYOUT));
+
+            if (min != -1 && max != -1)
+            {
+                Assert.NotNull(props.FirstOrDefault(
+                    p => p.Name == (stoich
+                        ? TextNodeProps.STOICH_MIN
+                        : TextNodeProps.NON_STOICH_MIN) && p.Value == $"{min}"));
+
+                Assert.NotNull(props.FirstOrDefault(
+                    p => p.Name == (stoich
+                        ? TextNodeProps.STOICH_MAX
+                        : TextNodeProps.NON_STOICH_MAX) && p.Value == $"{max}"));
+            }
         }
 
         [Fact]
@@ -48,7 +101,7 @@ namespace Epicod.Scraper.Packhum.Test
             IList<TextNodeProperty> props =
                 parser.ParseNote("Att. — Athens: Akropolis — stoich. 28 — 440-410 a.", 1);
 
-            Assert.Equal(6, props.Count);
+            Assert.Equal(8, props.Count);
 
             Assert.NotNull(props.FirstOrDefault(
                 p => p.Name == TextNodeProps.REGION && p.Value == "Att."));
@@ -67,6 +120,12 @@ namespace Epicod.Scraper.Packhum.Test
 
             Assert.NotNull(props.FirstOrDefault(
                 p => p.Name == TextNodeProps.DATE_VAL && p.Value == "-425"));
+
+            Assert.NotNull(props.FirstOrDefault(
+                p => p.Name == TextNodeProps.STOICH_MIN && p.Value == "28"));
+
+            Assert.NotNull(props.FirstOrDefault(
+                p => p.Name == TextNodeProps.STOICH_MAX && p.Value == "28"));
         }
 
         [Fact]
@@ -77,7 +136,7 @@ namespace Epicod.Scraper.Packhum.Test
                 parser.ParseNote(
                     "Att. — Athens: Akropolis — stoich. 28 — 440-410 a. (forgery?)", 1);
 
-            Assert.Equal(7, props.Count);
+            Assert.Equal(9, props.Count);
 
             Assert.NotNull(props.FirstOrDefault(
                 p => p.Name == TextNodeProps.REGION && p.Value == "Att."));
@@ -101,6 +160,12 @@ namespace Epicod.Scraper.Packhum.Test
 
             Assert.NotNull(props.FirstOrDefault(
                 p => p.Name == TextNodeProps.FORGERY && p.Value == "3"));
+
+            Assert.NotNull(props.FirstOrDefault(
+                p => p.Name == TextNodeProps.STOICH_MIN && p.Value == "28"));
+
+            Assert.NotNull(props.FirstOrDefault(
+                p => p.Name == TextNodeProps.STOICH_MAX && p.Value == "28"));
         }
 
         [Fact]
@@ -133,7 +198,7 @@ namespace Epicod.Scraper.Packhum.Test
                 parser.ParseNote("Att. — Athens: Akropolis — stoich. 28 " +
                 "— 440-410 a. — IG I² 87,f + 141,a, + 174 — IG I³, Add.p.950", 1);
 
-            Assert.Equal(8, props.Count);
+            Assert.Equal(10, props.Count);
 
             Assert.NotNull(props.FirstOrDefault(
                 p => p.Name == TextNodeProps.REGION && p.Value == "Att."));
@@ -158,6 +223,12 @@ namespace Epicod.Scraper.Packhum.Test
 
             Assert.NotNull(props.FirstOrDefault(
                 p => p.Name == TextNodeProps.REFERENCE && p.Value == "IG I³, Add.p.950"));
+
+            Assert.NotNull(props.FirstOrDefault(
+                p => p.Name == TextNodeProps.STOICH_MIN && p.Value == "28"));
+
+            Assert.NotNull(props.FirstOrDefault(
+                p => p.Name == TextNodeProps.STOICH_MAX && p.Value == "28"));
         }
 
         [Fact]

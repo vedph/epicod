@@ -46,6 +46,26 @@
         public const string LAYOUT = "layout";
 
         /// <summary>
+        /// The stoichedon minimum number.
+        /// </summary>
+        public const string STOICH_MIN = "stoich-min";
+
+        /// <summary>
+        /// The stoichedon maximum number.
+        /// </summary>
+        public const string STOICH_MAX = "stoich-max";
+
+        /// <summary>
+        /// The non-stoichedon minimum number.
+        /// </summary>
+        public const string NON_STOICH_MIN = "non-stoich-min";
+
+        /// <summary>
+        /// The non-stoichedon maximum number.
+        /// </summary>
+        public const string NON_STOICH_MAX = "non-stoich-max";
+
+        /// <summary>
         /// The original date.
         /// </summary>
         public const string DATE_PHI = "date-phi";
