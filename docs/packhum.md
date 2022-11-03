@@ -290,16 +290,28 @@ In the end, each text will be found in its own page, having a line for each tabl
 The note at the top of each text page is a line with U+2014 as separator, including these data (the asterisk marks those data which are mostly present):
 
 1. region\*
-2. location\*
-3. type
-4. date\*
-5. reference(s)
+2. site\*
+3. location
+4. type
+5. date\*
+6. reference(s)
 
 For instance:
 
 ```txt
-Att. — Athens: Akropolis — stoich. 28 — 440-410 a. — IG I² 87,f + 141,a, + 174 — IG I³, Add.p.950
+Att. — Athens — Akropolis — stoich. 28 — 440-410 a. — IG I² 87,f + 141,a, + 174 — IG I³, Add.p.950
 ```
+
+Here:
+
+- region = `Att.`
+- site: `Athens`
+- location: `acropolis`
+- type: `stoich. 28`
+- date: `440-410 a.`
+- references:
+  - `IG I² 87,f + 141,a, + 174`
+  - `IG I³, Add.p.950`
 
 Unfortunately, it's difficult to detect which field is what, as no field is required. For instance:
 
@@ -308,12 +320,17 @@ Att. — 440-430 a.
 Att. — Lamptrai: Thiti — s. V a. — Elliot(1962) 56-58 (+) — SEG 32.19
 ```
 
-Going deeper, we can observe that:
+We can observe that:
 
 - type usually is a word in `[]` (e.g. `[pottery]`), or is related to the writing direction or layout (e.g. `stoich.` with an optional letters count, `non-stoich.`, `boustr.`, `retrogr.`, `retr`).
 - reference start with any of the `RefHeads.txt` prefixes.
 - toponyms cannot have digits in their text once text in `()` or `[]` has been removed.
 - date has a number of forms (see below).
+
+So, the parsing strategy here relies on two essential points:
+
+- metadata are ordered as illustrated above, from region to references; so, even though any metadata can be absent, we can be reasonably sure that a place does not follow a date.
+- some metadata have a more fixed pattern, which helps in identifying "anchors" which combined with position can tell us the type of each of them.
 
 Sample queries to lookup references in tokens:
 
@@ -385,12 +402,17 @@ A1. preprocess: this is required to avoid splitting in a wrong way:
   - `late (?) 2nd c. AD`
   - `later (?) Rom. Imp. period`
 - extract `[...]` or `(...)` into hints.
+- corner cases: replacements:
+  - `w/` and `w//` => `w`(these are wrong parsing cases: not a date).
+  - `July/August` => `July`.
+  - `early/mid` => `early`.
+  - `half/mid` => `1st half`.
+  - `mid/2nd half of the` => `mid`.
+  - `middle / 2nd half` => `mid`.
 - `or`/`od.`/`oder` + ( `sh.`/`shortly`/`slightly`) + `lat.`/`later`/`aft.`/`after`/`earlier`/`früher`/`später` + (`?`) => wrap in `()` and normalize language.
-- `at the earliest` => wrap in `()` if not already inside brackets.
-- `,\s+early$` => wrap in `()`.
-- `w/` and `w//` => `w`(these are wrong parsing cases: not a date).
-- `July/August` => `July`.
-- `,\s*([0-3]?[0-9])?\s*(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[^\s]*` => month, day.
+- `at the earliest` => wrap in `()`.
+- early suffix: `,\s+early$` => wrap in `()`.
+- date suffix: `,\s*([0-3]?[0-9])?\s*(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[^\s]*` => month, day.
 
 >Note: corner cases were defined by this query:
 
@@ -517,12 +539,15 @@ For Packhum I currently define these metadata:
 - `text`: full text.
 - `note`: original unparsed note.
 - `region`: region.
-- `location`: location in region.
+- `site`: site in region.
+- `location`: location in site.
 - `type`: type.
 - `layout`: text layout.
 - `date-phi`: the date as found in the note.
-- `date-txt`: the date's text in a conventional normal form (Cadmus).
-- `date-val`: the date's (approximate) numeric value.
+- `date-txt`: the date's text in a conventional normal form (Cadmus). Eventually suffixed with `#N` for multiple dates.
+- `date-val`: the date's (approximate) numeric value. Eventually suffixed with `#N` for multiple dates.
 - `reference`: zero or more references.
+- `stoich-min`, `stoich-max`: min and max stoichedon counts. These always occur in pair.
+- `non-stoich-min`, `non-stoich-max`: min and max non-stoichedon counts. These always occur in pair.
 
 All these metadata occur at most once per node, except for `reference`.

@@ -95,6 +95,43 @@ namespace Epicod.Scraper.Packhum.Test
         }
 
         [Fact]
+        public void Parse_RegionSiteLocationTypeDate_Ok()
+        {
+            PackhumParser parser = new();
+            IList<TextNodeProperty> props =
+                parser.ParseNote("Att. — Athens — Akropolis — stoich. 28 — 440-410 a.", 1);
+
+            Assert.Equal(9, props.Count);
+
+            Assert.NotNull(props.FirstOrDefault(
+                p => p.Name == TextNodeProps.REGION && p.Value == "Att."));
+
+            Assert.NotNull(props.FirstOrDefault(
+                p => p.Name == TextNodeProps.SITE && p.Value == "Athens"));
+
+            Assert.NotNull(props.FirstOrDefault(
+                p => p.Name == TextNodeProps.LOCATION && p.Value == "Akropolis"));
+
+            Assert.NotNull(props.FirstOrDefault(
+                p => p.Name == TextNodeProps.LAYOUT && p.Value == "stoich. 28"));
+
+            Assert.NotNull(props.FirstOrDefault(
+                p => p.Name == TextNodeProps.DATE_PHI && p.Value == "440-410 a."));
+
+            Assert.NotNull(props.FirstOrDefault(
+                p => p.Name == TextNodeProps.DATE_TXT && p.Value == "440 -- 410 BC"));
+
+            Assert.NotNull(props.FirstOrDefault(
+                p => p.Name == TextNodeProps.DATE_VAL && p.Value == "-425"));
+
+            Assert.NotNull(props.FirstOrDefault(
+                p => p.Name == TextNodeProps.STOICH_MIN && p.Value == "28"));
+
+            Assert.NotNull(props.FirstOrDefault(
+                p => p.Name == TextNodeProps.STOICH_MAX && p.Value == "28"));
+        }
+
+        [Fact]
         public void Parse_RegionSiteTypeDate_Ok()
         {
             PackhumParser parser = new();

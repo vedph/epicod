@@ -61,6 +61,9 @@ namespace Epicod.Scraper.Packhum
         private static readonly Regex _bracketRegex = new(@"\([^)]*\)",
             RegexOptions.Compiled);
 
+        private static readonly Regex _earliestRegex = new(
+            "([^(])at the earliest", RegexOptions.Compiled);
+
         // datation
         private static readonly Regex _splitPtRegex = new(
             @"([0-9IVX](?:st|nd|rd|th)?\??)-([0-9IVX])", RegexOptions.Compiled);
@@ -204,8 +207,8 @@ namespace Epicod.Scraper.Packhum
                         + ")";
             });
 
-            // at the earliest => wrap in ()
-            s = s.Replace("at the earliest", "(at the earliest)");
+            // at the earliest => wrap in () if not already in ()
+            s = _earliestRegex.Replace(s, "$1(at the earliest)");
 
             // , early... : wrap in ()
             s = _earlyModifierRegex.Replace(s, " (early)");
