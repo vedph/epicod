@@ -80,6 +80,11 @@ namespace Epicod.Scraper.Packhum.Test
             "179",
             "175 n.Chr."
         })]
+        [InlineData("179 vel 175 n.Chr.", new[]
+        {
+            "179",
+            "175 n.Chr."
+        })]
         [InlineData("118/9 & 129/30 AD", new[]
         {
             "118/9",
@@ -140,7 +145,9 @@ namespace Epicod.Scraper.Packhum.Test
         [InlineData("", "")]
         [InlineData("139p.", "139 p.")]
         [InlineData("222-235p.", "222-235 p.")]
-        public void PreprocessDatations_DetachAP_Ok(string text, string expected)
+        [InlineData("p. ante 408/7 a.", "ante 408/7 a.")]
+        [InlineData("p. post 408/7 a.", "post 408/7 a.")]
+        public void PreprocessDatations_Ok(string text, string expected)
         {
             PackhumDateParser parser = new();
             text = parser.PreprocessForSplit(text);
@@ -440,7 +447,9 @@ namespace Epicod.Scraper.Packhum.Test
         [InlineData("c. ante 21 BC", "-- c. 21 BC")]
         [InlineData("ante 21 BC ?", "-- 21 BC ?")]
         [InlineData("ante III BC", "-- III BC")]
+        [InlineData("p. ante 21 BC ?", "-- 21 BC ?")]
         [InlineData("post 21 BC", "21 BC --")]
+        [InlineData("p. post 21 BC", "21 BC --")]
         [InlineData("after 21 BC", "21 BC --")]
         [InlineData("aft. 21 BC", "21 BC --")]
         [InlineData("post III BC", "III BC --")]

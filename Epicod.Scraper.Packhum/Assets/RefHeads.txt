@@ -1,10 +1,12 @@
-﻿Schefold--Berger--Schmidt 
+﻿F. Hiller von Gaertringen,
+Schefold--Berger--Schmidt 
 Jour. Roy. Geo. Soc. 
 Kubitschek & Reichel 
 Freyer-Schauenburg,
 Hell.Phil.Syl.Ist. 
 İnan & Alföldi-R. 
 Pappakonstantinou,
+Studies S.V. Tracy
 Bolu & Dörtdivan,
 Tölle-Kastenbein,
 Türk Ark. Derg. 
@@ -13,21 +15,27 @@ Dumont-Homolle
 Mon. Berl. Ak. 
 Pfuhl & Möbius 
 Staatsverträge 
+W.K. Pritchett,
 Wiss. Z. Halle 
 Ann. d. Inst. 
 Bel.T.Tar.Kur.
 Benndorf&Niem.
+E. Schweigert,
 Fraser & Bean,
 Hula & Szanto 
 J.-A. Lebèque,
 Pickard-Camb.,
 Thorikos VIII 
+Diog. Laert. 
 Haussoullier,
+M.B. Walbank,
 Thorikos III 
 Thorikos VII 
 B. ec. fran.
+B.D. Meritt,
 Friedländer,
 G. Lüderitz,
+K.J. Rigsby,
 Malandrakis,
 Thorikos II 
 Thorikos IV 
@@ -41,8 +49,10 @@ Arch. Inv.
 Chiake Ep. 
 Hornblower,
 Kretikidis,
+Makedonika 
 Mous. Smy. 
 Philologus 
+S.V. Tracy,
 Sokolowski,
 Stamatiades
 Thorikos I 
@@ -105,6 +115,7 @@ Marcadé
 Martini,
 Milet II
 Moretti 
+O. Kern,
 Roueché,
 Säflund,
 Tuchelt,
@@ -137,12 +148,14 @@ Newton,
 Pennas,
 Phoros,
 Robert,
+S. Dow,
 Sinuri 
 unpubl.
 Vidman,
 Welles 
 AArch 
 Conze,
+Elliot
 Epet. 
 Ergon 
 Hicks 
@@ -230,7 +243,6 @@ GVI
 JHS 
 JRS 
 PAE 
-PAE 
 RAL 
 REG 
 RhM 
@@ -244,7 +256,6 @@ AA
 AC 
 AD 
 AE 
-Ag.
 Ag.
 AS 
 BE 

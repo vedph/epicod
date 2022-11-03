@@ -25,9 +25,22 @@ namespace Epicod.Scraper.Packhum
         private const int FLD_REFERENCE = 6;
         private const int FLD_TAIL = 7;
 
-        private readonly char[] _seps;
-        private readonly Regex _layoutRegex;
-        private readonly Regex _forgeryRegex;
+        private static readonly char[] _seps = new[] { '\u2014' };
+
+        private static readonly Regex _layoutRegex = new (
+            @"^\s*(?:stoich|non-stoich|boustr|retr|retrogr|sinistr)\b",
+            RegexOptions.Compiled);
+
+        private static readonly Regex _forgeryRegex = new(
+            @"(?<r2>probable )?(modern )?forgery(?<r3>\?)?",
+            RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+        private static readonly Regex _stoichRegex = new(
+            @"(?<t>stoich|non-stoich)\.\s*(?<c>c\.\s*)?" +
+            @"(?:(?:(?<n>[0-9]+)(?:[-/](?<n2>[0-9]+))?" +
+            @"(?<q>\?|\(\?\))?)?|(?:\([^)]+\)))", RegexOptions.Compiled);
+
+        // state
         private readonly PackhumDateParser _dateParser;
         private readonly List<string> _refHeads;
 
@@ -46,17 +59,9 @@ namespace Epicod.Scraper.Packhum
         /// </summary>
         public PackhumParser()
         {
-            _seps = new[] { '\u2014' };
             _dateParser = new PackhumDateParser();
 
             // type as writing direction/layout
-            _layoutRegex = new Regex(
-                @"^\s*(?:stoich|non-stoich|boustr|retr|retrogr|sinistr)\b",
-                RegexOptions.Compiled);
-
-            _forgeryRegex = new(@"(?<r2>probable )?(modern )?forgery(?<r3>\?)?",
-                RegexOptions.Compiled | RegexOptions.IgnoreCase);
-
             _refHeads = new();
             LoadRefHeads();
         }
@@ -119,6 +124,12 @@ namespace Epicod.Scraper.Packhum
                 return true;
             }
             return false;
+        }
+
+        private void ParseStoich(string text, int nodeId,
+            IList<TextNodeProperty> props)
+        {
+            // TODO
         }
 
         private bool ParseType(string text, int nodeId,

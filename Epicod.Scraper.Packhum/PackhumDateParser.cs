@@ -38,7 +38,7 @@ namespace Epicod.Scraper.Packhum
 
         private static readonly string[] _dateSeps = new[]
         {
-            " and ", " or ", " od.", " oder ", " & ", ","
+            " and ", " or ", " od.", " oder ", " vel ", " & ", ","
         };
 
         // date preprocessing
@@ -389,6 +389,10 @@ namespace Epicod.Scraper.Packhum
                 s = _dotCenturyRegex.Replace(s, "$1th ").Replace("th /", "th/");
 
                 // corner cases:
+                // p. ante or p. post => ante or post
+                s = s.Replace("p. ante ", "ante ");
+                s = s.Replace("p. post ", "post ");
+
                 // mid- > med.
                 s = _midDashRegex.Replace(s, "med. $1");
 
