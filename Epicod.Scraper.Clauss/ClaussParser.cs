@@ -99,7 +99,7 @@ namespace Epicod.Scraper.Clauss
         }
 
         private void ParseMetadatum(int nodeId, string label, string content,
-            IList<TextNodeProperty> properties)
+            IList<TextNodeProperty> props)
         {
             TextNodeProperty p = new()
             {
@@ -115,7 +115,7 @@ namespace Epicod.Scraper.Clauss
                     if (!content.Contains('<'))
                     {
                         p.Value = _wsRegex.Replace(content, " ").Trim();
-                        properties.Add(p);
+                        props.Add(p);
                     }
                     else
                     {
@@ -125,8 +125,8 @@ namespace Epicod.Scraper.Clauss
                         if (m.Success)
                         {
                             p.Value = m.Groups[2].Value;
-                            properties.Add(p);
-                            properties.Add(new TextNodeProperty
+                            props.Add(p);
+                            props.Add(new TextNodeProperty
                             {
                                 NodeId = nodeId,
                                 Name = "image",
@@ -140,7 +140,7 @@ namespace Epicod.Scraper.Clauss
                             Logger?.LogError("Unexpected element in publication: {Content}",
                                 content);
                             p.Value = _wsRegex.Replace(content, " ").Trim();
-                            properties.Add(p);
+                            props.Add(p);
                         }
                     }
                     break;
@@ -149,7 +149,7 @@ namespace Epicod.Scraper.Clauss
                     if (!content.Contains('<'))
                     {
                         p.Value = _wsRegex.Replace(content, " ").Trim();
-                        properties.Add(p);
+                        props.Add(p);
                     }
                     else
                     {
@@ -162,7 +162,7 @@ namespace Epicod.Scraper.Clauss
                             // rename place as location
                             p.Name = "location";
                             p.Value = m.Groups[2].Value;
-                            properties.Add(p);
+                            props.Add(p);
                             // extract lat and lon from href
                             var pt = ParsePoint(m.Groups[1].Value);
                             if (pt == null)
@@ -172,7 +172,7 @@ namespace Epicod.Scraper.Clauss
                             }
                             else
                             {
-                                properties.Add(new TextNodeProperty
+                                props.Add(new TextNodeProperty
                                 {
                                     NodeId = nodeId,
                                     Name = "point",
@@ -186,7 +186,7 @@ namespace Epicod.Scraper.Clauss
                             Logger?.LogError("Unexpected element in place: {Content}",
                                 content);
                             p.Value = _wsRegex.Replace(content, " ").Trim();
-                            properties.Add(p);
+                            props.Add(p);
                         }
                     }
                     break;
@@ -197,7 +197,7 @@ namespace Epicod.Scraper.Clauss
                         StringSplitOptions.RemoveEmptyEntries)
                         .Select(s => s.Trim()).Where(s => s.Length > 0))
                     {
-                        properties.Add(new TextNodeProperty
+                        props.Add(new TextNodeProperty
                         {
                             NodeId = nodeId,
                             Name = "tag",
@@ -208,7 +208,7 @@ namespace Epicod.Scraper.Clauss
 
                 case "comment":
                     p.Value = _wsRegex.Replace(content, " ").Trim();
-                    properties.Add(p);
+                    props.Add(p);
                     break;
 
                 default:
@@ -218,7 +218,7 @@ namespace Epicod.Scraper.Clauss
                             p.Name, content);
                     }
                     p.Value = _wsRegex.Replace(content, " ").Trim();
-                    properties.Add(p);
+                    props.Add(p);
                     break;
             }
         }

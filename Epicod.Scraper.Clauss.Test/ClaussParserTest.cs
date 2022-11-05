@@ -1,6 +1,5 @@
 using HtmlAgilityPack;
 using System.IO;
-using System.Linq;
 using System.Reflection;
 using System.Text;
 using Xunit;
@@ -60,8 +59,8 @@ namespace Epicod.Scraper.Clauss.Test
 
             Assert.Equal(1, n);
             Assert.Equal(2, writer.Properties[1].Count);
-            Assert.True(writer.Properties[1].Any(p => p.Name == "publication"));
-            Assert.True(writer.Properties[1].Any(p => p.Name == "image"));
+            Assert.Contains(writer.Properties[1], p => p.Name == "publication");
+            Assert.Contains(writer.Properties[1], p => p.Name == "image");
         }
     }
 }

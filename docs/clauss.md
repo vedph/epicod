@@ -147,3 +147,78 @@ href="javascript:Neues_Fenster(&#39;osm-map.php?ort=Abazli&amp;latitude=39.54711
 </noscript>
 <br />
 ```
+
+## Metadata
+
+For Clauss I currently define these metadata:
+
+a) scraped:
+
+- `count`: the total count of inscriptions for each region. This is provided by the region-based query. The scraper also checks that this count corresponds to the effective count of inscriptions scraped from each region.
+- `dating`: the date, or the first part of a dates interval.
+- `to`: the second part of a dates interval, when the date is an interval.
+- `details`: the HTML portion of the page representing the unparsed details about the inscription.
+- `comment`: the optional comment found in some inscriptions.
+- `edcs-id`: the EDCS ID.
+- `image`: the full link to the inscription image.
+- `material`: the inscription material (e.g. `lapis`).
+- `province`: the inscription province (e.g. `Achaia`).
+- `place`: the inscription place in the province.
+- `point`: the inscription geographical coordinates, modeled as a PostgreSQL `POINT` structure (lon,lat): e.g. `POINT(23,7279843,37,9841493)`.
+- `publication`: the inscription's unparsed source(s) (e.g. `AE 1916, 00024 = IG-02, 03298`).
+- `tag`: any number of tags attached to this inscription (see below). Each tag has been extracted from a list, and stored as a single record.
+- `text`: the inscription's unparsed text.
+
+The full list of tags can be got via a simple query:
+
+```sql
+select distinct(value) from text_node_property tnp 
+where tnp.name='tag'
+order by value;
+```
+
+Here it is:
+
+- Augusti/Augustae
+- carmina
+- defixiones
+- diplomata militaria
+- inscriptiones christianae
+- leges
+- liberti/libertae
+- litterae erasae
+- litterae in litura
+- miliaria
+- milites
+- mulieres
+- nomen singulare
+- officium/professio
+- ordo decurionum
+- ordo equester
+- ordo senatorius
+- praenomen et nomen
+- reges
+- sacerdotes christiani
+- sacerdotes pagani
+- senatus consulta
+- servi/servae
+- seviri Augustales
+- sigilla impressa
+- signacula
+- signacula medicorum
+- termini
+- tesserae nummulariae
+- tituli fabricationis
+- tituli honorarii
+- tituli operum
+- tituli possessionis
+- tituli sacri
+- tituli sepulcrales
+- tria nomina
+- viri
+
+b) injected:
+
+- `date-txt` (and `date-txt#2`, etc.): the textual representation of the parsed date. The model of datation is from [Cadmus](https://cadmus.fusi-soft.com/#/docs/data-architecture).
+- `date-val` (and `date-val#2`, etc.): a single numeric value calculated for the parsed date.
+- `languages`: the main language(s) of the inscription, deduced by inspecting `text`. This is limited to Greek (`grc`) and Latin (`lat`), separated by space and sorted alphabetically. So the possible values are `grc`, `lat`, `grc lat`. This is useful to quickly filter those inscriptions containing Greek text.

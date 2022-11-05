@@ -60,11 +60,22 @@ pg_dump --username=postgres -f DUMPFILEPATH DBNAME
 
 ## Useful Queries
 
+- list of metadata types for a corpus:
+
+```sql
+select distinct tnp.name from text_node_property tnp 
+inner join text_node tn on tnp.node_id = tn.id 
+where tn.corpus = 'packhum'
+order by name;
+```
+
 - count properties for a corpus:
 
+```sql
 select count(*) from text_node_property tnp 
 inner join text_node tn on tnp.node_id = tn.id 
 where tn.corpus = 'clauss';
+```
 
 - count injected properties for PHI:
 

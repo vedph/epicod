@@ -543,18 +543,25 @@ Sometimes there are errors, like `117-138 n.Chr.Jh.n.Chr. (Chapot)`.
 
 For Packhum I currently define these metadata:
 
-- `text`: full text.
-- `note`: original unparsed note.
-- `region`: region.
-- `site`: site in region.
-- `location`: location in site.
-- `type`: type.
-- `layout`: text layout.
-- `date-phi`: the date as found in the note.
-- `date-txt`: the date's text in a conventional normal form (Cadmus). Eventually suffixed with `#N` for multiple dates.
-- `date-val`: the date's (approximate) numeric value. Eventually suffixed with `#N` for multiple dates.
-- `reference`: zero or more references.
-- `stoich-min`, `stoich-max`: min and max stoichedon counts. These always occur in pair.
-- `non-stoich-min`, `non-stoich-max`: min and max non-stoichedon counts. These always occur in pair.
+a) scraped:
 
-All these metadata occur at most once per node, except for `reference`.
+- `note`: the original, unparsed line of text including most of the metadata.
+- `phi`: the PHI ID.
+- `text`: the original, unparsed text.
+
+b) injected:
+
+- `date-phi`: the portion of `note` representing a date.
+- `date-txt` (and `date-txt#2`, etc.): the textual representation of the parsed date. The model of datation is from [Cadmus](https://cadmus.fusi-soft.com/#/docs/data-architecture).
+- `date-val` (and `date-val#2`, etc.): a single numeric value calculated for the parsed date.
+- `layout`: the portion of `note` representing text layout and writing direction.
+- `reference`: the portion of `note` representing references.
+- `region`: the portion of `note` representing a region.
+- `site`: the portion of `note` representing a site inside a region.
+- `location`: the portion of `note` representing a location inside a site.
+- `type`: the portion of `note` representing a generic classification for the inscription (e.g. "pottery").
+- `stoich-min` and `stoich-max`: min and max stoichedon counts as parsed from `layout`. Value is 0 when counts are not specified.
+- `non-stoich-min` and `non-stoich-max`: min and max non-stoichedon counts as parsed from `layout`. Value is 0 when counts are not specified.
+- `forgery`: a value indicating the probability that an inscription is the product of forgery: 1=forgery, 2=probable forgery, 3=perhaps forgery.
+
+All these metadata occur at most once per node, except for `reference`; datations may occur multiple times, but in this case they get a `#N` ordinal suffix, e.g. `date-txt` vs. `date-txt#2`, and `date-val` vs `date-val#2` (`date-phi` instead is the original metadatum, and as such is always unique, while other date properties are injected). This preserves the original order of the dates, which is relevant as far as the first date given is the one considered as the most probable. Currently the largest ordinal suffix is 6.
