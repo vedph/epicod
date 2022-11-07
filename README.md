@@ -22,7 +22,9 @@ docker run --volume postgresData://c/data/pgsql -p 5432:5432 --name postgres -e 
 
 ## Database
 
-A RDBMS is used as the target of scraping and parsing processes. The database schema is designed to be able to hold data from different sources and with different formats and modeling. To this end, I have designed a very simple structure to represent the hierarchical organization of each corpus.
+A RDBMS is used as the target of scraping and parsing processes. The database schema is designed to be able to hold data from different sources and with different formats and modeling. To this end, I have designed a very simple structure to represent the hierarchical organization of each corpus (an upcoming paper will provide more details about modeling).
+
+![schema](./docs/img/schema.png)
 
 In fact, it's easy to realize that whatever corpus we will handle will include a set of texts in some hierarchical structure. For instance, in the case of Packhum this is the one appearing from the site: regions include books, books include texts.
 
