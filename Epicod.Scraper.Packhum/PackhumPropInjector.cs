@@ -74,7 +74,7 @@ namespace Epicod.Scraper.Packhum
             {
                 Logger = Logger
             };
-            string[] cols = new[] { "node_id", "name", "value" };
+            string[] cols = new[] { "node_id", "name", "value", "type" };
 
             // get total
             dynamic row = qf.Query(EpicodSchema.T_PROP)
@@ -105,8 +105,14 @@ namespace Epicod.Scraper.Packhum
                     if (props.Count == 0) continue;
 
                     injected += props.Count;
-                    var data = props.Select(
-                        p => new object[] { item.NodeId, p.Name ?? "", p.Value ?? "" })
+                    var data = props.Select(p => new object?[]
+                        {
+                            item.NodeId,
+                            p.Name!,
+                            p.Value!,
+                            p.Name == TextNodeProps.DATE_VAL
+                                ? TextNodeProps.TYPE_INT : null
+                        })
                         .ToArray();
                     if (!IsDry) qf.Query(EpicodSchema.T_PROP).Insert(cols, data);
                 }

@@ -131,23 +131,25 @@ namespace Epicod.Scraper.Clauss
         }
 
         private void CollectDateProps(int nodeId, string a, string b,
-            IList<object[]> props)
+            IList<object?[]> props)
         {
             int n = 0;
             foreach (var date in BuildDates(a, b))
             {
                 n++;
-                props.Add(new object[]
+                props.Add(new object?[]
                 {
                     nodeId,
                     TextNodeProps.DATE_VAL + (n > 1? $"#{n}" : ""),
-                    date.GetSortValue()
+                    date.GetSortValue(),
+                    TextNodeProps.TYPE_INT
                 });
-                props.Add(new object[]
+                props.Add(new object?[]
                 {
                     nodeId,
                     TextNodeProps.DATE_TXT + (n > 1? $"#{n}" : ""),
-                    date.ToString()
+                    date.ToString(),
+                    null
                 });
             }
         }
@@ -160,7 +162,7 @@ namespace Epicod.Scraper.Clauss
                 new PostgresCompiler());
 
             if (!IsDry) Clear(qf);
-            string[] cols = new[] { "node_id", "name", "value" };
+            string[] cols = new[] { "node_id", "name", "value", "type" };
 
             int count = 0, injected = 0;
             ProgressReport? report = progress != null
@@ -180,7 +182,7 @@ namespace Epicod.Scraper.Clauss
             query = query.Select("tn.id", "tp.name", "tp.value")
                          .OrderBy("tn.id");
 
-            List<object[]> props = new();
+            List<object?[]> props = new();
             StringBuilder a = new(), b = new();
 
             // for each node
@@ -219,8 +221,10 @@ namespace Epicod.Scraper.Clauss
                     // languages provided by scanning text
                     case "text":
                         string langs = GetLanguages(row.value);
-                        props.Add(
-                            new object[] { id, TextNodeProps.LANGUAGES, langs });
+                        props.Add(new object?[]
+                        {
+                            id, TextNodeProps.LANGUAGES, langs, null
+                        });
                         break;
                 }
 
