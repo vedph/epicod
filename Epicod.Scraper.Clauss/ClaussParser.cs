@@ -177,7 +177,7 @@ namespace Epicod.Scraper.Clauss
                                     NodeId = nodeId,
                                     Name = "point",
                                     Value = $"POINT({pt.Item1},{pt.Item2})",
-                                    Type = "point"
+                                    Type = TextNodeProps.TYPE_POINT
                                 });
                             }
                         }

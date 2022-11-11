@@ -72,7 +72,7 @@ namespace Epicod.Cli.Commands
                 $"Output path: {_options.OutputPath}");
 
             string connection = string.Format(CultureInfo.InvariantCulture,
-                _options.Configuration.GetConnectionString("Default"),
+                _options.Configuration!.GetConnectionString("Default")!,
                 _options.DatabaseName);
 
             using StreamWriter writer = new(_options.OutputPath, false, Encoding.UTF8);

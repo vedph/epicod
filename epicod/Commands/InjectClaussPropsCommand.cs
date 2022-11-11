@@ -60,7 +60,7 @@ namespace Epicod.Cli.Commands
                 $"Preflight: {(_options.IsDry ? "yes" : "no")}\n");
 
             string connection = string.Format(CultureInfo.InvariantCulture,
-                _options.Configuration.GetConnectionString("Default"),
+                _options.Configuration!.GetConnectionString("Default")!,
                 _options.DatabaseName);
 
             ProgressBar bar = new(100, null, new ProgressBarOptions

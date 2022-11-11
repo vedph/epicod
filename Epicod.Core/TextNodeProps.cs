@@ -1,4 +1,6 @@
-﻿namespace Epicod.Core
+﻿using System.Data;
+
+namespace Epicod.Core
 {
     /// <summary>
     /// Constants used for text node properties.
@@ -44,6 +46,16 @@
         /// The writing direction / layout.
         /// </summary>
         public const string LAYOUT = "layout";
+
+        /// <summary>
+        /// The boustrophedon value: 1=boustrophedic, 2=perhaps boustrophedic.
+        /// </summary>
+        public const string BOUSTR = "boustr";
+
+        /// <summary>
+        /// The right-to-left value: 1=RTL, 2=perhaps RTL.
+        /// </summary>
+        public const string RTL = "rtl";
 
         /// <summary>
         /// The stoichedon minimum number.
@@ -92,5 +104,6 @@
 
         // data types
         public const string TYPE_INT = "integer";
+        public const string TYPE_POINT = "point";
     }
 }

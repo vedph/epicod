@@ -28,12 +28,20 @@ namespace Epicod.Scraper.Packhum
         private static readonly char[] _seps = new[] { '\u2014' };
 
         private static readonly Regex _layoutRegex = new (
-            @"^\s*(?:stoich|non-stoich|boustr|retr|retrogr|sinistr)\b",
+            @"^\s*(?:stoich|non-stoich|boustr|bstr|retr|retrogr|sinistr)\b",
             RegexOptions.Compiled);
 
         private static readonly Regex _forgeryRegex = new(
             @"(?<r2>probable )?(modern )?forgery(?<r3>\?)?",
             RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+        private static readonly Regex _retrogrRegex = new(
+            @"(?<t>retr|retrogr)\.\s*(?<q>\?)?",
+            RegexOptions.Compiled);
+
+        private static readonly Regex _boustrRegex = new(
+            @"(?<t>bstr|boustr)\.\s*(?<q>\?)?",
+            RegexOptions.Compiled);
 
         private static readonly Regex _stoichRegex = new(
             @"(?<t>stoich|non-stoich)\.\s*(?<c>c\.\s*)?" +
@@ -119,11 +127,32 @@ namespace Epicod.Scraper.Packhum
                 {
                     props.Add(new TextNodeProperty(nodeId,
                         TextNodeProps.FORGERY,
-                        v));
+                        v,
+                        TextNodeProps.TYPE_INT));
                 }
                 return true;
             }
             return false;
+        }
+
+        private static void ParseRetrogr(string text, int nodeId,
+            IList<TextNodeProperty> props)
+        {
+            Match m = _retrogrRegex.Match(text);
+            if (!m.Success) return;
+
+            props.Add(new TextNodeProperty(nodeId, TextNodeProps.RTL,
+                m.Groups["q"].Length > 0 ? "2" : "1", TextNodeProps.TYPE_INT));
+        }
+
+        private static void ParseBoustr(string text, int nodeId,
+            IList<TextNodeProperty> props)
+        {
+            Match m = _boustrRegex.Match(text);
+            if (!m.Success) return;
+
+            props.Add(new TextNodeProperty(nodeId, TextNodeProps.BOUSTR,
+                m.Groups["q"].Length > 0 ? "2" : "1", TextNodeProps.TYPE_INT));
         }
 
         private static void ParseStoich(string text, int nodeId,
@@ -162,16 +191,16 @@ namespace Epicod.Scraper.Packhum
             if (non)
             {
                 props.Add(new TextNodeProperty(nodeId, TextNodeProps.NON_STOICH_MIN,
-                    $"{n1}"));
+                    $"{n1}", TextNodeProps.TYPE_INT));
                 props.Add(new TextNodeProperty(nodeId, TextNodeProps.NON_STOICH_MAX,
-                    $"{n2}"));
+                    $"{n2}", TextNodeProps.TYPE_INT));
             }
             else
             {
                 props.Add(new TextNodeProperty(nodeId, TextNodeProps.STOICH_MIN,
-                    $"{n1}"));
+                    $"{n1}", TextNodeProps.TYPE_INT));
                 props.Add(new TextNodeProperty(nodeId, TextNodeProps.STOICH_MAX,
-                    $"{n2}"));
+                    $"{n2}", TextNodeProps.TYPE_INT));
             }
         }
 
@@ -192,6 +221,12 @@ namespace Epicod.Scraper.Packhum
                 string v = text.Trim();
                 if (v == "retr") v = "retrogr";
                 props.Add(new TextNodeProperty(nodeId, TextNodeProps.LAYOUT, v));
+
+                // boustr.
+                ParseBoustr(text, nodeId, props);
+
+                // retrogr.
+                ParseRetrogr(text, nodeId, props);
 
                 // stoich.
                 ParseStoich(text, nodeId, props);

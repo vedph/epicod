@@ -51,7 +51,7 @@ namespace Epicod.Cli.Commands
 
             // create database if not exists
             IDbManager manager = new PgSqlDbManager(
-                _options.Configuration.GetConnectionString("Default"));
+                _options.Configuration!.GetConnectionString("Default")!);
             if (manager.Exists(_options.DatabaseName))
             {
                 Console.Write($"Database {_options.DatabaseName} already exists");

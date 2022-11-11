@@ -436,8 +436,6 @@ A2. _split_ at any of the following separators (_unless_ inside `()` or `[]`; th
   - " & "
   - ","
 
- TODO e.g. `11th/beg. 12th c. AD`.
-
 (B) **splitting** each date into datation points at:
 
 1. `([0-9IVX](?:st|nd|rd|th)?\??)-([0-9IVX])`
@@ -560,6 +558,8 @@ b) injected:
 - `site`: the portion of `note` representing a site inside a region.
 - `location`: the portion of `note` representing a location inside a site.
 - `type`: the portion of `note` representing a generic classification for the inscription (e.g. "pottery").
+- `boustr`: boustrophedic: 1=boustrophedic, 2=perhaps boustrophedic. Extracted from `note`.
+- `rtl`: right to left: 1=RTL, 2=perhaps RTL. Extracted from `note`.
 - `stoich-min` and `stoich-max`: min and max stoichedon counts as parsed from `layout`. Value is 0 when counts are not specified.
 - `non-stoich-min` and `non-stoich-max`: min and max non-stoichedon counts as parsed from `layout`. Value is 0 when counts are not specified.
 - `forgery`: a value indicating the probability that an inscription is the product of forgery: 1=forgery, 2=probable forgery, 3=perhaps forgery.

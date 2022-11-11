@@ -121,7 +121,7 @@ namespace Epicod.Cli.Commands
 
             // create database if not exists
             string connection = string.Format(CultureInfo.InvariantCulture,
-                _options.Context.Configuration!.GetConnectionString("Default"),
+                _options.Context.Configuration!.GetConnectionString("Default")!,
                 _options.DatabaseName);
 
             if (!_options.IsDry)

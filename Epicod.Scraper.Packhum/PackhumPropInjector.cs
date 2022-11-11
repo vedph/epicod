@@ -44,6 +44,8 @@ namespace Epicod.Scraper.Packhum
                   TextNodeProps.LOCATION,
                   TextNodeProps.REFERENCE,
                   TextNodeProps.FORGERY,
+                  TextNodeProps.BOUSTR,
+                  TextNodeProps.RTL,
                   TextNodeProps.STOICH_MIN,
                   TextNodeProps.STOICH_MAX,
                   TextNodeProps.NON_STOICH_MIN,

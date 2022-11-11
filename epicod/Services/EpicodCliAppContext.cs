@@ -37,7 +37,7 @@ namespace Epicod.Cli.Services
                 new EpicodCliContextServiceConfig
                 {
                     ConnectionString = string.Format(CultureInfo.InvariantCulture,
-                    Configuration.GetConnectionString("Default"), dbName),
+                    Configuration!.GetConnectionString("Default")!, dbName),
                     LocalDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
                         "Assets")
                 });

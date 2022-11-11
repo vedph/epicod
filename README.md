@@ -104,7 +104,7 @@ inner join text_node tn on tnp.node_id = tn.id
 where tn.corpus = 'packhum' and
 (tnp.name like 'date-val%' 
  or tnp.name like 'date-txt%'
- or tnp.name in ('date-phi','region','location','reference'));
+ or tnp.name in ('date-phi','layout','reference','region','site','location','type','boustr','rtl','stoich-min','stoich-max','non-stoich-min','non-stoich-max','forgery'));
 ```
 
 - count injected properties for Clauss:
@@ -120,6 +120,9 @@ where tn.corpus = 'clauss' and
 
 ## History
 
+- 2022-11-11:
+  - upgraded to NET 7.
+  - added boustr and rtl properties to PHI.
 - 2022-11-07: Packhum and Clauss property injection.
 - 2022-10-27: completed Clauss.
 - 2022-10-25:
